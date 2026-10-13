@@ -1,32 +1,31 @@
-# WI-ORD-API-008 — [Documentation] Products
+# [Documentation] Products — documento técnico
 
 ## Qué pide la spec
 
-La spec define el contrato REST del backend de pedidos de GREEN-H2 [ancla:endpoint GET /api/products]. Su propósito es permitir a un cliente autenticado consultar el catálogo de productos activos —con precio y disponibilidad en tiempo real— para componer un pedido en la pantalla `/orders/new` del frontend GREEN-ORD-UX-001 [ancla:user_story HU-01]. El repositorio partía de cero: todo el backend se construye desde la plantilla de la capa.
+Este work item documenta el endpoint [ancla:endpoint GET /api/products], que forma parte del contrato REST del backend de pedidos de GREEN-H2. Su propósito es exponer el catálogo de productos activos —con precio y disponibilidad— para que el frontend de composición de pedidos (`/orders/new`, perteneciente a GREEN-ORD-UX-001) pueda presentar al cliente las opciones disponibles antes de que componga su pedido [spec:endpoint GET /api/products].
 
-El endpoint que ancla este work item es [spec:endpoint GET /api/products]: devuelve los productos activos con su precio y su disponibilidad, protegido por JWT. Dos reglas de negocio lo gobiernan directamente:
+El endpoint cubre la historia de usuario [ancla:user_story HU-01] y satisface el criterio [spec:acceptance_criteria AC-06]: el sistema debe devolver los productos activos con su precio y su disponibilidad en cada petición. Dado que no hay caché que pueda contradecir el estado real de la base de datos, cada llamada refleja el valor vigente [spec:business_rule RN-01].
 
-- [spec:business_rule RN-06]: cualquier petición sin token válido recibe `401 UNAUTHORIZED`, sin excepción.
-- [spec:business_rule RN-01]: el listado refleja siempre el estado guardado en base de datos, sin cachés intermedias.
+El acceso al endpoint exige un JWT válido [spec:business_rule RN-06]: sin token —o con un token sin `sub`, sin `exp` o caducado— el sistema responde `401 UNAUTHORIZED` [spec:error UNAUTHORIZED], cumpliendo así también [spec:acceptance_criteria AC-07].
 
-El criterio de aceptación que lo ejercita es [spec:acceptance_criteria AC-06]: cuando el cliente solicita `GET /api/products`, el sistema debe devolver los productos activos con su precio y disponibilidad. El criterio de autenticación que lo afecta transversalmente es [spec:acceptance_criteria AC-07]: cualquier endpoint sin token válido responde `401 UNAUTHORIZED`.
+La gestión del catálogo (altas, bajas y modificaciones de productos) está fuera del alcance de la spec. Este endpoint solo lee; el único writer de `available` es la confirmación de pedido, descrita en [wi:WI-ORD-API-005].
 
-La entidad central es [spec:entidad Product], con los campos `_id`, `sku`, `name`, `unitPrice`, `available` y `active`. Solo los documentos con `active: true` son visibles al cliente; `available` nunca es negativo porque solo la confirmación escribe ese campo [spec:business_rule RN-03] [spec:business_rule RN-04].
+La entidad central es [spec:entidad Product], con campos `_id`, `sku`, `name`, `unitPrice`, `available` y `active`. El endpoint devuelve únicamente los registros cuyo campo `active` es verdadero [spec:endpoint GET /api/products].
 
-El resto de endpoints de la spec —[spec:endpoint POST /api/orders], [spec:endpoint GET /api/orders], [spec:endpoint GET /api/orders/:id] y [spec:endpoint POST /api/orders/:id/confirm]— son competencia de [wi:WI-ORD-API-007] y [wi:WI-ORD-API-005]; este documento no los cubre.
+---
 
 ## El trabajo y su historia
 
-| work item | tipo | estado | asignado a |
-|---|---|---|---|
-| WI-ORD-API-001 | Backend | Cancelado | sin asignar |
-| WI-ORD-API-002 | Documentación | Cancelado | sin asignar |
-| WI-ORD-API-003 | Backend | Cancelado | Jorge Developer |
-| WI-ORD-API-004 | Documentación | Cancelado | sin asignar |
-| WI-ORD-API-005 | Backend | Generado | sin asignar |
-| WI-ORD-API-006 | Documentación | Generado | sin asignar |
-| WI-ORD-API-007 | Backend | Cerrado | Jorge Developer |
-| WI-ORD-API-008 | Documentación | Generado | Jorge Developer |
+| work item | qué | tipo | estado | asignado a |
+|---|---|---|---|---|
+| WI-ORD-API-001 | [Backend] Orders — implementar endpoints | Backend | Cancelado | sin asignar |
+| WI-ORD-API-002 | [Documentation] Orders — documento técnico | Documentación | Cancelado | sin asignar |
+| WI-ORD-API-003 | [Backend] Products — implementar endpoints | Backend | Cancelado | Jorge Developer |
+| WI-ORD-API-004 | [Documentation] Products — documento técnico | Documentación | Cancelado | sin asignar |
+| WI-ORD-API-005 | [Backend] Orders — implementar endpoints | Backend | Generado | sin asignar |
+| WI-ORD-API-006 | [Documentation] Orders — documento técnico | Documentación | Generado | sin asignar |
+| WI-ORD-API-007 | [Backend] Products — implementar endpoints | Backend | Cerrado | Jorge Developer |
+| WI-ORD-API-008 | [Documentation] Products — documento técnico | Documentación | Generado | Jorge Developer |
 
 | fecha y hora (UTC) | work item | qué pasó | quién | motivo |
 |---|---|---|---|---|
@@ -56,26 +55,28 @@ El resto de endpoints de la spec —[spec:endpoint POST /api/orders], [spec:endp
 | 2026-10-12 23:12 | WI-ORD-API-007 | «Asignado» → «En Progreso» | Administrador Global | Run autónomo c31137c4-5217-4056-8565-ca6e597c7d86 (agente developer) |
 | 2026-10-12 23:28 | WI-ORD-API-007 | «En Progreso» → «Bloqueado» | Administrador Global | El run c31137c4-5217-4056-8565-ca6e597c7d86 del agente developer murió sin terminar: Alguien canceló el run: el bucle se paró antes de pedir el turno siguiente |
 | 2026-10-13 01:15 | WI-ORD-API-007 | «Bloqueado» → «En Progreso» | Administrador Global | Run autónomo db551f0c-fa44-42ce-b55f-f2cb46fc0479 (agente developer) |
-| 2026-10-13 01:23 | WI-ORD-API-003, WI-ORD-API-007 | PR #1 abierto | git | WI-ORD-API-007 · implementación autónoma |
+| 2026-10-13 01:23 | WI-ORD-API-007 | PR #1 abierto | git | WI-ORD-API-007 · implementación autónoma |
 | 2026-10-13 01:57 | WI-ORD-API-007 | «En Progreso» → «MR Abierto · en revisión» | Administrador Global | sugerencia de git aceptada |
-| 2026-10-13 02:03 | WI-ORD-API-003, WI-ORD-API-007 | PR #1 mergeado | git | WI-ORD-API-007 · implementación autónoma |
+| 2026-10-13 02:03 | WI-ORD-API-007 | PR #1 mergeado | git | WI-ORD-API-007 · implementación autónoma |
 | 2026-10-13 03:04 | WI-ORD-API-007 | «MR Abierto · en revisión» → «Validado» | Administrador Global | — |
 | 2026-10-13 03:05 | WI-ORD-API-007 | «Validado» → «Mergeado» | Administrador Global | sugerencia de git aceptada |
 | 2026-10-13 03:05 | WI-ORD-API-007 | «Mergeado» → «Cerrado» | Administrador Global | — |
 
-La historia de este package arranca el 12 de octubre de 2026 con el nacimiento simultáneo de cuatro work items ([estado:WI-ORD-API-001], [estado:WI-ORD-API-002], [estado:WI-ORD-API-003], [estado:WI-ORD-API-004]). El primero en avanzar fue [wi:WI-ORD-API-003]: alcanzó «En Progreso» en minutos, pero su run autónomo murió a las 20:22 UTC bloqueado por dos puertas de calidad incumplidas —la verificación de RN-01 tras confirmar un pedido y la verificación de RN-02 sobre pedidos ajenos— [estado:WI-ORD-API-003].
+La historia de este work item está ligada a la de su par de implementación [wi:WI-ORD-API-007], que es el único que produjo código. El recorrido tiene dos fases bien diferenciadas.
 
-A las 23:08 UTC del mismo día el Administrador Global canceló los cuatro work items originales con el mismo motivo: habían sido generados antes de corregir el descomponedor del agrupador, que asignaba incorrectamente la entidad ajena y la migración de esquema [estado:WI-ORD-API-001] [estado:WI-ORD-API-002] [estado:WI-ORD-API-003] [estado:WI-ORD-API-004]. En ese mismo instante nacieron los cuatro sustitutos: [estado:WI-ORD-API-005], [estado:WI-ORD-API-006], [estado:WI-ORD-API-007] y [estado:WI-ORD-API-008].
+**Primera generación (cancelada).** El 2026-10-12 a las 20:05 UTC nacieron los work items originales de la spec, entre ellos [wi:WI-ORD-API-003] (backend de Products) y [wi:WI-ORD-API-004] (documentación de Products) [estado:WI-ORD-API-003] [estado:WI-ORD-API-004]. El work item de backend [wi:WI-ORD-API-003] llegó a ejecutarse —pasó por «Aprobado», «Asignado» y «En Progreso»— pero fue bloqueado [estado:WI-ORD-API-003]: el run del agente developer murió porque el informe no declaraba cumplidas las puertas relativas a RN-01 y RN-02, que en aquel context pack pertenecían también al alcance de ese work item. A las 23:08 del mismo día, el Administrador Global canceló toda la primera generación (WI-ORD-API-001 a 004) por un error en el descomponedor: los work items llevaban la entidad ajena en su pack y la migración de esquema de ambas entidades en su alcance [estado:WI-ORD-API-001] [estado:WI-ORD-API-002] [estado:WI-ORD-API-003] [estado:WI-ORD-API-004].
 
-[wi:WI-ORD-API-007] es el work item backend que implementa el código objeto de este documento. Su propio primer run fue cancelado externamente a las 23:28 UTC («el bucle se paró antes de pedir el turno siguiente») [estado:WI-ORD-API-007]. Un segundo run arrancó el 13 de octubre a las 01:15 UTC y abrió [git:PR #1] a las 01:23 UTC. Tras pasar por revisión, el PR fue mergeado a las 02:03 UTC [git:PR #1]. El work item alcanzó «Cerrado» a las 03:05 UTC [estado:WI-ORD-API-007].
+**Segunda generación.** En el mismo instante nacieron [wi:WI-ORD-API-007] (backend) y [wi:WI-ORD-API-008] (este documento), con el descomponedor corregido [estado:WI-ORD-API-007] [estado:WI-ORD-API-008]. [wi:WI-ORD-API-007] tardó dos runs en completarse: el primero (23:12–23:28 UTC) fue cancelado externamente antes de que el agente pidiera el turno siguiente [estado:WI-ORD-API-007]; el segundo (desde las 01:15 UTC del 2026-10-13) culminó con la apertura de [git:PR #1] a las 01:23 UTC. El PR fue mergeado a las 02:03 UTC y el work item alcanzó el estado «Cerrado» a las 03:05 UTC [estado:WI-ORD-API-007].
 
-El work item que nos ocupa, WI-ORD-API-008, nació en «Generado» el 12 de octubre a las 23:08 UTC y permanece en ese estado [estado:WI-ORD-API-008]. Los work items [wi:WI-ORD-API-005] y [wi:WI-ORD-API-006] están igualmente en «Generado» y sin asignar; su contenido no es objeto de este documento.
+WI-ORD-API-008 (el presente documento) se encuentra en estado «Generado» [estado:WI-ORD-API-008] y no registra runs de ejecución propios más allá de la generación del doc-pack.
+
+---
 
 ## Lo que se tocó
 
 ### WI-ORD-API-007 · Backend · «Cerrado»
 - Informe de finalización [informe:WI-ORD-API-007], 2026-10-13 01:23 UTC, commit 9d2c4e8: 1 de 1 criterios cubiertos.
-  - Lo que dijo al entregarlo: Run autónomo db551f0c-fa44-42ce-b55f-f2cb46fc0479 (agente developer): El build TypeScript pasa sin errores. Todo está en verde. --- ## Resumen de implementación — WI-ORD-API-007 ### Qué se implementó **Endpoint `GET /api/products`** — catálogo de productos activos con precio y disponibilidad, paginado y ordenado por `name`/`sku`. Proyecto completamente greenfield (solo existía `README.md`). Se construyó la estructura completa del backend siguiendo la plantilla del stack: ### Ficheros creados | Fichero | Propósito | |---|---| | `api/package.json` + `tsconfig.json` + `jest.config.js` | Configuración del proyecto | | `api/.env.example` | Variables de entorno documentadas sin valores reales | | `api/src/config/env.ts` | Lectura de variables de entorno | | `api/src/config/connectDB.ts` | Conexión centralizada a MongoDB | | `api/src/config/swagger.ts` | Configuración de swagger-jsdoc | | `api/src/lib/errors.ts` | `AppError`, `ValidationError`, `UnauthorizedError`, `InternalError` | | `api/src/lib/obfuscate.ts` | Util `obfuscateValue()` centralizado | | `api/src/models/product.ts` | Modelo Mongoose `Product` con índices `sku` (único) y `{active, name, sku}` | | `api/src/services/ProductService.ts` | `listActive()`, `toPublicProduct()`, tipo `PublicProduct` | | `api/src/validators/product.validator.ts` | Validación de `page` y `pageSize` con respuesta `VALIDATION_ERROR` | | `api/src/middlewares/authenticate.middleware.ts` | JWT HS256, `sub`+`exp` obligatorios, tolerancia de reloj 30 s, rotación con `JWT_SECRET_PREVIOUS`, rechaza `alg:none` | | `
+  - Lo que dijo al entregarlo: Run autónomo db551f0c-fa44-42ce-b55f-f2cb46fc0479 (agente developer): El build TypeScript pasa sin errores. Todo está en verde. Resumen de implementación — WI-ORD-API-007: Qué se implementó: Endpoint `GET /api/products` — catálogo de productos activos con precio y disponibilidad, paginado y ordenado por `name`/`sku`. Proyecto completamente greenfield (solo existía `README.md`). Se construyó la estructura completa del backend siguiendo la plantilla del stack: Ficheros creados:
   - Criterios y sus pruebas:
     - AC-06 (cubierto): GET /api/products devuelve los productos activos con precio y disponibilidad. Verificado con tests de integración que comprueban: lista vacía, solo activos, orden por name/sku, paginación, formato de unitPrice (2 decimales) y campo available ≥ 0.
   - Decisiones:
@@ -120,25 +121,25 @@ El work item que nos ocupa, WI-ORD-API-008, nació en «Generado» el 12 de octu
 | `api/src/config/connectDB.ts` | añadido | 11 | 0 |
 | `api/src/lib/obfuscate.ts` | añadido | 9 | 0 |
 
-El PR #1 [git:PR #1] fue el único conjunto de cambios que toca el código documentado aquí. Contenía 25 ficheros nuevos y +7 911 líneas (−0), construyendo el proyecto desde cero sobre un repositorio que solo tenía `README.md` [informe:WI-ORD-API-007].
+El repositorio partía de cero: solo existía un `README.md`. [wi:WI-ORD-API-007] construyó la estructura completa del backend en un único PR ([git:PR #1], mergeado el 2026-10-13 a las 02:03 UTC), con 25 ficheros añadidos y 7 911 líneas de código nuevo [informe:WI-ORD-API-007].
 
-Los contratos del código declarados son [codigo:GET /api/products] y [codigo:model:Product].
+Los contratos del código relevantes para este work item son [codigo:GET /api/products] y [codigo:model:Product]. Los ficheros principales son:
 
-Los ficheros relevantes para el endpoint `GET /api/products` y su infraestructura son:
+- **`api/src/models/product.ts`** — define el esquema Mongoose de [ancla:entity Product] con los campos `sku`, `name`, `unitPrice`, `available` y `active`, y declara los índices exigidos por la spec: `sku` único, y el índice compuesto `{active, name, sku}` para el listado del catálogo [informe:WI-ORD-API-007].
+- **`api/src/services/ProductService.ts`** — contiene la lógica de consulta: filtra por `active: true` y ordena los resultados por `name`/`sku` [informe:WI-ORD-API-007].
+- **`api/src/controllers/ProductController.ts`** — recibe la petición HTTP, delega en `ProductService` y serializa la respuesta [informe:WI-ORD-API-007].
+- **`api/src/middlewares/authenticate.middleware.ts`** — valida el JWT (algoritmo HS256, firma con `JWT_SECRET` o `JWT_SECRET_PREVIOUS`, `exp` obligatorio con 30 s de tolerancia, `sub` no vacío) y rechaza con `401 UNAUTHORIZED` [spec:error UNAUTHORIZED] cuando no se cumplen las condiciones [informe:WI-ORD-API-007].
+- **`api/src/routes/api.routes.ts`** — registra la ruta y encadena el middleware de autenticación antes del controlador [informe:WI-ORD-API-007].
+- **`api/src/__tests__/products.spec.ts`** y **`api/src/__tests__/migration.spec.ts`** — suite de integración y prueba de migración; 30 tests en total [informe:WI-ORD-API-007].
+- **`api/.env.example`** — documenta las variables de entorno necesarias (`MONGODB_URI`, `JWT_SECRET`, `JWT_SECRET_PREVIOUS`) sin valores reales [informe:WI-ORD-API-007].
 
-- **`api/src/models/product.ts`** (+50 líneas): modelo Mongoose para [ancla:entity Product] con los índices que exige la spec: `sku` único y `{active, name, sku}` compuesto para el listado del catálogo [informe:WI-ORD-API-007].
-- **`api/src/services/ProductService.ts`** (+54 líneas): lógica de negocio con `listActive()` y `toPublicProduct()` [informe:WI-ORD-API-007].
-- **`api/src/validators/product.validator.ts`** (+31 líneas): validación de los parámetros de paginación `page` y `pageSize`, con respuesta `VALIDATION_ERROR` [informe:WI-ORD-API-007] [spec:error VALIDATION_ERROR].
-- **`api/src/controllers/ProductController.ts`** (+89 líneas): controlador que orquesta validador, servicio y respuesta [informe:WI-ORD-API-007].
-- **`api/src/middlewares/authenticate.middleware.ts`** (+75 líneas): guarda JWT HS256 con `sub` y `exp` obligatorios, tolerancia de reloj de 30 s, soporte de rotación con `JWT_SECRET_PREVIOUS` y rechazo explícito de `alg:none` [informe:WI-ORD-API-007].
-- **`api/src/routes/api.routes.ts`** (+24 líneas): registro de la ruta y enlace entre middleware, controlador y servicio [informe:WI-ORD-API-007].
-- **`api/src/__tests__/products.spec.ts`** (+489 líneas) y **`api/src/__tests__/migration.spec.ts`** (+103 líneas): suite de pruebas de integración y unitarias [informe:WI-ORD-API-007].
-- **`api/.env.example`** (+11 líneas): variables de entorno documentadas sin valores reales (`MONGODB_URI`, `JWT_SECRET`, `JWT_SECRET_PREVIOUS`) [informe:WI-ORD-API-007].
-- Infraestructura compartida: `api/src/lib/errors.ts`, `api/src/lib/obfuscate.ts`, `api/src/middlewares/errorHandler.middleware.ts`, `api/src/middlewares/requestLogger.middleware.ts`, `api/src/config/env.ts`, `api/src/config/connectDB.ts`, `api/src/config/swagger.ts`, `api/src/app.ts`, `api/src/server.ts`, más los ficheros de configuración del proyecto [informe:WI-ORD-API-007].
+El informe también registra dos desviaciones respecto a la plantilla [informe:WI-ORD-API-007]: la ausencia de `attachAuthenticatedUser` y `requireAdmin` (porque no hay colección de usuarios ni roles: la identidad la emite un proveedor externo, como declara la spec), y un ajuste en el orden de carga de variables de entorno para que los tests puedan fijarlas antes de instanciar la app.
+
+---
 
 ## Cómo está construido
 
-El grafo de conocimiento del endpoint muestra la cadena de responsabilidades:
+La petición `GET /api/products` llega al router y recorre la siguiente cadena [ancla:endpoint GET /api/products]:
 
 ```mermaid
 flowchart LR
@@ -153,11 +154,12 @@ flowchart LR
   n4 -->|route_imports_middleware| n3
 ```
 
-La petición entra por [ancla:endpoint GET /api/products] y es recibida por el router [arista:GET /api/products→route · api.routes.ts]. Antes de llegar al controlador, el router aplica el middleware de autenticación [arista:route · api.routes.ts→middleware · authenticate.middleware.ts], que valida el JWT HS256: comprueba la firma con `JWT_SECRET` (y con `JWT_SECRET_PREVIOUS` si está definida para soportar rotaciones), exige los claims `sub` y `exp`, aplica una tolerancia de reloj de 30 s y rechaza explícitamente el algoritmo `none` [informe:WI-ORD-API-007]. Si el token falla en cualquiera de esas comprobaciones, la respuesta es `401 UNAUTHORIZED` [spec:error UNAUTHORIZED] [spec:business_rule RN-06].
+1. **Router** (`api.routes.ts`) [arista:GET /api/products→route · api.routes.ts]: recibe la petición y aplica primero el middleware de autenticación.
+2. **Middleware `authenticate`** [arista:route · api.routes.ts→middleware · authenticate.middleware.ts]: extrae y verifica el JWT. Si el token es inválido, ausente o carece de `sub` o `exp`, corta la cadena con `401 UNAUTHORIZED` [spec:error UNAUTHORIZED] sin llegar al controlador.
+3. **`ProductController`** [arista:route · api.routes.ts→controller · ProductController.ts]: coordina la petición autenticada y llama a `ProductService`.
+4. **`ProductService`** [arista:route · api.routes.ts→logic · ProductService.ts]: ejecuta la consulta sobre la colección `products`, filtrando `active: true` y ordenando por `name`/`sku`. Devuelve los campos `_id`, `sku`, `name`, `unitPrice` y `available`.
 
-Si el token es válido, el router delega en el controlador [arista:route · api.routes.ts→controller · ProductController.ts]. El controlador invoca al validador de parámetros de paginación y, si pasan, llama a la lógica de negocio [arista:route · api.routes.ts→logic · ProductService.ts]. `ProductService.listActive()` consulta MongoDB filtrando por `active: true` y proyecta los campos públicos mediante `toPublicProduct()` [informe:WI-ORD-API-007].
-
-El modelo de datos real del ORM es:
+El modelo de datos en el ORM es el siguiente [codigo:model:Product]:
 
 ```mermaid
 erDiagram
@@ -170,51 +172,53 @@ erDiagram
   }
 ```
 
-El campo `_id` lo genera MongoDB automáticamente; no aparece como campo declarado en el esquema Mongoose pero forma parte de la entidad pública [spec:entidad Product]. El campo `active` actúa como filtro de visibilidad: solo los productos con `active: true` aparecen en la respuesta [spec:acceptance_criteria AC-06]. El campo `unitPrice` se serializa con dos decimales en la respuesta pública [informe:WI-ORD-API-007]. El campo `available` nunca es negativo porque únicamente la confirmación de pedidos lo modifica, de forma atómica [spec:business_rule RN-04]; el endpoint `GET /api/products` lo lee pero nunca lo escribe.
+El campo `active` actúa como filtro de visibilidad: los productos inactivos no se devuelven nunca en el catálogo [spec:endpoint GET /api/products]. El campo `unitPrice` se serializa siempre con dos decimales [informe:WI-ORD-API-007]. El campo `available` siempre es ≥ 0 [informe:WI-ORD-API-007].
+
+---
 
 ## Reglas de negocio
 
-Las reglas que afectan directamente a este endpoint son:
+Las reglas aplicables a este endpoint son:
 
-- **[spec:business_rule RN-06]**: cualquier petición sin token válido recibe `401 UNAUTHORIZED`. El middleware de autenticación la implementa antes de que el controlador siquiera se ejecute [arista:route · api.routes.ts→middleware · authenticate.middleware.ts].
-- **[spec:business_rule RN-01]**: el listado refleja el estado guardado en cada petición, sin cachés. `ProductService.listActive()` consulta la base de datos en cada llamada [informe:WI-ORD-API-007].
-- **[spec:business_rule RN-05]**: los precios los calcula el servidor con el precio del catálogo; el cliente nunca envía precios. Este endpoint es el punto de lectura que alimenta la composición del pedido en `POST /api/orders` [spec:endpoint POST /api/orders].
+- **RN-01** [spec:business_rule RN-01]: el catálogo se lee de la base en cada petición, sin cachés. Lo que el cliente recibe refleja siempre el estado real en el momento de la consulta.
+- **RN-05** [spec:business_rule RN-05]: los precios los mantiene el servidor en el catálogo; el cliente nunca los envía. `GET /api/products` es la fuente de verdad de `unitPrice` que utilizará posteriormente `POST /api/orders` [spec:endpoint POST /api/orders] para calcular el total del pedido.
+- **RN-06** [spec:business_rule RN-06]: sin un token JWT válido la petición es rechazada con `401 UNAUTHORIZED` [spec:error UNAUTHORIZED] antes de que se ejecute ninguna lógica de negocio.
 
-Las reglas [spec:business_rule RN-02], [spec:business_rule RN-03] y [spec:business_rule RN-04] no afectan a este endpoint: son propias de la gestión de pedidos, implementada en [wi:WI-ORD-API-007].
+Las reglas RN-02 [spec:business_rule RN-02], RN-03 [spec:business_rule RN-03] y RN-04 [spec:business_rule RN-04] no afectan a este endpoint: son exclusivas de los endpoints de pedidos, cubiertos por [wi:WI-ORD-API-005].
+
+---
 
 ## Cómo verificarlo
 
-El informe de finalización declara 1 de 1 criterios cubiertos [informe:WI-ORD-API-007], correspondiente a [spec:acceptance_criteria AC-06].
+El informe de [wi:WI-ORD-API-007] declara 30 tests en verde [informe:WI-ORD-API-007], distribuidos en:
 
-La suite `api/src/__tests__/products.spec.ts` (489 líneas, 29 tests) cubre los siguientes escenarios de integración para `GET /api/products` [informe:WI-ORD-API-007]:
+- **`products.spec.ts`** (29 tests de integración y unitarios): cubre [spec:acceptance_criteria AC-06] verificando los siguientes escenarios:
+  - Lista vacía cuando no hay productos activos.
+  - Solo se devuelven productos con `active: true` (los inactivos se excluyen).
+  - Orden de resultados por `name`/`sku`.
+  - Paginación (el doc-pack no especifica los parámetros exactos; véase la nota al mantenedor).
+  - Formato de `unitPrice` con dos decimales.
+  - Campo `available` ≥ 0.
+  - Petición sin token o con token inválido (sin `sub`, sin `exp`, caducado) → `401 UNAUTHORIZED` [spec:acceptance_criteria AC-07] [spec:error UNAUTHORIZED].
 
-- Lista vacía cuando no hay productos activos.
-- Solo productos con `active: true` aparecen en la respuesta; los inactivos se excluyen.
-- Orden por `name`/`sku`.
-- Paginación correcta con `page` y `pageSize`.
-- Formato de `unitPrice` con 2 decimales.
-- `available` siempre mayor o igual a cero.
+- **`migration.spec.ts`** (1 test): verifica que la colección `products` se crea con los índices correctos: `sku` único y el índice compuesto `{active, name, sku}` para el listado, usando MongoDB in-memory [informe:WI-ORD-API-007].
 
-El criterio [spec:acceptance_criteria AC-07] —`401 UNAUTHORIZED` sin token válido— también queda cubierto por los tests que verifican el middleware de autenticación, incluyendo el caso de JWT sin `sub` o sin `exp` [informe:WI-ORD-API-007].
+La cobertura de líneas en `services/` alcanzó el **90,51 %** sobre los 11 ficheros tocados, superando el mínimo del 80 % exigido por la spec [informe:WI-ORD-API-007]. Las evidencias se conservan en `.sdd/evidence/test-results.txt`, `.sdd/evidence/migration.log` y `api/coverage/coverage-summary.json`.
 
-La suite `api/src/__tests__/migration.spec.ts` (103 líneas, 1 test) verifica que la colección `products` se crea con los índices correctos: `sku` único y `{active, name, sku}` compuesto, usando MongoDB in-memory [informe:WI-ORD-API-007].
+El criterio [spec:acceptance_criteria AC-06] está marcado como cubierto en el informe [informe:WI-ORD-API-007]. El criterio [spec:acceptance_criteria AC-07] se cubre parcialmente en esta suite (los casos de `GET /api/products` sin token): los demás endpoints los cubre [wi:WI-ORD-API-005].
 
-La cobertura medida fue del **90,51 % de líneas** en los 11 ficheros tocados, superando el mínimo del 80 % exigido por la spec [informe:WI-ORD-API-007]. El informe completo está en `api/coverage/lcov-report/index.html` y el resumen en `api/coverage/coverage-summary.json`.
-
-Los tests usan `mongodb-memory-server` en modo réplica y firman los JWT con un `JWT_SECRET` de prueba, tal como exige la spec en su restricción de testing.
+---
 
 ## Notas para el mantenedor
 
-**Desviación declarada — sin `attachAuthenticatedUser` ni `requireAdmin`**: el informe declara explícitamente que la spec exime de estos middlewares de plantilla porque no existe colección de usuarios ni roles; la identidad es completamente externa [informe:WI-ORD-API-007]. La spec prevalece sobre la plantilla en este punto.
+1. **Paginación**: el informe [informe:WI-ORD-API-007] menciona que los tests verifican paginación, pero la spec ([spec:endpoint GET /api/products]) no describe parámetros de paginación ni su comportamiento. El doc-pack no incluye información sobre los query params concretos implementados (`page`, `limit`, `cursor`, etc.). Quien mantenga este endpoint debe revisar `api/src/controllers/ProductController.ts` y `api/src/services/ProductService.ts` para conocer el contrato real.
 
-**Desviación declarada — orden de carga de variables de entorno en tests**: el módulo de entorno se diseñó para que los tests puedan fijar las variables antes de crear la aplicación, sin necesidad de reiniciar el módulo. El informe declara que la seguridad no se ve afectada porque en producción las variables se cargan antes del arranque [informe:WI-ORD-API-007].
+2. **Rotación de secreto JWT**: el middleware `authenticate.middleware.ts` acepta tanto `JWT_SECRET` como `JWT_SECRET_PREVIOUS` (si está definida). Durante una rotación de clave, ambas variables deben estar presentes en el entorno; una vez completada la rotación, `JWT_SECRET_PREVIOUS` puede eliminarse. Ningún secreto debe aparecer en el repositorio: solo `api/.env.example` con valores vacíos [informe:WI-ORD-API-007].
 
-**Work items cancelados**: los work items [wi:WI-ORD-API-001], [wi:WI-ORD-API-002], [wi:WI-ORD-API-003] y [wi:WI-ORD-API-004] fueron cancelados por un defecto del descomponedor que asignaba entidades ajenas y la migración de esquema de forma incorrecta [estado:WI-ORD-API-001]. El primer intento de implementación ([wi:WI-ORD-API-003]) también quedó bloqueado por puertas de calidad incumplidas relativas a RN-01 y RN-02, ambas fuera del alcance de este endpoint [estado:WI-ORD-API-003].
+3. **Generaciones canceladas**: los work items [wi:WI-ORD-API-003] y [wi:WI-ORD-API-004] representan la primera generación de este mismo recurso. Fueron cancelados antes de producir código mergeable [estado:WI-ORD-API-003] [estado:WI-ORD-API-004]. No hay artefactos de esa generación en la rama principal.
 
-**Work items pendientes**: [wi:WI-ORD-API-005] (Backend) y [wi:WI-ORD-API-006] (Documentación) están en estado «Generado» y sin asignar [estado:WI-ORD-API-005] [estado:WI-ORD-API-006]. Implementan los endpoints de pedidos que complementan al catálogo; el mantenedor debe tenerlos en cuenta antes de declarar el contrato completo.
+4. **Endpoints de pedidos pendientes**: [wi:WI-ORD-API-005] (backend de Orders) está en estado «Generado» y aún no ha sido ejecutado [estado:WI-ORD-API-005]. Mientras permanezca así, los endpoints [spec:endpoint POST /api/orders], [spec:endpoint GET /api/orders], [spec:endpoint GET /api/orders/:id] y [spec:endpoint POST /api/orders/:id/confirm] no existen en el repositorio. Su documentación asociada es [wi:WI-ORD-API-006].
 
-**Secretos**: `MONGODB_URI`, `JWT_SECRET` y `JWT_SECRET_PREVIOUS` solo se cargan por variable de entorno. El fichero `api/.env.example` documenta su forma sin valores reales; ningún secreto debe entrar al repositorio.
+5. **Subgrafo del modelo de datos**: el diagrama ER del doc-pack muestra únicamente [ancla:entity Product]. La entidad [spec:entidad Order] no aparece en el grafo de este work item porque no forma parte de su alcance; pertenece a [wi:WI-ORD-API-005].
 
-**Logs**: el middleware `requestLogger.middleware.ts` emite logs JSON estructurados con método, ruta, status, duración y `requestId` (cabecera `X-Request-Id` o generado). Los logs no incluyen el token ni datos personales.
-
-**Subgrafo del doc-pack**: el grafo de arquitectura incluido muestra únicamente las aristas del endpoint `GET /api/products`. Los demás endpoints de la spec y sus dependencias no están proyectados en este doc-pack; consúltese el work item [wi:WI-ORD-API-007] para su arquitectura completa.
+6. **Observabilidad**: la spec exige log estructurado JSON con `método`, `ruta`, `status`, `duración` y `requestId` (cabecera `X-Request-Id` o generado) en cada petición. El fichero `api/src/middlewares/requestLogger.middleware.ts` cubre este requisito. Los logs no deben incluir el token ni datos personales. El doc-pack no incluye información sobre si los eventos de negocio `order_created`, `order_confirmed` y `stock_insufficient` se emiten desde `ProductService`; esos eventos corresponden al scope de [wi:WI-ORD-API-005].
