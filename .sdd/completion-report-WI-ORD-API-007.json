@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 5,
+  "workItemCode": "WI-ORD-API-007",
+  "summary": "Implementado el endpoint GET /api/products que devuelve el catálogo de productos activos con precio y disponibilidad, paginado y ordenado por name/sku. Se incluyen modelo Mongoose (Product), servicio (ProductService), controlador delgado (ProductController), validador de query, middleware de autenticación JWT y documentación Swagger. Tests de integración (30 en verde) y migración de esquema con índices.",
+  "criteria": [
+    {
+      "id": "AC-06",
+      "status": "covered",
+      "note": "GET /api/products devuelve los productos activos con precio y disponibilidad. Verificado con tests de integración que comprueban: lista vacía, solo activos, orden por name/sku, paginación, formato de unitPrice (2 decimales) y campo available ≥ 0."
+    }
+  ],
+  "gates": [
+    {
+      "businessRuleId": "RN-06",
+      "status": "cumple",
+      "note": "Los tests 'GET /api/products — RN-06: 401 sin token válido' comprueban 8 escenarios: sin cabecera Authorization, sin prefijo Bearer, firma inválida, token caducado, sin claim sub, sin claim exp, sub vacío y algoritmo none. Todos devuelven 401 UNAUTHORIZED."
+    }
+  ],
+  "testsRun": [
+    { "name": "src/__tests__/products.spec.ts", "result": "pass" },
+    { "name": "src/__tests__/migration.spec.ts", "result": "pass" }
+  ],
+  "evidence": [
+    {
+      "type": "test_results",
+      "ref": ".sdd/evidence/test-results.txt",
+      "note": "30 tests passing: 29 en products.spec.ts (integración + unitarios) y 1 en migration.spec.ts"
+    },
+    {
+      "type": "api_docs",
+      "ref": "api/src/controllers/ProductController.ts",
+      "note": "Endpoint GET /api/products documentado con bloque @swagger en el controlador; swagger-jsdoc lo recoge desde config/swagger.ts (apis: ['./src/controllers/*.ts'])"
+    },
+    {
+      "type": "migration_log",
+      "ref": ".sdd/evidence/migration.log",
+      "note": "Log generado por migration.spec.ts: colección products creada con índices sku (único) y {active, name, sku} compuesto. Verificado en MongoDB in-memory."
+    },
+    {
+      "type": "coverage_report",
+      "ref": "api/coverage/lcov-report/index.html",
+      "note": "Cobertura medida en la corrida: 90.51% de líneas en los 11 ficheros tocados (exigida ≥ 80%). Resumen en api/coverage/coverage-summary.json."
+    }
+  ],
+  "deviations": [
+    {
+      "description": "La plantilla de stack (§7) define la cadena authenticate → attachAuthenticatedUser → autorización de rol → validación → controller. Este work item no usa attachAuthenticatedUser ni requireAdmin.",
+      "reason": "La spec (§4) declara explícitamente: 'Excepción declarada a la plantilla: no hay attachAuthenticatedUser ni requireAdmin, porque no hay colección de usuarios ni roles (la identidad es externa)'. La spec manda sobre la plantilla según §4-bis."
+    },
+    {
+      "description": "El middleware authenticate lee JWT_SECRET y JWT_SECRET_PREVIOUS de process.env en cada petición, en lugar de desde el objeto config importado al arranque.",
+      "reason": "Necesario para que los tests (que fijan las variables de entorno antes de crear la app) funcionen correctamente sin reiniciar el módulo. La seguridad no se ve afectada: en producción las variables se cargan antes del arranque del servidor."
+    }
+  ],
+  "dodSelfAssessment": {
+    "met": true,
+    "blockers": []
+  },
+  "clarificationRequests": []
+}

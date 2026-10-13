@@ -1,0 +1,48 @@
+Test Suites: 2 passed, 2 total
+Tests:       30 passed, 30 total
+Snapshots:   0 total
+Time:        ~9 s
+
+=== Detalle de suites ===
+
+PASS src/__tests__/products.spec.ts
+  GET /api/products — AC-06: catálogo de productos activos
+    ✓ 200 · devuelve lista vacía cuando no hay productos activos
+    ✓ 200 · devuelve solo productos activos con precio y disponibilidad
+    ✓ 200 · los productos están ordenados por name y después por sku
+    ✓ 200 · paginación con page y pageSize personalizados
+    ✓ 200 · unitPrice tiene 2 decimales
+    ✓ 200 · available es entero ≥ 0
+    ✓ 200 · page y pageSize por defecto son 1 y 50
+  GET /api/products — 400 validación de query
+    ✓ 400 · page = 0 (fuera de rango)
+    ✓ 400 · page = -1 (negativo)
+    ✓ 400 · page no entero (decimal)
+    ✓ 400 · page no numérico (texto)
+    ✓ 400 · pageSize = 0 (fuera de rango)
+    ✓ 400 · pageSize = 101 (excede máximo)
+    ✓ 400 · pageSize no entero (decimal)
+    ✓ 400 · pageSize no numérico
+    ✓ 400 · ambos parámetros inválidos incluye details de los dos campos
+  GET /api/products — RN-06: 401 sin token válido
+    ✓ 401 · sin cabecera Authorization
+    ✓ 401 · cabecera Authorization sin Bearer
+    ✓ 401 · token con firma inválida
+    ✓ 401 · token caducado
+    ✓ 401 · token sin claim sub
+    ✓ 401 · token sin claim exp
+    ✓ 401 · sub vacío da 401
+    ✓ 401 · token con algoritmo none rechazado
+    ✓ 401 · rotación: token firmado con secreto anterior es aceptado
+  ProductService — unitarios
+    ✓ listActive filtra solo productos activos
+    ✓ listActive ordena por name y sku
+    ✓ listActive pagina correctamente
+    ✓ toPublicProduct proyecta correctamente sin exponer campos internos
+
+PASS src/__tests__/migration.spec.ts
+  Migración de esquema — Product
+    ✓ crea la colección products y sus índices correctamente
+
+=== Cobertura ===
+Cobertura: 90.51% de líneas en los 11 ficheros tocados (exigida ≥ 80%)
