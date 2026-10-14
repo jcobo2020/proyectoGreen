@@ -6,20 +6,37 @@ import { createApiRouter } from './routes/api.routes';
 import { requestLogger } from './middlewares/requestLogger.middleware';
 import { notFound, errorHandler } from './middlewares/errorHandler.middleware';
 import { ProductService } from './services/ProductService';
+import { OrderService } from './services/OrderService';
+import { MongoUnitOfWork } from './lib/MongoUnitOfWork';
+import { MongoOrderRepository } from './lib/MongoOrderRepository';
 import { ProductController } from './controllers/ProductController';
+import { OrderController } from './controllers/OrderController';
 
-export function createApp(_connection?: typeof mongoose): Application {
+export interface AppDeps {
+  orderController?: OrderController;
+  productController?: ProductController;
+}
+
+export function createApp(_connection?: typeof mongoose, deps?: AppDeps): Application {
   const app = express();
 
   // Middlewares globales
   app.use(express.json());
   app.use(requestLogger);
 
+  // Composition root: construir servicios y controladores una sola vez
+  const productService = new ProductService();
+  const unitOfWork = new MongoUnitOfWork();
+  const orderRepository = new MongoOrderRepository();
+  const orderService = new OrderService(productService, unitOfWork, orderRepository);
+  const productController = deps?.productController ?? new ProductController(productService);
+  const orderController = deps?.orderController ?? new OrderController(orderService);
+
   // Documentación Swagger
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
   // Rutas de la API
-  app.use('/api', createApiRouter());
+  app.use('/api', createApiRouter({ productController, orderController }));
 
   // Manejo de rutas no encontradas y errores (este orden es obligatorio)
   app.use(notFound);

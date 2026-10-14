@@ -1,0 +1,16 @@
+=== Migration Log — WI-ORD-API-005 ===
+Fecha: 2026-10-14T03:54:42.891Z
+
+Colecciones disponibles: products, orders
+
+Índices en la colección 'products':
+  - _id_: {"_id":1}
+  - sku_1: {"sku":1} [UNIQUE]
+  - active_1_name_1_sku_1: {"active":1,"name":1,"sku":1}
+
+Índices en la colección 'orders':
+  - _id_: {"_id":1}
+  - code_1: {"code":1} [UNIQUE]
+  - customerId_1_createdAt_-1: {"customerId":1,"createdAt":-1}
+
+Resultado: OK — colecciones products y orders creadas con sus índices

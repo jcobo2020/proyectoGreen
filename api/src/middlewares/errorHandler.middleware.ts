@@ -1,5 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { isAppError, ValidationError } from '../lib/errors';
+import {
+  isAppError,
+  ValidationError,
+  ProductNotFoundError,
+  InsufficientStockError,
+} from '../lib/errors';
 
 export function notFound(req: Request, res: Response, _next: NextFunction): void {
   res.status(404).json({
@@ -24,13 +29,29 @@ export function errorHandler(
       return;
     }
 
+    if (err instanceof ProductNotFoundError) {
+      res.status(err.statusCode).json({
+        code: err.code,
+        message: err.message,
+        details: err.details,
+      });
+      return;
+    }
+
+    if (err instanceof InsufficientStockError) {
+      res.status(err.statusCode).json({
+        code: err.code,
+        message: err.message,
+        details: err.details,
+      });
+      return;
+    }
+
     // Errores de dominio que solo tienen code, statusCode, message
-    const body: Record<string, unknown> = {
+    res.status(err.statusCode).json({
       code: err.code,
       message: err.message,
-    };
-
-    res.status(err.statusCode).json(body);
+    });
     return;
   }
 

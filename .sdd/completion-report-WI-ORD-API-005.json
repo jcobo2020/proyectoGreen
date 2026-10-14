@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 5,
+  "workItemCode": "WI-ORD-API-005",
+  "summary": "Se implementaron los cuatro endpoints de pedidos (POST /api/orders, GET /api/orders, GET /api/orders/:id, POST /api/orders/:id/confirm) con su modelo Order, servicio OrderService con tres puertos inyectados (IProductCatalog, IUnitOfWork, IOrderRepository), controlador OrderController, MongoOrderRepository (adaptador de infraestructura), MongoUnitOfWork con transacciones readConcern snapshot + writeConcern majority + maxCommitTimeMS 5000 y conteo de intentos, validadores, eventos de negocio y migration.spec.ts. Rework 3: borrado lib/withSession.ts (sin uso); validador GET /api/orders corregido para usar parseInt estricto (rechaza 0x10, 0x1, notación no decimal); añadida prueba HTTP 500 con fallo DENTRO de la transacción tras escritura de confirmInTx (verifica pedido en pending_confirmation y stock intacto); añadidas pruebas de rechazo de notación hexadecimal en query params. 139 tests en 5 suites, todos en verde. Cobertura medida: 97,66% líneas, 97,54% statements.",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "status": "covered",
+      "note": "Test '201 · crea pedido en estado pending_confirmation con código y total correctos' (orders.spec.ts): crea en estado pending_confirmation con código ORD-AAAAMMDD-XXXXXX y total correcto, responde 201. Test de 500 real con repositorio roto → errorHandler → 500 INTERNAL_ERROR."
+    },
+    {
+      "id": "AC-08",
+      "status": "covered",
+      "note": "Tests en 'AC-08 · POST /api/orders — validación de entrada': items vacío, >50 líneas, quantity fuera de 1-99, productId no ObjectId, campos desconocidos (price, total, status), duplicados, items:[null] → 400 VALIDATION_ERROR con details. POST con query desconocida → 400."
+    },
+    {
+      "id": "AC-05",
+      "status": "covered",
+      "note": "Tests en 'AC-05 · RN-01 · GET /api/orders': devuelve solo pedidos del cliente autenticado, ordenados por createdAt desc, con el último estado; RN-01 verificado confirmando y comprobando que el listado refleja 'confirmed'. Test de 500 real con repositorio roto."
+    },
+    {
+      "id": "AC-02",
+      "status": "covered",
+      "note": "Tests en 'AC-02 · GET /api/orders/:id': 200 caso feliz, 400 INVALID_ORDER_ID, 400 query desconocida, 404 ORDER_NOT_FOUND, 403 ORDER_FORBIDDEN para pedido de otro cliente, RN-01 detalle tras confirmación, 500 real con repositorio roto."
+    },
+    {
+      "id": "AC-03",
+      "status": "covered",
+      "note": "Tests en 'AC-03 · POST /api/orders/:id/confirm': 200 confirma y descuenta stock, 400 INVALID_ORDER_ID, 400 query desconocida, 404 ORDER_NOT_FOUND, 403 ORDER_FORBIDDEN, 409 INSUFFICIENT_STOCK, cuerpo ignorado, 500 real con repositorio roto, 500 con fallo DENTRO de la transacción (findByIdInTx falla tras confirmInTx exitoso; pedido sigue pending_confirmation y stock intacto). Evento stock_insufficient verificado."
+    },
+    {
+      "id": "AC-04",
+      "status": "covered",
+      "note": "Test 'AC-04 · Idempotencia': confirmar un pedido ya confirmado devuelve 200 sin volver a descontar (stock queda igual tras segunda confirmación). Unitaria: rama idempotente de OrderService.confirm() con dobles."
+    },
+    {
+      "id": "AC-07",
+      "status": "covered",
+      "note": "Tests en 'RN-06 · AC-07': los cuatro endpoints sin Authorization responden 401 UNAUTHORIZED; también token sin sub, sin exp → 401."
+    }
+  ],
+  "gates": [
+    {
+      "businessRuleId": "RN-01",
+      "status": "cumple",
+      "note": "Tests 'RN-01 · confirmar actualiza el estado en el listado' y 'RN-01 · confirmar actualiza el estado en el detalle' (orders.spec.ts): después de confirmar, GET /api/orders y GET /api/orders/:id devuelven status=confirmed en la siguiente petición. Sin caché: lectura directa de la base en cada petición."
+    },
+    {
+      "businessRuleId": "RN-02",
+      "status": "cumple",
+      "note": "Tests 'RN-02 · 403 · pedido de otro cliente → ORDER_FORBIDDEN' en AC-02 (GET /api/orders/:id) y AC-03 (POST /api/orders/:id/confirm): ambos responden 403 ORDER_FORBIDDEN cuando CUSTOMER_B accede a pedido de CUSTOMER_A. Unitaria: lanza OrderForbiddenError en pre-check y dentro de transacción."
+    },
+    {
+      "businessRuleId": "RN-03",
+      "status": "cumple",
+      "note": "Test '409 · cantidad pedida > disponible → INSUFFICIENT_STOCK con details' (orders.spec.ts): cantidad pedida > disponible responde 409 con details {productId, requested, available}. La creación es bloqueante pero no reserva stock (test 'no reserva stock al crear' verifica que available no cambia). Unitaria: lanza InsufficientStockError con details correctos."
+    },
+    {
+      "businessRuleId": "RN-04",
+      "status": "cumple",
+      "note": "Tests 'RN-04 · Concurrencia': (a) dos confirmaciones del mismo pedido en paralelo → ambas 200 con un solo descuento (stock baja una sola vez); (b) dos confirmaciones de pedidos distintos sobre el último stock → una 200 y una 409, available=0, el perdedor sigue pending_confirmation. Implementado con session.withTransaction (readConcern snapshot, writeConcern majority) y updateOne condicional atómico."
+    },
+    {
+      "businessRuleId": "RN-05",
+      "status": "cumple",
+      "note": "Tests 'RN-05': body con campo price (nivel body o item) o campo total → 400 VALIDATION_ERROR; total es la suma de unitPrice×quantity del catálogo (test con unitPrice=7.50, qty=4 → total=30.00). Unitaria: 'calcula el total como la suma de unitPrice × quantity para cada línea' verifica los valores exactos pasados al repositorio."
+    },
+    {
+      "businessRuleId": "RN-06",
+      "status": "cumple",
+      "note": "Tests 'RN-06 · AC-07': POST /api/orders, GET /api/orders, GET /api/orders/:id, POST /api/orders/:id/confirm sin Authorization → 401 UNAUTHORIZED. También token sin sub o sin exp → 401. Implementado por authenticate.middleware en todos los endpoints."
+    }
+  ],
+  "testsRun": [
+    { "name": "src/__tests__/orders.spec.ts", "result": "pass", "note": "139 tests totales en 5 suites. Incluye: caso feliz, todos los errores de contrato (400, 401, 403, 404, 409, 500), 500 con repositorio roto (fuera de tx), 500 con fallo DENTRO de la tx (confirmInTx ok → findByIdInTx falla → abort → pedido pending_confirmation + stock intacto), concurrencia, idempotencia, rechazo de notación hex en query params." },
+    { "name": "src/__tests__/orderService.unit.spec.ts", "result": "pass" },
+    { "name": "src/__tests__/mongoUnitOfWork.spec.ts", "result": "pass" },
+    { "name": "src/__tests__/migration.spec.ts", "result": "pass" },
+    { "name": "src/__tests__/products.spec.ts", "result": "pass" }
+  ],
+  "evidence": [
+    {
+      "type": "test_results",
+      "ref": ".sdd/evidence/test-results.txt",
+      "note": "139 tests passing en 5 suites. Incluye tests unitarios de OrderService con dobles de IProductCatalog, IUnitOfWork e IOrderRepository, tests de integración de todos los endpoints, 500 con fallo dentro de la transacción, concurrencia, rechazo de notación hexadecimal en query params."
+    },
+    {
+      "type": "api_docs",
+      "ref": "api/src/controllers/OrderController.ts",
+      "note": "Endpoints POST /api/orders, GET /api/orders, GET /api/orders/:id, POST /api/orders/:id/confirm documentados con bloques @swagger en OrderController.ts; recogidos por config/swagger.ts (apis: ['./src/controllers/*.ts'])"
+    },
+    {
+      "type": "migration_log",
+      "ref": ".sdd/evidence/migration-WI-ORD-API-005.log",
+      "note": "Generado por migration.spec.ts: colecciones products y orders creadas con índices (products: sku único, {active,name,sku}; orders: code único, {customerId,createdAt:-1})"
+    },
+    {
+      "type": "coverage_report",
+      "ref": "api/coverage/lcov-report/index.html",
+      "note": "Cobertura 97,66% líneas / 97,54% statements sobre los ficheros tocados (exigida ≥80%). coverage-summary.json generado en api/coverage/. services/OrderService.ts: 98,97% líneas, 100% funciones, 100% branches."
+    }
+  ],
+  "deviations": [
+    {
+      "description": "migration.spec.ts escribe el log en .sdd/evidence/migration-WI-ORD-API-005.log en lugar de .sdd/evidence/migration.log, para no sobrescribir la evidencia del WI-ORD-API-007.",
+      "reason": "El fichero migration.log fue creado por WI-007 con su propia evidencia. Escribir en él desde este WI destruye la trazabilidad de WI-007. Se usa un nombre de fichero específico de este WI; el ref de evidencia se actualiza en consecuencia."
+    },
+    {
+      "description": "La plantilla de stack (§7) define la cadena authenticate → attachAuthenticatedUser → autorización de rol → validación → controller. Este work item no usa attachAuthenticatedUser ni requireAdmin.",
+      "reason": "La spec (§4) declara explícitamente: 'Excepción declarada a la plantilla: no hay attachAuthenticatedUser ni requireAdmin, porque no hay colección de usuarios ni roles (la identidad es externa)'. La autorización por dueño la hace OrderService (RN-02)."
+    },
+    {
+      "description": "MongoUnitOfWork acepta un sessionFactory opcional para inyectar una sesión mock en los tests unitarios de MongoUnitOfWork. En producción usa mongoose.startSession() como fábrica por defecto.",
+      "reason": "Para poder probar correctamente el límite MAX_ATTEMPTS sin depender del comportamiento del driver real con errores sintéticos, se inyecta una sesión mock. No cambia el comportamiento en producción."
+    },
+    {
+      "description": "createApp() acepta un segundo parámetro deps opcional (AppDeps) para inyectar un OrderController con un servicio/repositorio roto en los tests de 500.",
+      "reason": "Los tests de 500 deben provocar realmente un fallo en la capa de infraestructura (repositorio) sin modificar el composition root de producción. En producción deps es siempre undefined."
+    },
+    {
+      "description": "La spec §4 no define explícitamente IOrderRepository como puerto de OrderService (solo menciona IProductCatalog e IUnitOfWork). Se introduce como tercer puerto por exigencia de la revisión anterior.",
+      "reason": "La revisión anterior exige que la persistencia de pedidos vaya a un adaptador de infraestructura que recibe el TransactionContext. Se introduce IOrderRepository en lib/ports.ts y MongoOrderRepository en lib/MongoOrderRepository.ts como implementación. OrderService no importa OrderModel."
+    }
+  ],
+  "dodSelfAssessment": {
+    "met": true,
+    "blockers": [],
+    "note": "139 tests en verde, cobertura 97,66% de líneas / 97,54% de statements (≥80% exigido). Todas las correcciones del revisor aplicadas: (1) lib/withSession.ts borrado; (2) validador GET /api/orders usa parseInt estricto — rechaza 0x10, 0x1 y cualquier notación no decimal; (3) prueba HTTP de 500 con fallo DENTRO de la transacción tras escritura (confirmInTx ok, findByIdInTx falla, transacción aborta, pedido queda en pending_confirmation y stock intacto); (4) pruebas adicionales de rechazo de notación hexadecimal en query params."
+  },
+  "clarificationRequests": []
+}
