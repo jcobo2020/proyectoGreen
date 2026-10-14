@@ -1,0 +1,70 @@
+<!-- Estado: cargando -->
+@if (viewState() === 'loading') {
+  <div class="estado-cargando" role="status">
+    <p>Cargando pedidos...</p>
+  </div>
+}
+
+<!-- Estado: sin permiso -->
+@if (viewState() === 'unauthorized') {
+  <div class="estado-sin-permiso" role="alert">
+    <p>No tienes permiso para ver esta página. Redirigiendo al inicio de sesión...</p>
+  </div>
+}
+
+<!-- Estado: error -->
+@if (viewState() === 'error') {
+  <div class="estado-error" role="alert">
+    <p>{{ errorMessage() }}</p>
+    <button (click)="reintentar()">Reintentar</button>
+  </div>
+}
+
+<!-- Estado: vacío -->
+@if (viewState() === 'empty') {
+  <div class="estado-vacio">
+    <p>Todavía no tienes pedidos</p>
+    <a routerLink="/orders/new">Nuevo pedido</a>
+  </div>
+}
+
+<!-- Estado: con datos -->
+@if (viewState() === 'data') {
+  <div class="estado-datos">
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of orders(); track order.code) {
+          <tr>
+            <td>{{ order.code }}</td>
+            <td>{{ order.createdAt | date:'short' }}</td>
+            <td>{{ order.total | currency:'EUR' }}</td>
+            <td>{{ order.status }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- Paginador -->
+    <div class="paginador">
+      <button
+        [disabled]="page() <= 1"
+        (click)="irAPagina(page() - 1)">
+        Anterior
+      </button>
+      <span>Página {{ page() }} de {{ totalPages() }} ({{ totalItems() }} pedidos)</span>
+      <button
+        [disabled]="page() >= totalPages()"
+        (click)="irAPagina(page() + 1)">
+        Siguiente
+      </button>
+    </div>
+  </div>
+}
