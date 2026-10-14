@@ -1,8 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { ValidationError } from '../lib/errors';
 
+/** Parámetros de query permitidos para GET /api/products */
+const ALLOWED_QUERY_PARAMS = new Set(['page', 'pageSize']);
+
 export function validateListProductsQuery(req: Request, _res: Response, next: NextFunction): void {
   const details: Array<{ field: string; message: string }> = [];
+
+  // Rechazar parámetros de query desconocidos (R4-SEG-4)
+  for (const key of Object.keys(req.query)) {
+    if (!ALLOWED_QUERY_PARAMS.has(key)) {
+      details.push({ field: key, message: `Parámetro de query desconocido: ${key}` });
+    }
+  }
 
   const rawPage = req.query['page'];
   const rawPageSize = req.query['pageSize'];

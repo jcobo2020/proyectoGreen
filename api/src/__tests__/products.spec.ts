@@ -281,6 +281,28 @@ describe('GET /api/products — 400 validación de query', () => {
     expect(res.body.details.some((d: { field: string }) => d.field === 'page')).toBe(true);
     expect(res.body.details.some((d: { field: string }) => d.field === 'pageSize')).toBe(true);
   });
+
+  it('400 · parámetro de query desconocido', async () => {
+    const res = await request(app)
+      .get('/api/products?unknownParam=foo')
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('VALIDATION_ERROR');
+    expect(res.body).toHaveProperty('message');
+    expect(Array.isArray(res.body.details)).toBe(true);
+    expect(res.body.details.some((d: { field: string }) => d.field === 'unknownParam')).toBe(true);
+  });
+
+  it('400 · parámetro desconocido junto a page válido sigue siendo 400', async () => {
+    const res = await request(app)
+      .get('/api/products?page=1&extra=bar')
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('VALIDATION_ERROR');
+    expect(res.body.details.some((d: { field: string }) => d.field === 'extra')).toBe(true);
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -409,6 +431,34 @@ describe('GET /api/products — RN-06: 401 sin token válido', () => {
     process.env['JWT_SECRET_PREVIOUS'] = '';
 
     expect(res.status).toBe(200);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────────
+// WI-ORD-API-010 · Tests de contrato explícitos — GET /api/products
+// Confirman los códigos de estado declarados en §2 del contrato
+// ────────────────────────────────────────────────────────────────────────────────
+
+describe('GET /api/products — contrato de códigos de estado (WI-ORD-API-010)', () => {
+  it('afirma 200 cuando la petición es válida y el token es correcto', async () => {
+    const res = await request(app)
+      .get('/api/products')
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('items');
+    expect(res.body).toHaveProperty('total');
+    expect(res.body).toHaveProperty('page');
+    expect(res.body).toHaveProperty('pageSize');
+    expect(Array.isArray(res.body.items)).toBe(true);
+  });
+
+  it('afirma 401 cuando no hay cabecera Authorization', async () => {
+    const res = await request(app).get('/api/products');
+
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('UNAUTHORIZED');
+    expect(res.body).toHaveProperty('message');
   });
 });
 

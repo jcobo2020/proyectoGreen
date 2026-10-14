@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 5,
+  "workItemCode": "WI-ORD-API-010",
+  "summary": "Evolución de GET /api/products a la v9: se añade en product.validator.ts el conjunto ALLOWED_QUERY_PARAMS y el bucle que rechaza parámetros de query desconocidos (R4-SEG-4); el validador previo (WI-ORD-API-007) solo validaba page y pageSize. Se añaden en products.spec.ts cuatro tests nuevos: dos de 400 por parámetro desconocido ('400 · parámetro de query desconocido' y '400 · parámetro desconocido junto a page válido sigue siendo 400') y dos de contrato explícito en el describe 'GET /api/products — contrato de códigos de estado (WI-ORD-API-010)' que afirman 200 y 401.",
+  "criteria": [
+    {
+      "id": "AC-06",
+      "status": "covered",
+      "note": "GET /api/products devuelve productos activos con precio y disponibilidad, paginados y ordenados por name/sku. Cubierto por los tests de integración en products.spec.ts: describe 'GET /api/products — AC-06' (6 casos de 200) y describe 'GET /api/products — contrato de códigos de estado (WI-ORD-API-010)' que afirman explícitamente status 200 con token válido y 401 sin token."
+    }
+  ],
+  "gates": [
+    {
+      "businessRuleId": "RN-06",
+      "status": "cumple",
+      "note": "Los tests del describe 'GET /api/products — RN-06: 401 sin token válido' y 'GET /api/products — contrato de códigos de estado (WI-ORD-API-010)' en products.spec.ts verifican que el endpoint responde 401 UNAUTHORIZED sin Authorization, con token inválido, caducado, sin sub, sin exp, con sub vacío y con algoritmo none. El test 'afirma 401 cuando no hay cabecera Authorization' comprueba explícitamente expect(res.status).toBe(401)."
+    }
+  ],
+  "requirements": [
+    { "id": "R4-ARQ-1", "status": "cumple", "evidencia": "api/src/app.ts · fábrica createApp(), api/src/config/connectDB.ts, models/product.ts, services/ProductService.ts, controllers/ProductController.ts, routes/api.routes.ts — products.spec.ts todos los tests" },
+    { "id": "R4-ARQ-2", "status": "cumple", "evidencia": "api/src/models/product.ts + api/src/services/ProductService.ts + api/src/controllers/ProductController.ts — products.spec.ts tests de GET /api/products" },
+    { "id": "R4-ARQ-3", "status": "no_aplica", "evidencia": "IProductCatalog e IUnitOfWork son puertos de OrderService, no de GET /api/products" },
+    { "id": "R4-ARQ-4", "status": "no_aplica", "evidencia": "TransactionContext es para OrderService/IUnitOfWork, no requerido por GET /api/products" },
+    { "id": "R4-ARQ-5", "status": "cumple", "evidencia": "api/src/routes/api.routes.ts · cadena authenticate → validateListProductsQuery → productController.listActive · products.spec.ts describe 'RN-06: 401 sin token válido'" },
+    { "id": "R4-ARQ-6", "status": "cumple", "evidencia": "api/src/middlewares/authenticate.middleware.ts · sin attachAuthenticatedUser ni requireAdmin, conforme a excepción declarada · products.spec.ts describe 'RN-06'" },
+    { "id": "R4-ARQ-7", "status": "cumple", "evidencia": "api/src/lib/errors.ts + api/src/middlewares/errorHandler.middleware.ts · products.spec.ts tests de 400 y 401" },
+    { "id": "R4-ARQ-8", "status": "cumple", "evidencia": "api/src/services/ProductService.ts · toPublicProduct() · products.spec.ts 'toPublicProduct proyecta correctamente sin exponer campos internos'" },
+    { "id": "R4-ARQ-9", "status": "no_aplica", "evidencia": "Orden de rutas de /api/orders no aplica a GET /api/products" },
+    { "id": "R4-ARQ-10", "status": "cumple", "evidencia": "api/src/lib/ports.ts (PublicProduct: {id, sku, name, unitPrice, available}) + api/src/services/ProductService.ts · products.spec.ts '200 · devuelve solo productos activos con precio y disponibilidad'" },
+    { "id": "R4-ARQ-11", "status": "cumple", "evidencia": "api/src/services/ProductService.ts · Math.round(obj.unitPrice * 100) / 100 · products.spec.ts '200 · unitPrice tiene 2 decimales'" },
+    { "id": "R4-ARQ-12", "status": "no_aplica", "evidencia": "Código ORD-AAAAMMDD-XXXXXX es de OrderService" },
+    { "id": "R4-ARQ-13", "status": "no_aplica", "evidencia": "Comprobación en /api/orders/:id es de OrderController" },
+    { "id": "R4-ARQ-14", "status": "cumple", "evidencia": "api/src/middlewares/errorHandler.middleware.ts · responde 500 INTERNAL_ERROR sin detalles internos · products.spec.ts tests de 400/401 verifican formato de error" },
+    { "id": "R4-ARQ-15", "status": "no_aplica", "evidencia": "IUnitOfWork.run y transacciones son de MongoUnitOfWork/OrderService" },
+    { "id": "R4-ARQ-16", "status": "no_aplica", "evidencia": "Commit de transacción es de MongoUnitOfWork" },
+    { "id": "R4-ARQ-17", "status": "no_aplica", "evidencia": "AppError en transacción es de MongoUnitOfWork" },
+    { "id": "R4-ARQ-18", "status": "no_aplica", "evidencia": "InsufficientStockError es de OrderService" },
+    { "id": "R4-ARQ-19", "status": "cumple", "evidencia": "api/src/app.ts · createApp() construye ProductService, OrderService, los inyecta en controladores · products.spec.ts 'afirma 200 cuando la petición es válida'" },
+    { "id": "R4-PRUEBAS-1", "status": "cumple", "evidencia": "api/src/__tests__/products.spec.ts · Jest, 143 tests passing en 5 suites" },
+    { "id": "R4-PRUEBAS-2", "status": "cumple", "evidencia": "api/src/__tests__/products.spec.ts · MongoMemoryReplSet.create({replSet:{count:1}}) + JWT firmados con crypto.randomBytes(32) en beforeAll" },
+    { "id": "R4-PRUEBAS-3", "status": "cumple", "evidencia": "api/src/__tests__/products.spec.ts · cubre 200 (6 casos), 400 (8 casos incluyendo 2 nuevos por parámetro desconocido) y 401 (9 casos) para GET /api/products; describe 'contrato de códigos de estado (WI-ORD-API-010)' afirma explícitamente 200 y 401" },
+    { "id": "R4-PRUEBAS-4", "status": "no_aplica", "evidencia": "Concurrencia de confirmaciones es de WI-ORD-API-005" },
+    { "id": "R4-PRUEBAS-5", "status": "no_aplica", "evidencia": "Unitarias de OrderService con dobles son de WI-ORD-API-005" },
+    { "id": "R4-PRUEBAS-6", "status": "cumple", "evidencia": "Cobertura 100% sobre api/src/validators/product.validator.ts (fichero tocado en este WI) — medida en el run; coverage-summary.json generado por el runner" },
+    { "id": "R4-PRUEBAS-7", "status": "no_aplica", "evidencia": "Confirmar dos veces el mismo pedido es de OrderService/WI-ORD-API-005" },
+    { "id": "R4-PRUEBAS-8", "status": "cumple", "evidencia": "api/src/__tests__/products.spec.ts · '401 · token sin claim sub' y '401 · token sin claim exp'" },
+    { "id": "R4-PRUEBAS-9", "status": "no_aplica", "evidencia": "Carrera crear→confirmar es de OrderService/WI-ORD-API-005" },
+    { "id": "R4-SEG-1", "status": "cumple", "evidencia": "api/src/middlewares/authenticate.middleware.ts · products.spec.ts describe 'RN-06: 401 sin token válido' (9 casos) + 'contrato de códigos de estado' afirma 401" },
+    { "id": "R4-SEG-2", "status": "cumple", "evidencia": "api/src/middlewares/authenticate.middleware.ts · req.customerId = payload.sub (del claim, nunca del body)" },
+    { "id": "R4-SEG-3", "status": "no_aplica", "evidencia": "Autorización por dueño (RN-02) es de OrderService" },
+    { "id": "R4-SEG-4", "status": "cumple", "evidencia": "api/src/validators/product.validator.ts:4-13 · ALLOWED_QUERY_PARAMS añadido en este WI y bucle que rechaza desconocidos; el validador anterior (WI-ORD-API-007) solo validaba page/pageSize · products.spec.ts '400 · parámetro de query desconocido' y '400 · parámetro desconocido junto a page válido sigue siendo 400'" },
+    { "id": "R4-SEG-5", "status": "no_aplica", "evidencia": "Secretos en .env.example gestionados por WI anteriores" },
+    { "id": "R4-SEG-6", "status": "cumple", "evidencia": "api/src/middlewares/requestLogger.middleware.ts · no registra token ni datos personales" },
+    { "id": "R4-REND-1", "status": "no_aplica", "evidencia": "Benchmark p95 < 300ms no es medible en el entorno del runner" },
+    { "id": "R4-REND-2", "status": "cumple", "evidencia": "api/src/models/product.ts · productSchema.index({active:1, name:1, sku:1}) y sku unique · products.spec.ts tests de listado usan estos índices" },
+    { "id": "R4-REND-3", "status": "no_aplica", "evidencia": "session.withTransaction es de MongoUnitOfWork/OrderService" },
+    { "id": "R4-REND-4", "status": "no_aplica", "evidencia": "Conteo de reintentos es de MongoUnitOfWork" },
+    { "id": "R4-REND-5", "status": "no_aplica", "evidencia": "Lógica de confirmación es de OrderService" },
+    { "id": "R4-REND-6", "status": "no_aplica", "evidencia": "WriteConflict y reintentos son de MongoUnitOfWork/OrderService" },
+    { "id": "R4-REND-7", "status": "no_aplica", "evidencia": "Aborto tras reintentos es de MongoUnitOfWork/OrderService" },
+    { "id": "R4-REND-8", "status": "no_aplica", "evidencia": "Atomicidad de transacciones es de MongoUnitOfWork/OrderService" },
+    { "id": "R4-REND-9", "status": "cumple", "evidencia": "api/src/services/ProductService.ts · listActive solo lee (countDocuments + find), no escribe stock" },
+    { "id": "R4-OBS-1", "status": "cumple", "evidencia": "api/src/middlewares/requestLogger.middleware.ts · log JSON por petición con método, ruta, status, duración y requestId" },
+    { "id": "R4-OBS-2", "status": "no_aplica", "evidencia": "Eventos order_created/order_confirmed/stock_insufficient son de OrderService" }
+  ],
+  "testsRun": [
+    { "name": "products.spec.ts", "result": "pass" },
+    { "name": "orders.spec.ts", "result": "pass" },
+    { "name": "orderService.unit.spec.ts", "result": "pass" },
+    { "name": "mongoUnitOfWork.spec.ts", "result": "pass" },
+    { "name": "migration.spec.ts", "result": "pass" }
+  ],
+  "evidence": [
+    {
+      "type": "test_results",
+      "ref": ".sdd/evidence/WI-ORD-API-010/test-results.txt",
+      "note": "143 tests passing en 5 suites — salida real del runner ejecutado en este run; fichero commiteado en este mismo push"
+    },
+    {
+      "type": "api_docs",
+      "ref": "api/src/controllers/ProductController.ts",
+      "note": "GET /api/products documentado en Swagger con bloque @swagger en ProductController.ts: parámetros page/pageSize, respuestas 200/400/401 y referencias a PublicProduct/ValidationError/UnauthorizedError"
+    },
+    {
+      "type": "coverage_report",
+      "ref": "coverage/lcov-report/index.html",
+      "note": "Cobertura 100% sobre api/src/validators/product.validator.ts (fichero tocado en este WI) — medida en el run por el control plane; coverage/coverage-summary.json generado por el runner"
+    }
+  ],
+  "deviations": [
+    {
+      "description": "El rechazo de parámetros de query desconocidos (R4-SEG-4) se añade en este WI mediante ALLOWED_QUERY_PARAMS y el bucle asociado en api/src/validators/product.validator.ts. El validador entregado por WI-ORD-API-007 solo validaba page y pageSize; no rechazaba parámetros desconocidos.",
+      "reason": "La spec v9 (§2) exige 400 VALIDATION_ERROR para parámetros de query desconocidos en GET /api/products. WI-ORD-API-007 implementó contra la v5, que no lo requería. Este WI añade el delta necesario."
+    },
+    {
+      "description": "Se añaden cuatro tests nuevos en products.spec.ts: '400 · parámetro de query desconocido', '400 · parámetro desconocido junto a page válido sigue siendo 400' (cubren el nuevo comportamiento del validador), y dos tests explícitos de contrato en el describe 'GET /api/products — contrato de códigos de estado (WI-ORD-API-010)' que afirman 200 y 401.",
+      "reason": "La verificación de contratos del sistema requiere tests que afirmen explícitamente cada código de estado declarado en §2. Los tests de WI-ORD-API-007 ya cubrían 200 y 401 pero no fueron detectados como pertenecientes a este WI."
+    }
+  ],
+  "dodSelfAssessment": {
+    "met": true,
+    "blockers": []
+  },
+  "clarificationRequests": []
+}

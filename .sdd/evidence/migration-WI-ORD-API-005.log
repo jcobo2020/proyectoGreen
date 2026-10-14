@@ -1,7 +1,7 @@
 === Migration Log — WI-ORD-API-005 ===
-Fecha: 2026-10-14T03:54:42.891Z
+Fecha: 2026-10-14T12:55:42.717Z
 
-Colecciones disponibles: products, orders
+Colecciones disponibles: orders, products
 
 Índices en la colección 'products':
   - _id_: {"_id":1}
