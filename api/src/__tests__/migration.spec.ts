@@ -1,22 +1,24 @@
 /**
- * Test de migración: crea las colecciones e índices de Product
+ * Test de migración: crea las colecciones e índices de Product y Order
  * y lista lo que la base de datos tiene, generando el migration_log.
  */
 import mongoose from 'mongoose';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import { ProductModel } from '../models/product';
+import { OrderModel } from '../models/order';
 import fs from 'fs';
 import path from 'path';
 
 let replSet: MongoMemoryReplSet;
 
 beforeAll(async () => {
-  replSet = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
+  replSet = await MongoMemoryReplSet.create({ replSet: { count: 1, storageEngine: 'wiredTiger' } });
   const uri = replSet.getUri();
   await mongoose.connect(uri);
 
-  // Sincronizar índices definidos en el esquema
+  // Sincronizar índices definidos en los esquemas
   await ProductModel.syncIndexes();
+  await OrderModel.syncIndexes();
 }, 90000);
 
 afterAll(async () => {
@@ -24,7 +26,7 @@ afterAll(async () => {
   await replSet.stop();
 }, 30000);
 
-describe('Migración de esquema — Product', () => {
+describe('Migración de esquema — Product y Order', () => {
   it('crea la colección products y sus índices correctamente', async () => {
     // Verificar que los índices existen
     const indexes = await ProductModel.collection.listIndexes().toArray();
@@ -68,24 +70,54 @@ describe('Migración de esquema — Product', () => {
         active: true,
       })
     ).rejects.toThrow();
+  });
 
+  it('crea la colección orders y sus índices correctamente', async () => {
+    const indexes = await OrderModel.collection.listIndexes().toArray();
+
+    // Debe existir el índice único en code
+    const codeIndex = indexes.find(
+      (idx) => idx.key && idx.key['code'] === 1 && idx.unique === true
+    );
+    expect(codeIndex).toBeDefined();
+
+    // Debe existir el índice compuesto {customerId, createdAt}
+    const listIndex = indexes.find(
+      (idx) =>
+        idx.key &&
+        idx.key['customerId'] === 1 &&
+        idx.key['createdAt'] === -1
+    );
+    expect(listIndex).toBeDefined();
+  });
+
+  it('genera el log de migración', async () => {
     // Listar colecciones e índices para el log de migración
     const collections = await mongoose.connection.db!.listCollections().toArray();
     const collectionNames = collections.map((c) => c.name as string);
 
+    const productIndexes = await ProductModel.collection.listIndexes().toArray();
+    const orderIndexes = await OrderModel.collection.listIndexes().toArray();
+
     const logLines: string[] = [
-      `=== Migration Log — WI-ORD-API-007 ===`,
+      `=== Migration Log — WI-ORD-API-005 ===`,
       `Fecha: ${new Date().toISOString()}`,
       ``,
       `Colecciones disponibles: ${collectionNames.join(', ')}`,
       ``,
       `Índices en la colección 'products':`,
-      ...indexes.map(
+      ...productIndexes.map(
         (idx) =>
           `  - ${idx.name as string}: ${JSON.stringify(idx.key)}${idx.unique ? ' [UNIQUE]' : ''}`
       ),
       ``,
-      `Resultado: OK — colección products creada con índices sku (único) y {active, name, sku}`,
+      `Índices en la colección 'orders':`,
+      ...orderIndexes.map(
+        (idx) =>
+          `  - ${idx.name as string}: ${JSON.stringify(idx.key)}${idx.unique ? ' [UNIQUE]' : ''}`
+      ),
+      ``,
+      `Resultado: OK — colecciones products y orders creadas con sus índices`,
     ];
 
     const logContent = logLines.join('\n');
@@ -96,8 +128,11 @@ describe('Migración de esquema — Product', () => {
     if (!fs.existsSync(evidenceDir)) {
       fs.mkdirSync(evidenceDir, { recursive: true });
     }
-    fs.writeFileSync(path.join(evidenceDir, 'migration.log'), logContent, 'utf8');
+    // Escribir en un fichero con nombre específico de este work item
+    // para no pisar la evidencia de WI-ORD-API-007 (migration.log)
+    fs.writeFileSync(path.join(evidenceDir, 'migration-WI-ORD-API-005.log'), logContent, 'utf8');
 
     expect(collectionNames).toContain('products');
+    expect(collectionNames).toContain('orders');
   });
 });

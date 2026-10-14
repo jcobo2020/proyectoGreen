@@ -27,6 +27,63 @@ export class UnauthorizedError extends Error implements AppError {
   }
 }
 
+export class InvalidOrderIdError extends Error implements AppError {
+  statusCode = 400;
+  code = 'INVALID_ORDER_ID';
+
+  constructor(message = 'El id del pedido no es un ObjectId') {
+    super(message);
+    this.name = 'InvalidOrderIdError';
+  }
+}
+
+export class OrderForbiddenError extends Error implements AppError {
+  statusCode = 403;
+  code = 'ORDER_FORBIDDEN';
+
+  constructor(message = 'El pedido es de otro cliente') {
+    super(message);
+    this.name = 'OrderForbiddenError';
+  }
+}
+
+export class OrderNotFoundError extends Error implements AppError {
+  statusCode = 404;
+  code = 'ORDER_NOT_FOUND';
+
+  constructor(message = 'No existe el pedido') {
+    super(message);
+    this.name = 'OrderNotFoundError';
+  }
+}
+
+export class ProductNotFoundError extends Error implements AppError {
+  statusCode = 404;
+  code = 'PRODUCT_NOT_FOUND';
+  details: Array<{ productId: string }>;
+
+  constructor(message: string, details: Array<{ productId: string }>) {
+    super(message);
+    this.name = 'ProductNotFoundError';
+    this.details = details;
+  }
+}
+
+export class InsufficientStockError extends Error implements AppError {
+  statusCode = 409;
+  code = 'INSUFFICIENT_STOCK';
+  details: Array<{ productId: string; requested: number; available: number }>;
+
+  constructor(
+    message: string,
+    details: Array<{ productId: string; requested: number; available: number }>
+  ) {
+    super(message);
+    this.name = 'InsufficientStockError';
+    this.details = details;
+  }
+}
+
 export class InternalError extends Error implements AppError {
   statusCode = 500;
   code = 'INTERNAL_ERROR';
