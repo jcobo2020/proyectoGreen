@@ -1,0 +1,111 @@
+.orden-nueva {
+  padding: 1rem;
+}
+
+.contenido {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.catalogo {
+  flex: 1;
+}
+
+.resumen-pedido {
+  min-width: 280px;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+.tabla-productos {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-productos th,
+.tabla-productos td {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.fila-error-stock {
+  background-color: #fff3f3;
+}
+
+.error-stock {
+  color: #c00;
+  font-size: 0.85rem;
+}
+
+.mensaje-error-stock {
+  color: #c00;
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0;
+}
+
+.paginador {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.lineas-resumen {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.lineas-resumen li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.total-estimado {
+  font-size: 1.1rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.btn-continuar {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #2a6e2a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-continuar:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+}
+
+.aviso-validacion {
+  color: #c00;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.resumen-vacio {
+  color: #666;
+  font-style: italic;
+}
+
+.estado-cargando,
+.estado-error,
+.estado-sin-permiso {
+  padding: 2rem;
+  text-align: center;
+}
+
+.estado-error button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+}

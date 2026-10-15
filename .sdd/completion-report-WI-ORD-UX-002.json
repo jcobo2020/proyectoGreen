@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 5,
+  "workItemCode": "WI-ORD-UX-002",
+  "summary": "Corregidos los dos problemas del run anterior: (1) lineasResumen y continuarDeshabilitado ahora se construyen desde cartMap (mapa independiente de la página visible del catálogo), que guarda nombre/sku/precio/disponible de cada producto elegido; (2) añadidos tests del estado vacío (catálogo sin productos) y del estado de error 400/InvalidOrderInputError. El test de R4-PRUEBAS-7 ahora usa pageSize=2 y total=3 → totalPages=2, navega a la página 2 y afirma que lineasResumen() sigue mostrando los productos de la página anterior con sus cantidades y que el total estimado es correcto.",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "status": "covered",
+      "note": "Al recibir 201, continuar() llama a router.navigate(['/orders', order.id, 'confirm']). Prueba: 'navega a /orders/:id/confirm con el id del pedido creado'."
+    },
+    {
+      "id": "AC-03",
+      "status": "covered",
+      "note": "Al recibir InsufficientStockError, stockErrors se actualiza con los detalles por productId y no se navega. Prueba: 'marca las líneas afectadas con el disponible del servidor y no navega'."
+    },
+    {
+      "id": "AC-06",
+      "status": "covered",
+      "note": "continuarDeshabilitado() devuelve true si no hay líneas, si alguna quantity < 1, > 99 o > available. Pruebas: múltiples en 'AC-06 · validación de cantidades'."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R4-ARQ-1",
+      "status": "no_aplica",
+      "evidencia": "El frontend ya existe; este WI solo modifica el componente order-new."
+    },
+    {
+      "id": "R4-ARQ-2",
+      "status": "cumple",
+      "evidencia": "order-new.component.ts:54-62 · inyecta ListProductsUseCase y CreateOrderUseCase; usa puertos PRODUCT_REPOSITORY y ORDER_REPOSITORY. order-new.component.spec.ts · múltiples tests con repositorios doblados por su puerto."
+    },
+    {
+      "id": "R4-ARQ-3",
+      "status": "no_aplica",
+      "evidencia": "Excepción de /login ya implementada en interceptor y componente existentes; no se modifica en este WI."
+    },
+    {
+      "id": "R4-ARQ-4",
+      "status": "no_aplica",
+      "evidencia": "Configuración SSR ya en app.routes.server.ts, fuera del alcance de este WI."
+    },
+    {
+      "id": "R4-ARQ-5",
+      "status": "no_aplica",
+      "evidencia": "Token ya gestionado en jwtInterceptor existente."
+    },
+    {
+      "id": "R4-ARQ-6",
+      "status": "no_aplica",
+      "evidencia": "Interceptores ya configurados en orders.routes.ts."
+    },
+    {
+      "id": "R4-PRUEBAS-1",
+      "status": "cumple",
+      "evidencia": "order-new.component.spec.ts · todos los tests usan describe/it/expect/vi de Vitest."
+    },
+    {
+      "id": "R4-PRUEBAS-2",
+      "status": "cumple",
+      "evidencia": "order-new.component.spec.ts · estado cargando (línea 108), vacío (línea 119), error 500 al cargar (línea 133), sin permiso 401 cargar (línea 158) y 401 crear (línea 169), con datos 200 (línea 184), 409 InsufficientStockError (línea 316), 400 InvalidOrderInputError (línea 365), 404 ProductNotFoundError (línea 440), 500 InfrastructureError crear (línea 477)."
+    },
+    {
+      "id": "R4-PRUEBAS-3",
+      "status": "no_aplica",
+      "evidencia": "Traducción HTTP→dominio ya cubierta en http-order.repository.spec.ts y http-product.repository.spec.ts."
+    },
+    {
+      "id": "R4-PRUEBAS-4",
+      "status": "no_aplica",
+      "evidencia": "Casos de uso ya cubiertos en order.use-cases.spec.ts."
+    },
+    {
+      "id": "R4-PRUEBAS-5",
+      "status": "cumple",
+      "evidencia": "order-new.component.spec.ts · 'navega a /orders/:id/confirm con el id del pedido creado' · router.navigate llamado con ['/orders', 'order-abc123', 'confirm']."
+    },
+    {
+      "id": "R4-PRUEBAS-6",
+      "status": "cumple",
+      "evidencia": "order-new.component.spec.ts · 'con la petición en vuelo, el segundo clic no dispara otra' · createOrder llamado solo 1 vez tras 3 clics."
+    },
+    {
+      "id": "R4-PRUEBAS-7",
+      "status": "cumple",
+      "evidencia": "order-new.component.ts:78-90 · lineasResumen se construye desde cartMap (independiente de products()). order-new.component.spec.ts · 'el resumen lateral muestra el producto de la página anterior tras cambiar de página': pageSize=2, total=3 → totalPages=2, navega a página 2, afirma lineasResumen().length===2 con Producto A y Producto B y totalEstimado()≈96.5."
+    },
+    {
+      "id": "R4-SEG-1",
+      "status": "no_aplica",
+      "evidencia": "El token viaja solo en Authorization vía jwtInterceptor existente; order-new no toca el token."
+    },
+    {
+      "id": "R4-SEG-2",
+      "status": "no_aplica",
+      "evidencia": "URL del proveedor y base de API ya se leen del entorno en código existente."
+    },
+    {
+      "id": "R4-SEG-3",
+      "status": "cumple",
+      "evidencia": "order-new.component.ts:173-175 · continuar() envía solo {productId, quantity}. order-new.component.spec.ts · 'envía solo productId y quantity en el payload (no precio ni total)'."
+    },
+    {
+      "id": "R4-REND-1",
+      "status": "no_aplica",
+      "evidencia": "pageSize 50 para productos ya definido en ListProductsUseCase existente."
+    },
+    {
+      "id": "R4-REND-2",
+      "status": "cumple",
+      "evidencia": "order-new.component.ts:93-95 · totalEstimado se calcula en la vista multiplicando unitPrice×quantity del cartMap. order-new.component.spec.ts · 'muestra el total estimado calculado con precios ya cargados'."
+    },
+    {
+      "id": "R4-OBS-1",
+      "status": "no_aplica",
+      "evidencia": "Errores de infraestructura se loguean en el repositorio HTTP, que ya existe."
+    },
+    {
+      "id": "R4-OBS-2",
+      "status": "cumple",
+      "evidencia": "order-new.component.ts:192,202,208 · console.error con [order_create_failed] code=… path=/api/orders. Pruebas: 'registra order_create_failed con código INSUFFICIENT_STOCK', 'VALIDATION_ERROR', 'PRODUCT_NOT_FOUND', '500'."
+    }
+  ],
+  "testsRun": [
+    { "name": "src/app/feature/orders/ui/order-new/order-new.component.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/ui/order-list/order-list.component.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/application/order.use-cases.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/infrastructure/http-order.repository.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/infrastructure/http-product.repository.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/infrastructure/session.interceptor.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/orders.routes.spec.ts", "result": "pass" },
+    { "name": "src/app/@core/guards/auth.guard.spec.ts", "result": "pass" },
+    { "name": "src/app/@core/interceptors/jwt.interceptor.spec.ts", "result": "pass" },
+    { "name": "src/app/@core/interceptors/error.interceptor.spec.ts", "result": "pass" },
+    { "name": "src/app/app.config.spec.ts", "result": "pass" },
+    { "name": "src/app/app.config.server.spec.ts", "result": "pass" },
+    { "name": "src/app/app.routes.spec.ts", "result": "pass" },
+    { "name": "src/app/app.routes.server.spec.ts", "result": "pass" }
+  ],
+  "deviations": [],
+  "dodSelfAssessment": {
+    "met": true,
+    "blockers": []
+  },
+  "evidence": [
+    {
+      "type": "coverage_report",
+      "ref": "coverage/lcov-report/index.html",
+      "note": "Cobertura 95.54% de sentencias en todos los ficheros (94.47% en los ficheros tocados en este WI). Generada por ng test --coverage en este run."
+    }
+  ],
+  "clarificationRequests": []
+}
