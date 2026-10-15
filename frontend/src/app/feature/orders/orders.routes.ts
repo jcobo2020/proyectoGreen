@@ -11,7 +11,9 @@ import { ListOrdersUseCase } from './application/order.use-cases';
  * Rutas de la feature orders (R4-ARQ-2, R4-ARQ-6):
  * - authGuard protege todas las rutas hijas.
  * - HttpClient propio con jwtInterceptor + ordersSessionInterceptor (sin errorInterceptor global).
- * - Literales (new) antes que paramétricas (:id).
+ * - Las rutas 'new' y ':id/confirm' pertenecen a WI-ORD-UX-002 y WI-ORD-UX-003
+ *   y se añadirán en esos work items con sus componentes correspondientes.
+ * - Este work item solo define la ruta '' (listado /orders).
  */
 export const ordersRoutes: Routes = [
   {
@@ -25,12 +27,6 @@ export const ordersRoutes: Routes = [
     children: [
       {
         path: '',
-        loadComponent: () =>
-          import('./ui/order-list/order-list.component').then(m => m.OrderListComponent)
-      },
-      {
-        // Literal antes que paramétrica (R4-ARQ-2)
-        path: 'new',
         loadComponent: () =>
           import('./ui/order-list/order-list.component').then(m => m.OrderListComponent)
       }

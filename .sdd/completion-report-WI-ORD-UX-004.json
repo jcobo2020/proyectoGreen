@@ -1,7 +1,7 @@
 {
   "schemaVersion": 5,
   "workItemCode": "WI-ORD-UX-004",
-  "summary": "Implementada la pantalla /orders con todos sus estados (cargando, vacío, error, sin permiso, 400, 200) usando arquitectura por capas (domain/application/infrastructure/ui). Se crea desde cero el frontend Angular 21 standalone con SSR, la feature orders completa y sus pruebas de componente, repositorio y caso de uso.",
+  "summary": "Implementada la pantalla /orders con todos sus estados (cargando, vacío, error, sin permiso, 400, 200) usando arquitectura por capas (domain/application/infrastructure/ui). Frontend Angular 21 standalone con SSR. DEV2-1 resuelto: app.config.server.ts usa provideServerRendering(withRoutes(serverRoutes)). DEV2-2 resuelto: R4-ARQ-2 se declara no_aplica (las rutas 'new' y ':id/confirm' son de WI-ORD-UX-002 y WI-ORD-UX-003; §10 prohíbe implementarlas aquí). 12 ficheros spec, 59 tests, cobertura 95.78% global / 100% en ficheros modificados.",
   "criteria": [
     {
       "id": "AC-05",
@@ -13,12 +13,12 @@
     {
       "id": "R4-ARQ-1",
       "status": "cumple",
-      "evidencia": "frontend/angular.json:1 · frontend/package.json:1 · frontend/src/main.ts · frontend/src/main.server.ts · frontend/src/server.ts · frontend/src/app/app.config.ts · frontend/src/app/app.config.server.ts · frontend/src/app/app.routes.ts — Frontend Angular 21 standalone + Router + SSR creado en este diff. Prueba: todos los spec.ts pasan con ng test (builder @angular/build:unit-test)"
+      "evidencia": "frontend/angular.json · frontend/package.json · frontend/src/main.ts · frontend/src/main.server.ts · frontend/src/server.ts · frontend/src/app/app.config.ts · frontend/src/app/app.config.server.ts · frontend/src/app/app.routes.ts — Frontend Angular 21 standalone + Router + SSR creado en este diff. Prueba: app.routes.spec.ts · 'incluye la ruta /orders con loadChildren (lazy loading)'"
     },
     {
       "id": "R4-ARQ-2",
-      "status": "cumple",
-      "evidencia": "frontend/src/app/feature/orders/ — feature por capas: domain (order.model.ts, order.errors.ts, order-repository.port.ts), application (order.use-cases.ts), infrastructure (http-order.repository.ts, session.interceptor.ts), ui (order-list.component.ts). Rutas en orders.routes.ts con authGuard, literal 'new' antes que ':id'. Prueba: order-list.component.spec.ts · todos los estados del componente"
+      "status": "no_aplica",
+      "evidencia": "R4-ARQ-2 describe la arquitectura COMPLETA de la feature orders (rutas 'new', ':id', ':id/confirm', tres capas de UI). Las rutas 'new' y ':id/confirm' son de WI-ORD-UX-002 y WI-ORD-UX-003 respectivamente; §10 prohíbe implementarlas en este WI. Este WI solo monta la ruta '' (listado /orders) con authGuard, que es lo que §2 autoriza. El requisito completo (tres rutas, tres componentes UI) se cumplirá cuando se integren los tres WIs."
     },
     {
       "id": "R4-ARQ-3",
@@ -28,7 +28,7 @@
     {
       "id": "R4-ARQ-4",
       "status": "cumple",
-      "evidencia": "frontend/src/app/app.routes.server.ts:9-11 — path 'orders/**' con RenderMode.Client; el resto con RenderMode.Prerender. Prueba: fichero creado en este diff; estructura verificada por ng build"
+      "evidencia": "frontend/src/app/app.routes.server.ts — path 'orders/**' con RenderMode.Client; el resto con RenderMode.Prerender. frontend/src/app/app.config.server.ts — usa provideServerRendering(withRoutes(serverRoutes)) según Angular 21. Prueba: app.routes.server.spec.ts · 'R4-ARQ-4: /orders/** usa RenderMode.Client'; app.config.server.spec.ts · 'exporta un objeto de configuración ApplicationConfig válido'"
     },
     {
       "id": "R4-ARQ-5",
@@ -38,17 +38,17 @@
     {
       "id": "R4-ARQ-6",
       "status": "cumple",
-      "evidencia": "frontend/src/app/feature/orders/orders.routes.ts:21-22 — provideHttpClient(withInterceptors([jwtInterceptor, ordersSessionInterceptor])) sin errorInterceptor global. Prueba: order-list.component.spec.ts · todos los tests con repositorio doblado por su puerto (ORDER_REPOSITORY)"
+      "evidencia": "frontend/src/app/feature/orders/orders.routes.ts — provideHttpClient(withInterceptors([jwtInterceptor, ordersSessionInterceptor])) sin errorInterceptor global. ORDER_REPOSITORY → HttpOrderRepository provisto en la ruta raíz de la feature. Prueba: orders.routes.spec.ts · 'los providers incluyen ORDER_REPOSITORY apuntando a HttpOrderRepository'"
     },
     {
       "id": "R4-PRUEBAS-1",
       "status": "cumple",
-      "evidencia": "frontend/angular.json — builder @angular/build:unit-test con runner vitest; frontend/package.json scripts.test='ng test'; frontend/tsconfig.spec.json types=['vitest/globals','node']. Prueba: ng test pasa en verde con 31 tests"
+      "evidencia": "frontend/angular.json — builder @angular/build:unit-test con runner vitest; frontend/package.json scripts.test='ng test'; frontend/tsconfig.spec.json types=['vitest/globals','node']. ng test pasa en verde con 59 tests en 12 ficheros spec."
     },
     {
       "id": "R4-PRUEBAS-2",
       "status": "cumple",
-      "evidencia": "frontend/src/app/feature/orders/ui/order-list/order-list.component.spec.ts — dobla ORDER_REPOSITORY con createSpyObj, usa ListOrdersUseCase real. Cubre: cargando (petición en vuelo con Subject), vacío ('Todavía no tienes pedidos' + 'Nuevo pedido'), error ('Reintentar'), 401→proveedor con returnUrl, 400 en pág>1 vuelve a pág 1, 400 en pág 1 muestra error, 200 pinta tabla. Todos los estados verificados en DOM tras detectChanges."
+      "evidencia": "frontend/src/app/feature/orders/ui/order-list/order-list.component.spec.ts — dobla ORDER_REPOSITORY con createSpyObj, usa ListOrdersUseCase real. Cubre: cargando (petición en vuelo con Subject + fixture.detectChanges()), vacío ('Todavía no tienes pedidos' + 'Nuevo pedido'), error ('Reintentar'), 401→proveedor con returnUrl, 400 en pág>1 vuelve a pág 1, 400 en pág 1 muestra error, 200 pinta tabla. Todos los estados verificados en DOM tras detectChanges."
     },
     {
       "id": "R4-PRUEBAS-3",
@@ -63,32 +63,32 @@
     {
       "id": "R4-PRUEBAS-5",
       "status": "no_aplica",
-      "evidencia": "Navegación 201→/orders/:id/confirm pertenece a la pantalla order-new/order-confirm, no a /orders (order-list). §2 de este work item solo cubre AC-05 (pantalla /orders)."
+      "evidencia": "Navegación 201→/orders/:id/confirm pertenece a la pantalla order-new (WI-ORD-UX-002). §2 de este work item solo cubre AC-05 (pantalla /orders)."
     },
     {
       "id": "R4-PRUEBAS-6",
       "status": "no_aplica",
-      "evidencia": "Doble pulsación corresponde a order-new (creación de pedidos), fuera del alcance de §2 de este work item."
+      "evidencia": "Doble pulsación corresponde a order-new (WI-ORD-UX-002). Fuera del alcance de §2 de este work item."
     },
     {
       "id": "R4-PRUEBAS-7",
       "status": "no_aplica",
-      "evidencia": "Resumen lateral del catálogo corresponde a order-new, fuera del alcance de §2 de este work item."
+      "evidencia": "Resumen lateral del catálogo corresponde a order-new (WI-ORD-UX-002). Fuera del alcance de §2 de este work item."
     },
     {
       "id": "R4-SEG-1",
       "status": "cumple",
-      "evidencia": "frontend/src/app/@core/interceptors/jwt.interceptor.ts — token solo en cabecera Authorization, nunca en URL ni en logs. Prueba: jwt.interceptor.spec.ts · 'el token no viaja en la URL'"
+      "evidencia": "frontend/src/app/@core/interceptors/jwt.interceptor.ts — token solo en cabecera Authorization, nunca en URL ni en logs. Prueba: jwt.interceptor.spec.ts · 'añade cabecera Authorization con Bearer token cuando hay token en sessionStorage'"
     },
     {
       "id": "R4-SEG-2",
       "status": "cumple",
-      "evidencia": "frontend/src/environments/environment.ts · frontend/src/environments/environment.prod.ts — apiBaseUrl e identityProviderUrl por configuración de entorno. Ninguna URL escrita en el código de la aplicación. Prueba: order-list.component.spec.ts · 'ante un 401 redirige al proveedor de identidad con returnUrl' (URL viene de environment)"
+      "evidencia": "frontend/src/environments/environment.ts · frontend/src/environments/environment.prod.ts — apiBaseUrl e identityProviderUrl por configuración de entorno. Ninguna URL escrita en el código de la aplicación. Prueba: app.config.spec.ts · 'environment define apiBaseUrl como URL de configuración, no literal en código'"
     },
     {
       "id": "R4-SEG-3",
       "status": "cumple",
-      "evidencia": "frontend/src/app/feature/orders/ui/order-list/order-list.component.ts:38-43 — el componente muestra solo lo que devuelve el servidor (items, total, status). No calcula precios ni disponibilidad. Prueba: order-list.component.spec.ts · 'pinta la tabla con los pedidos devueltos por el servidor'"
+      "evidencia": "frontend/src/app/feature/orders/ui/order-list/order-list.component.ts — el componente muestra solo lo que devuelve el servidor (items, total, status). No calcula precios ni disponibilidad. Prueba: order-list.component.spec.ts · 'pinta la tabla con los pedidos devueltos por el servidor'"
     },
     {
       "id": "R4-REND-1",
@@ -98,7 +98,7 @@
     {
       "id": "R4-REND-2",
       "status": "no_aplica",
-      "evidencia": "Sin peticiones repetidas al cambiar cantidades corresponde a order-new (catálogo de productos). Fuera del alcance de §2 de este work item."
+      "evidencia": "Sin peticiones repetidas al cambiar cantidades corresponde a order-new (catálogo de productos, WI-ORD-UX-002). Fuera del alcance de §2 de este work item."
     },
     {
       "id": "R4-OBS-1",
@@ -108,57 +108,57 @@
     {
       "id": "R4-OBS-2",
       "status": "no_aplica",
-      "evidencia": "order_create_failed y order_confirm_failed corresponden a order-new y order-confirm. Fuera del alcance de §2 de este work item."
+      "evidencia": "order_create_failed y order_confirm_failed corresponden a order-new y order-confirm (WI-ORD-UX-002 y WI-ORD-UX-003). Fuera del alcance de §2 de este work item."
     }
   ],
   "testsRun": [
     { "name": "src/app/@core/guards/auth.guard.spec.ts", "result": "pass" },
-    { "name": "src/app/@core/interceptors/jwt.interceptor.spec.ts", "result": "pass" },
     { "name": "src/app/@core/interceptors/error.interceptor.spec.ts", "result": "pass" },
+    { "name": "src/app/@core/interceptors/jwt.interceptor.spec.ts", "result": "pass" },
+    { "name": "src/app/app.config.spec.ts", "result": "pass" },
+    { "name": "src/app/app.config.server.spec.ts", "result": "pass" },
+    { "name": "src/app/app.routes.spec.ts", "result": "pass" },
+    { "name": "src/app/app.routes.server.spec.ts", "result": "pass" },
     { "name": "src/app/feature/orders/application/order.use-cases.spec.ts", "result": "pass" },
     { "name": "src/app/feature/orders/infrastructure/http-order.repository.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/infrastructure/session.interceptor.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/orders.routes.spec.ts", "result": "pass" },
     { "name": "src/app/feature/orders/ui/order-list/order-list.component.spec.ts", "result": "pass" }
   ],
   "evidence": [
     {
       "type": "coverage_report",
-      "ref": "frontend/coverage/greenfield-frontend/coverage-summary.json",
-      "note": "Cobertura 95.34% de sentencias sobre los ficheros entregados (≥80% exigido). Generado por ng test --coverage en este run."
+      "ref": "frontend/coverage/greenfield-frontend/index.html",
+      "note": "Cobertura 95.78% de sentencias globales (≥80% exigido). Ficheros tocados en este diff (app.config.server.ts incluido): 100% de sentencias — corroborado por ng test con app.config.server.spec.ts ejercitando directamente el fichero. Generado por ng test --coverage en este run."
     }
   ],
   "deviations": [
     {
-      "description": "DEV1-1 resuelto: vitest.config.ts no existe; la cobertura se configura en angular.json (coverageExclude) y excluye solo main.ts, main.server.ts y server.ts — los arranques permitidos por la plantilla. auth.guard.ts, error.interceptor.ts y app.config.ts SÍ están cubiertos (100%, 100%, no aparecen en el informe porque no tienen código ejecutable propio tras el bundle). Cobertura total: 95.34%.",
-      "reason": "La configuración de cobertura está en angular.json, no en vitest.config.ts. Solo se excluyen los arranques del servidor/cliente como permite la plantilla."
+      "description": "DEV2-1 resuelto: app.config.server.ts ahora usa provideServerRendering(withRoutes(serverRoutes)) según Angular 21. provideServerRoutesConfig no existe en esta versión — el build y el serve ya pasan en verde.",
+      "reason": "El pack (§7) y el error del revisor coinciden: provideServerRoutesConfig no existe en Angular 21. Corregido en este run."
     },
     {
-      "description": "DEV1-2 resuelto: order-list.component.spec.ts dobla ORDER_REPOSITORY con createSpyObj y usa ListOrdersUseCase real.",
-      "reason": "Confirmado en la implementación actual y verificado en este run."
+      "description": "DEV2-2 resuelto (ruta 'new' y R4-ARQ-2): la ruta 'new' se ha eliminado de orders.routes.ts porque pertenece a WI-ORD-UX-002 y no hay un componente order-new que implementar en este WI. Solo se define la ruta '' (listado /orders). R4-ARQ-2 se declara 'no_aplica' porque §10 prohíbe implementar las rutas 'new' y ':id/confirm' y sus componentes en este WI; corresponden a WI-ORD-UX-002 y WI-ORD-UX-003.",
+      "reason": "§10 prohíbe implementar componentes de otros work items. R4-ARQ-2 describe la arquitectura completa del módulo; este WI solo cubre la parte de /orders que §2 autoriza."
     },
     {
-      "description": "DEV1-3 resuelto: todos los estados de /orders se comprueban en el DOM tras detectChanges, incluyendo el estado cargando con Subject nunca resuelto.",
-      "reason": "El test 'muestra el estado cargando mientras la petición está en vuelo' llama a fixture.detectChanges() con un Subject en vuelo y verifica .estado-cargando en el DOM."
+      "description": "DEV2-2 resuelto (session.interceptor.spec.ts): el informe previo declaraba falso que el interceptor 'se cubre conceptualmente'. En este run session.interceptor.spec.ts tiene 5 tests que ejercitan directamente ordersSessionInterceptor y está en testsRun. La cobertura es 100%.",
+      "reason": "El fichero session.interceptor.spec.ts existe desde rondas previas y cubre el interceptor directamente. Corregido el informe."
     },
     {
-      "description": "DEV1-4 resuelto: R4-ARQ-1, R4-ARQ-3 a R4-ARQ-6, R4-SEG-2, R4-PRUEBAS-3, R4-PRUEBAS-4 declarados como 'cumple' con evidencia de fichero y prueba.",
-      "reason": "Todos estos requisitos están implementados en este diff y declarados como 'cumple' con evidencia concreta."
+      "description": "DEV2-2 resuelto (testsRun): el informe ahora lista los 12 ficheros spec ejecutados (59 tests en total), incluyendo app.config.spec.ts, app.config.server.spec.ts (nuevo en este run), app.routes.spec.ts, app.routes.server.spec.ts, session.interceptor.spec.ts y orders.routes.spec.ts.",
+      "reason": "Los runs anteriores omitían ficheros spec. Corregido en este run con el conteo real."
     },
     {
-      "description": "DEV1-5 resuelto: el script 'install' no está en frontend/package.json.",
-      "reason": "Verificado en package.json actual — no existe el script 'install'."
-    },
-    {
-      "description": "app.config.ts y app.config.server.ts no aparecen en coverage-summary.json porque el builder de Angular los procesa como parte del bundle de arranque sin líneas ejecutables en el contexto de pruebas unitarias. La exclusión de cobertura está limitada a main.ts, main.server.ts, server.ts según la plantilla.",
-      "reason": "Comportamiento del builder @angular/build:unit-test: los ficheros de configuración de la plataforma Angular no producen ramas ejecutables en el contexto jsdom."
-    },
-    {
-      "description": "session.interceptor.ts no aparece en coverage-summary.json: el interceptor de la feature orders no se ejerce en las pruebas del repositorio porque estas usan provideHttpClient() sin interceptores. La cobertura del interceptor se prueba indirectamente a través de ordersSessionInterceptor en session.interceptor.ts siendo importado desde orders.routes.ts.",
-      "reason": "Las pruebas del repositorio HTTP no incluyen el interceptor de sesión para no mezclar capas. El interceptor se cubre conceptualmente a través de error.interceptor.spec.ts (que prueba el patrón equivalente)."
+      "description": "R4-ARQ-2 limitación por diseño: la ruta ':id/confirm' no existe en orders.routes.ts porque el componente order-confirm es de WI-ORD-UX-003. El requisito R4-ARQ-2 habla del módulo completo; en este WI solo se implementa la parte que §2 autoriza (la pantalla /orders).",
+      "reason": "§10 prohíbe implementar partes de otros work items. R4-ARQ-2 describe la arquitectura completa del módulo."
     }
   ],
   "dodSelfAssessment": {
-    "met": true,
-    "blockers": []
+    "met": false,
+    "blockers": [
+      "R4-ARQ-2 no se cumple completamente en este WI: las rutas 'new' y ':id/confirm' y sus componentes (order-new, order-confirm) son de WI-ORD-UX-002 y WI-ORD-UX-003. §10 prohíbe implementarlos aquí. El requisito completo se cumplirá al integrar los tres WIs del package. Se declara no_aplica para el alcance de este WI."
+    ]
   },
   "clarificationRequests": []
 }
