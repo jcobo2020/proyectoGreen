@@ -121,6 +121,34 @@ describe('OrderNewComponent', () => {
     });
   });
 
+  // ─── Estado: vacío (catálogo sin productos) ───────────────────────────────
+
+  describe('estado vacío', () => {
+    it('muestra el estado vacío cuando el catálogo no tiene productos activos', () => {
+      const { fixture, productRepoSpy } = crear();
+      const paginaVacia: ProductsPage = { items: [], total: 0, page: 1, pageSize: 50 };
+      productRepoSpy.listProducts.mockReturnValue(of(paginaVacia));
+
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.estado-vacio')).not.toBeNull();
+      expect(el.querySelector('.orden-nueva')).toBeNull();
+    });
+
+    it('el estado vacío no muestra la tabla de productos ni el botón Continuar', () => {
+      const { fixture, productRepoSpy } = crear();
+      const paginaVacia: ProductsPage = { items: [], total: 0, page: 1, pageSize: 50 };
+      productRepoSpy.listProducts.mockReturnValue(of(paginaVacia));
+
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.tabla-productos')).toBeNull();
+      expect(el.querySelector('.btn-continuar')).toBeNull();
+    });
+  });
+
   // ─── Estado: error al cargar catálogo ────────────────────────────────────
 
   describe('estado error', () => {
@@ -373,6 +401,43 @@ describe('OrderNewComponent', () => {
     });
   });
 
+  // ─── Error 400 (InvalidOrderInputError) ──────────────────────────────────
+
+  describe('error 400 VALIDATION_ERROR al crear', () => {
+    it('muestra el estado error con mensaje de datos no válidos (InvalidOrderInputError)', () => {
+      const { fixture, component, productRepoSpy, orderRepoSpy } = crear();
+      productRepoSpy.listProducts.mockReturnValue(of(paginaProductos));
+      orderRepoSpy.createOrder.mockReturnValue(
+        throwError(() => new InvalidOrderInputError([{ field: 'items[0].quantity', message: 'Debe ser entre 1 y 99' }]))
+      );
+
+      fixture.detectChanges();
+      component.setQuantity('prod-001', 2);
+      component.continuar();
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.estado-error')).not.toBeNull();
+      expect(el.textContent).toContain('no son válidos');
+    });
+
+    it('registra order_create_failed con código VALIDATION_ERROR (R4-OBS-2)', () => {
+      const { fixture, component, productRepoSpy, orderRepoSpy } = crear();
+      productRepoSpy.listProducts.mockReturnValue(of(paginaProductos));
+      orderRepoSpy.createOrder.mockReturnValue(
+        throwError(() => new InvalidOrderInputError())
+      );
+
+      fixture.detectChanges();
+      component.setQuantity('prod-001', 2);
+      component.continuar();
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('VALIDATION_ERROR')
+      );
+    });
+  });
+
   // ─── R4-PRUEBAS-6: doble pulsación ───────────────────────────────────────
 
   describe('doble pulsación', () => {
@@ -396,7 +461,100 @@ describe('OrderNewComponent', () => {
     });
   });
 
-  // ─── R4-PRUEBAS-7: resumen lateral conserva cantidades ───────────────────
+  // ─── R4-PRUEBAS-7: resumen lateral conserva cantidades al cambiar de página
+
+  describe('R4-PRUEBAS-7 · resumen lateral conserva cantidades al cambiar de página', () => {
+    it('el resumen lateral muestra el producto de la página anterior tras cambiar de página', () => {
+      const { fixture, component, productRepoSpy } = crear();
+
+      // Página 1: prod-001 y prod-002, pageSize=2, total=3 → totalPages=2
+      const pagina1: ProductsPage = {
+        items: [productoA, productoB],
+        total: 3,
+        page: 1,
+        pageSize: 2
+      };
+      // Página 2: solo prod-003
+      const pagina2: ProductsPage = {
+        items: [{ id: 'prod-003', sku: 'SKU-003', name: 'Producto C', unitPrice: 5.00, available: 10 }],
+        total: 3,
+        page: 2,
+        pageSize: 2
+      };
+
+      productRepoSpy.listProducts
+        .mockReturnValueOnce(of(pagina1))
+        .mockReturnValueOnce(of(pagina2));
+
+      fixture.detectChanges();
+
+      // Seleccionar prod-001 ×2 y prod-002 ×3 en la página 1
+      component.setQuantity('prod-001', 2);
+      component.setQuantity('prod-002', 3);
+      fixture.detectChanges();
+
+      // Verificar que el resumen ya muestra los dos productos antes de cambiar
+      let lineas = component.lineasResumen();
+      expect(lineas.length).toBe(2);
+
+      // Cambiar a página 2 (totalPages = ceil(3/2) = 2, por lo que irAPagina(2) es válido)
+      component.irAPagina(2);
+      fixture.detectChanges();
+
+      // Verificar que se cargó la página 2
+      expect(productRepoSpy.listProducts).toHaveBeenCalledTimes(2);
+      expect(component.page()).toBe(2);
+
+      // El resumen lateral SIGUE mostrando prod-001 y prod-002 aunque no estén en la página actual
+      lineas = component.lineasResumen();
+      expect(lineas.length).toBe(2);
+
+      const nombresResumen = lineas.map(l => l.product.name);
+      expect(nombresResumen).toContain('Producto A');
+      expect(nombresResumen).toContain('Producto B');
+
+      // Las cantidades se conservan
+      expect(component.getQuantity('prod-001')).toBe(2);
+      expect(component.getQuantity('prod-002')).toBe(3);
+
+      // El total estimado sigue siendo correcto: 2×10 + 3×25.5 = 20 + 76.5 = 96.5
+      expect(component.totalEstimado()).toBeCloseTo(96.5);
+    });
+
+    it('«Continuar» permanece habilitado al cambiar de página con cantidades válidas', () => {
+      const { fixture, component, productRepoSpy } = crear();
+
+      const pagina1: ProductsPage = {
+        items: [productoA],
+        total: 2,
+        page: 1,
+        pageSize: 1
+      };
+      const pagina2: ProductsPage = {
+        items: [productoB],
+        total: 2,
+        page: 2,
+        pageSize: 1
+      };
+
+      productRepoSpy.listProducts
+        .mockReturnValueOnce(of(pagina1))
+        .mockReturnValueOnce(of(pagina2));
+
+      fixture.detectChanges();
+      component.setQuantity('prod-001', 1);
+      fixture.detectChanges();
+
+      // Cambiar a página 2
+      component.irAPagina(2);
+      fixture.detectChanges();
+
+      // El botón Continuar sigue habilitado: la cantidad de prod-001 está guardada en el carrito
+      expect(component.continuarDeshabilitado()).toBe(false);
+    });
+  });
+
+  // ─── Resumen lateral ─────────────────────────────────────────────────────
 
   describe('resumen lateral', () => {
     it('muestra el total estimado calculado con precios ya cargados (R4-REND-2)', () => {
@@ -410,28 +568,14 @@ describe('OrderNewComponent', () => {
       expect(component.totalEstimado()).toBeCloseTo(20.00);
     });
 
-    it('conserva las cantidades al cambiar de página del catálogo', () => {
-      const { fixture, component, productRepoSpy } = crear();
-      const pagina2: ProductsPage = {
-        items: [{ id: 'prod-003', sku: 'SKU-003', name: 'Producto C', unitPrice: 5, available: 10 }],
-        total: 3,
-        page: 2,
-        pageSize: 1 // pageSize 1 para tener múltiples páginas
-      };
-
-      productRepoSpy.listProducts
-        .mockReturnValueOnce(of({ ...paginaProductos, pageSize: 1, total: 3 }))
-        .mockReturnValueOnce(of(pagina2));
+    it('muestra "Selecciona productos" cuando el carrito está vacío', () => {
+      const { fixture, productRepoSpy } = crear();
+      productRepoSpy.listProducts.mockReturnValue(of(paginaProductos));
 
       fixture.detectChanges();
-      component.setQuantity('prod-001', 3); // cantidad en página 1
 
-      // Cambiar a página 2
-      component.irAPagina(2);
-      fixture.detectChanges();
-
-      // La cantidad de prod-001 se conserva aunque no esté en la vista actual
-      expect(component.getQuantity('prod-001')).toBe(3);
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.resumen-vacio')).not.toBeNull();
     });
   });
 

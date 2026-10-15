@@ -13,12 +13,22 @@ import {
 } from '../../domain/errors/order.errors';
 import { environment } from '../../../../../environments/environment';
 
-type ViewState = 'loading' | 'error' | 'unauthorized' | 'data';
+type ViewState = 'loading' | 'error' | 'unauthorized' | 'empty' | 'data';
 
 interface StockError {
   productId: string;
   requested: number;
   available: number;
+}
+
+/** Snapshot de un producto seleccionado: lo que necesitamos para el resumen aunque cambie de página. */
+interface CartEntry {
+  productId: string;
+  sku: string;
+  name: string;
+  unitPrice: number;
+  available: number;
+  quantity: number;
 }
 
 /**
@@ -46,8 +56,13 @@ export class OrderNewComponent implements OnInit {
   readonly pageSize = signal(50);
   readonly errorMessage = signal<string>('');
 
-  /** Cantidades seleccionadas: productId → quantity */
-  readonly quantities = signal<Record<string, number>>({});
+  /**
+   * Mapa del carrito: productId → CartEntry.
+   * Guarda nombre, sku, precio y disponible de cada producto elegido,
+   * de modo que el resumen y «Continuar» no dependen de la página actual del catálogo.
+   * R4-PRUEBAS-7: las cantidades se conservan al cambiar de página.
+   */
+  private readonly cartMap = signal<Record<string, CartEntry>>({});
 
   /** Errores de stock por productId */
   readonly stockErrors = signal<Record<string, StockError>>({});
@@ -60,19 +75,18 @@ export class OrderNewComponent implements OnInit {
   );
 
   /**
-   * Líneas del resumen: productos con quantity > 0.
-   * R4-PRUEBAS-7: las cantidades se conservan al cambiar de página.
+   * Líneas del resumen: entradas del carrito con quantity > 0.
+   * R4-PRUEBAS-7: se construye desde cartMap, independiente de la página visible.
    */
-  readonly lineasResumen = computed(() => {
-    const qtys = this.quantities();
-    return this.products()
-      .filter(p => (qtys[p.id] ?? 0) > 0)
-      .map(p => ({
-        product: p,
-        quantity: qtys[p.id],
-        lineTotal: p.unitPrice * qtys[p.id]
-      }));
-  });
+  readonly lineasResumen = computed(() =>
+    Object.values(this.cartMap())
+      .filter(e => e.quantity > 0)
+      .map(e => ({
+        product: { id: e.productId, sku: e.sku, name: e.name, unitPrice: e.unitPrice, available: e.available },
+        quantity: e.quantity,
+        lineTotal: e.unitPrice * e.quantity
+      }))
+  );
 
   /**
    * Total estimado calculado en la vista (R4-REND-2).
@@ -83,20 +97,15 @@ export class OrderNewComponent implements OnInit {
   );
 
   /**
-   * AC-06: «Continuar» deshabilitado si alguna cantidad está fuera de 1-99
+   * AC-06: «Continuar» deshabilitado si no hay líneas válidas o alguna está fuera de 1-99
    * o supera el disponible mostrado.
    */
   readonly continuarDeshabilitado = computed(() => {
-    const qtys = this.quantities();
-    const productos = this.products();
-    const hayAlguna = Object.values(qtys).some(q => q > 0);
-    if (!hayAlguna) return true;
+    const entries = Object.values(this.cartMap()).filter(e => e.quantity > 0);
+    if (entries.length === 0) return true;
 
-    // Verificar que todas las cantidades son válidas
-    for (const p of productos) {
-      const q = qtys[p.id] ?? 0;
-      if (q === 0) continue;
-      if (q < 1 || q > 99 || q > p.available) return true;
+    for (const e of entries) {
+      if (e.quantity < 1 || e.quantity > 99 || e.quantity > e.available) return true;
     }
     return false;
   });
@@ -113,7 +122,11 @@ export class OrderNewComponent implements OnInit {
         this.totalItems.set(result.total);
         this.pageSize.set(result.pageSize);
         this.products.set(result.items);
-        this.viewState.set('data');
+        if (result.items.length === 0 && page === 1) {
+          this.viewState.set('empty');
+        } else {
+          this.viewState.set('data');
+        }
       },
       error: (err: Error) => {
         if (err instanceof OrderUnauthorizedError) {
@@ -129,7 +142,27 @@ export class OrderNewComponent implements OnInit {
   }
 
   setQuantity(productId: string, value: number): void {
-    this.quantities.update(q => ({ ...q, [productId]: value }));
+    // Buscar el producto en la página actual para guardar su snapshot en el carrito
+    const producto = this.products().find(p => p.id === productId);
+    this.cartMap.update(cart => {
+      const copy = { ...cart };
+      if (value > 0 && producto) {
+        copy[productId] = {
+          productId,
+          sku: producto.sku,
+          name: producto.name,
+          unitPrice: producto.unitPrice,
+          available: producto.available,
+          quantity: value
+        };
+      } else if (value <= 0) {
+        delete copy[productId];
+      } else if (copy[productId]) {
+        // Si no está en la página actual pero ya estaba en el carrito, actualizar solo la cantidad
+        copy[productId] = { ...copy[productId], quantity: value };
+      }
+      return copy;
+    });
     // Limpiar el error de stock al cambiar la cantidad
     this.stockErrors.update(e => {
       const copy = { ...e };
@@ -139,7 +172,7 @@ export class OrderNewComponent implements OnInit {
   }
 
   getQuantity(productId: string): number {
-    return this.quantities()[productId] ?? 0;
+    return this.cartMap()[productId]?.quantity ?? 0;
   }
 
   reintentar(): void {
@@ -148,7 +181,6 @@ export class OrderNewComponent implements OnInit {
 
   irAPagina(page: number): void {
     if (page >= 1 && page <= this.totalPages()) {
-      // R4-PRUEBAS-7: las cantidades se conservan al cambiar de página
       const paginaActual = this.page();
       if (page !== paginaActual) {
         this.cargar(page);
@@ -160,10 +192,9 @@ export class OrderNewComponent implements OnInit {
     // R4-PRUEBAS-6: si ya hay una petición en vuelo, no se dispara otra
     if (this.creando || this.continuarDeshabilitado()) return;
 
-    const qtys = this.quantities();
-    const items = Object.entries(qtys)
-      .filter(([, q]) => q > 0)
-      .map(([productId, quantity]) => ({ productId, quantity }));
+    const items = Object.values(this.cartMap())
+      .filter(e => e.quantity > 0)
+      .map(e => ({ productId: e.productId, quantity: e.quantity }));
 
     if (items.length === 0) return;
 
@@ -192,12 +223,16 @@ export class OrderNewComponent implements OnInit {
           const returnUrl = encodeURIComponent('/orders/new');
           window.location.href = `${environment.identityProviderUrl}?returnUrl=${returnUrl}`;
           this.viewState.set('unauthorized');
-        } else if (err instanceof ProductNotFoundError || err instanceof InvalidOrderInputError) {
+        } else if (err instanceof InvalidOrderInputError) {
+          this.errorMessage.set('Los datos del pedido no son válidos.');
+          this.viewState.set('error');
+          // R4-OBS-2
+          console.error(`[order_create_failed] code=VALIDATION_ERROR path=/api/orders`);
+        } else if (err instanceof ProductNotFoundError) {
           this.errorMessage.set('Algunos productos no están disponibles. Por favor, recarga el catálogo.');
           this.viewState.set('error');
           // R4-OBS-2
-          const code = err instanceof ProductNotFoundError ? 'PRODUCT_NOT_FOUND' : 'VALIDATION_ERROR';
-          console.error(`[order_create_failed] code=${code} path=/api/orders`);
+          console.error(`[order_create_failed] code=PRODUCT_NOT_FOUND path=/api/orders`);
         } else {
           this.errorMessage.set('Error al crear el pedido. Por favor, inténtalo de nuevo.');
           this.viewState.set('error');

@@ -20,6 +20,13 @@
   </div>
 }
 
+<!-- Estado: vacío (catálogo sin productos activos) -->
+@if (viewState() === 'empty') {
+  <div class="estado-vacio" role="status">
+    <p>No hay productos disponibles en el catálogo en este momento.</p>
+  </div>
+}
+
 <!-- Estado: con datos -->
 @if (viewState() === 'data') {
   <div class="orden-nueva">
