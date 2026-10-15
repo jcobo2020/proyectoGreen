@@ -220,3 +220,167 @@ describe('CreateOrderUseCase', () => {
     expect(capturado).toBeInstanceOf(ProductNotFoundError);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GetOrderUseCase
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { GetOrderUseCase, ConfirmOrderUseCase } from './order.use-cases';
+import {
+  OrderNotFoundError,
+  OrderForbiddenError
+} from '../domain/errors/order.errors';
+
+function crearGetOrder() {
+  const repoSpy = createSpyObj<OrderRepositoryPort>('OrderRepositoryPort', [
+    'listOrders',
+    'createOrder',
+    'getOrder',
+    'confirmOrder'
+  ]);
+  TestBed.configureTestingModule({
+    providers: [
+      GetOrderUseCase,
+      { provide: ORDER_REPOSITORY, useValue: repoSpy }
+    ]
+  });
+  return { useCase: TestBed.inject(GetOrderUseCase), repoSpy };
+}
+
+describe('GetOrderUseCase', () => {
+  const pedido: PublicOrder = {
+    id: 'order-abc',
+    code: 'ORD-001',
+    status: 'pending_confirmation',
+    items: [],
+    total: 0,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  };
+
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('llama al puerto con el id dado', () => {
+    const { useCase, repoSpy } = crearGetOrder();
+    repoSpy.getOrder.mockReturnValue(of(pedido));
+
+    useCase.execute('order-abc').subscribe();
+
+    expect(repoSpy.getOrder).toHaveBeenCalledWith('order-abc');
+  });
+
+  it('devuelve el pedido que retorna el puerto', () => {
+    const { useCase, repoSpy } = crearGetOrder();
+    repoSpy.getOrder.mockReturnValue(of(pedido));
+
+    let resultado: PublicOrder | undefined;
+    useCase.execute('order-abc').subscribe(p => resultado = p);
+
+    expect(resultado).toEqual(pedido);
+  });
+
+  it('propaga OrderNotFoundError del puerto', () => {
+    const { useCase, repoSpy } = crearGetOrder();
+    repoSpy.getOrder.mockReturnValue(throwError(() => new OrderNotFoundError()));
+
+    let capturado: unknown;
+    useCase.execute('order-abc').subscribe({ error: e => capturado = e });
+
+    expect(capturado).toBeInstanceOf(OrderNotFoundError);
+  });
+
+  it('propaga OrderForbiddenError del puerto', () => {
+    const { useCase, repoSpy } = crearGetOrder();
+    repoSpy.getOrder.mockReturnValue(throwError(() => new OrderForbiddenError()));
+
+    let capturado: unknown;
+    useCase.execute('order-abc').subscribe({ error: e => capturado = e });
+
+    expect(capturado).toBeInstanceOf(OrderForbiddenError);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ConfirmOrderUseCase
+// ─────────────────────────────────────────────────────────────────────────────
+
+function crearConfirmOrder() {
+  const repoSpy = createSpyObj<OrderRepositoryPort>('OrderRepositoryPort', [
+    'listOrders',
+    'createOrder',
+    'getOrder',
+    'confirmOrder'
+  ]);
+  TestBed.configureTestingModule({
+    providers: [
+      ConfirmOrderUseCase,
+      { provide: ORDER_REPOSITORY, useValue: repoSpy }
+    ]
+  });
+  return { useCase: TestBed.inject(ConfirmOrderUseCase), repoSpy };
+}
+
+describe('ConfirmOrderUseCase', () => {
+  const pedidoConfirmado: PublicOrder = {
+    id: 'order-abc',
+    code: 'ORD-001',
+    status: 'confirmed',
+    confirmedAt: '2024-01-01T10:00:00Z',
+    items: [],
+    total: 0,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T10:00:00Z'
+  };
+
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('llama al puerto con el id dado', () => {
+    const { useCase, repoSpy } = crearConfirmOrder();
+    repoSpy.confirmOrder.mockReturnValue(of(pedidoConfirmado));
+
+    useCase.execute('order-abc').subscribe();
+
+    expect(repoSpy.confirmOrder).toHaveBeenCalledWith('order-abc');
+  });
+
+  it('devuelve el pedido confirmado que retorna el puerto', () => {
+    const { useCase, repoSpy } = crearConfirmOrder();
+    repoSpy.confirmOrder.mockReturnValue(of(pedidoConfirmado));
+
+    let resultado: PublicOrder | undefined;
+    useCase.execute('order-abc').subscribe(p => resultado = p);
+
+    expect(resultado).toEqual(pedidoConfirmado);
+  });
+
+  it('propaga InsufficientStockError del puerto', () => {
+    const { useCase, repoSpy } = crearConfirmOrder();
+    const error = new InsufficientStockError([{ productId: 'p1', requested: 5, available: 2 }]);
+    repoSpy.confirmOrder.mockReturnValue(throwError(() => error));
+
+    let capturado: unknown;
+    useCase.execute('order-abc').subscribe({ error: e => capturado = e });
+
+    expect(capturado).toBeInstanceOf(InsufficientStockError);
+  });
+
+  it('propaga OrderForbiddenError del puerto', () => {
+    const { useCase, repoSpy } = crearConfirmOrder();
+    repoSpy.confirmOrder.mockReturnValue(throwError(() => new OrderForbiddenError()));
+
+    let capturado: unknown;
+    useCase.execute('order-abc').subscribe({ error: e => capturado = e });
+
+    expect(capturado).toBeInstanceOf(OrderForbiddenError);
+  });
+
+  it('propaga OrderNotFoundError del puerto', () => {
+    const { useCase, repoSpy } = crearConfirmOrder();
+    repoSpy.confirmOrder.mockReturnValue(throwError(() => new OrderNotFoundError()));
+
+    let capturado: unknown;
+    useCase.execute('order-abc').subscribe({ error: e => capturado = e });
+
+    expect(capturado).toBeInstanceOf(OrderNotFoundError);
+  });
+});

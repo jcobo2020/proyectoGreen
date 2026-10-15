@@ -7,6 +7,7 @@ import {
   OrderForbiddenError,
   OrderInfrastructureError,
   OrderNotFoundError,
+  OrderNotPendingError,
   OrderUnauthorizedError
 } from '../domain/errors/order.errors';
 
@@ -281,6 +282,259 @@ describe('HttpOrderRepository · createOrder', () => {
 
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('409'));
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('/api/orders'));
+    httpMock.verify();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// getOrder — GET /api/orders/:id
+// ─────────────────────────────────────────────────────────────────────────────
+
+const pedidoDetalle: PublicOrder = {
+  id: 'abc123',
+  code: 'ORD-001',
+  status: 'pending_confirmation',
+  items: [{ productId: 'p1', sku: 'SKU-01', name: 'Prod A', unitPrice: 10, quantity: 2, lineTotal: 20 }],
+  total: 20,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z'
+};
+
+describe('HttpOrderRepository · getOrder', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    TestBed.resetTestingModule();
+  });
+
+  it('200 → devuelve el pedido', () => {
+    const { repo, httpMock } = crear();
+    let resultado: unknown;
+    repo.getOrder('abc123').subscribe(r => resultado = r);
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders/abc123') && r.method === 'GET');
+    req.flush(pedidoDetalle);
+
+    expect(resultado).toEqual(pedidoDetalle);
+    httpMock.verify();
+  });
+
+  it('400 → InvalidOrderInputError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.getOrder('bad-id').subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders/bad-id'));
+    req.flush({ code: 'INVALID_ORDER_ID', message: 'id inválido' }, { status: 400, statusText: 'Bad Request' });
+
+    expect(error).toBeInstanceOf(InvalidOrderInputError);
+    httpMock.verify();
+  });
+
+  it('401 → OrderUnauthorizedError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.getOrder('abc123').subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders/abc123'));
+    req.flush({ code: 'UNAUTHORIZED', message: 'Sin token' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(error).toBeInstanceOf(OrderUnauthorizedError);
+    httpMock.verify();
+  });
+
+  it('403 → OrderForbiddenError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.getOrder('abc123').subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders/abc123'));
+    req.flush({ code: 'ORDER_FORBIDDEN', message: 'Sin permiso' }, { status: 403, statusText: 'Forbidden' });
+
+    expect(error).toBeInstanceOf(OrderForbiddenError);
+    httpMock.verify();
+  });
+
+  it('404 → OrderNotFoundError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.getOrder('abc123').subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders/abc123'));
+    req.flush({ code: 'ORDER_NOT_FOUND', message: 'No existe' }, { status: 404, statusText: 'Not Found' });
+
+    expect(error).toBeInstanceOf(OrderNotFoundError);
+    httpMock.verify();
+  });
+
+  it('500 → OrderInfrastructureError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.getOrder('abc123').subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders/abc123'));
+    req.flush({ code: 'INTERNAL_ERROR', message: 'Error interno' }, { status: 500, statusText: 'Internal Server Error' });
+
+    expect(error).toBeInstanceOf(OrderInfrastructureError);
+    httpMock.verify();
+  });
+
+  it('registra en consola la ruta y el código (R4-OBS-1)', () => {
+    const { repo, httpMock } = crear();
+    repo.getOrder('abc123').subscribe({ error: () => {} });
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders/abc123'));
+    req.flush({}, { status: 403, statusText: 'Forbidden' });
+
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('403'));
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('/api/orders/abc123'));
+    httpMock.verify();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// confirmOrder — POST /api/orders/:id/confirm
+// ─────────────────────────────────────────────────────────────────────────────
+
+const pedidoConfirmado: PublicOrder = {
+  id: 'abc123',
+  code: 'ORD-001',
+  status: 'confirmed',
+  confirmedAt: '2024-01-01T10:00:00Z',
+  items: [{ productId: 'p1', sku: 'SKU-01', name: 'Prod A', unitPrice: 10, quantity: 2, lineTotal: 20 }],
+  total: 20,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T10:00:00Z'
+};
+
+describe('HttpOrderRepository · confirmOrder', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    TestBed.resetTestingModule();
+  });
+
+  it('200 → devuelve el pedido confirmado', () => {
+    const { repo, httpMock } = crear();
+    let resultado: unknown;
+    repo.confirmOrder('abc123').subscribe(r => resultado = r);
+
+    const req = httpMock.expectOne(r =>
+      r.url.includes('/api/orders/abc123/confirm') && r.method === 'POST'
+    );
+    req.flush(pedidoConfirmado, { status: 200, statusText: 'OK' });
+
+    expect(resultado).toEqual(pedidoConfirmado);
+    httpMock.verify();
+  });
+
+  it('400 → InvalidOrderInputError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.confirmOrder('bad-id').subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/confirm'));
+    req.flush({ code: 'INVALID_ORDER_ID', message: 'id inválido' }, { status: 400, statusText: 'Bad Request' });
+
+    expect(error).toBeInstanceOf(InvalidOrderInputError);
+    httpMock.verify();
+  });
+
+  it('401 → OrderUnauthorizedError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.confirmOrder('abc123').subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/confirm'));
+    req.flush({ code: 'UNAUTHORIZED', message: 'Sin token' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(error).toBeInstanceOf(OrderUnauthorizedError);
+    httpMock.verify();
+  });
+
+  it('403 → OrderForbiddenError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.confirmOrder('abc123').subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/confirm'));
+    req.flush({ code: 'ORDER_FORBIDDEN', message: 'Sin permiso' }, { status: 403, statusText: 'Forbidden' });
+
+    expect(error).toBeInstanceOf(OrderForbiddenError);
+    httpMock.verify();
+  });
+
+  it('404 → OrderNotFoundError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.confirmOrder('abc123').subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/confirm'));
+    req.flush({ code: 'ORDER_NOT_FOUND', message: 'No existe' }, { status: 404, statusText: 'Not Found' });
+
+    expect(error).toBeInstanceOf(OrderNotFoundError);
+    httpMock.verify();
+  });
+
+  it('409 con ORDER_NOT_PENDING → OrderNotPendingError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.confirmOrder('abc123').subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/confirm'));
+    req.flush(
+      { code: 'ORDER_NOT_PENDING', message: 'El pedido no está en estado pendiente' },
+      { status: 409, statusText: 'Conflict' }
+    );
+
+    expect(error).toBeInstanceOf(OrderNotPendingError);
+    httpMock.verify();
+  });
+
+  it('409 con INSUFFICIENT_STOCK → InsufficientStockError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.confirmOrder('abc123').subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/confirm'));
+    req.flush(
+      { code: 'INSUFFICIENT_STOCK', message: 'Sin stock', details: [{ productId: 'p1', requested: 5, available: 2 }] },
+      { status: 409, statusText: 'Conflict' }
+    );
+
+    expect(error).toBeInstanceOf(InsufficientStockError);
+    const stockErr = error as InsufficientStockError;
+    expect(stockErr.details[0].available).toBe(2);
+    httpMock.verify();
+  });
+
+  it('500 → OrderInfrastructureError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.confirmOrder('abc123').subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/confirm'));
+    req.flush({ code: 'INTERNAL_ERROR', message: 'Error interno' }, { status: 500, statusText: 'Internal Server Error' });
+
+    expect(error).toBeInstanceOf(OrderInfrastructureError);
+    httpMock.verify();
+  });
+
+  it('registra en consola la ruta y el código (R4-OBS-1)', () => {
+    const { repo, httpMock } = crear();
+    repo.confirmOrder('abc123').subscribe({ error: () => {} });
+
+    const req = httpMock.expectOne(r => r.url.includes('/confirm'));
+    req.flush({}, { status: 409, statusText: 'Conflict' });
+
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('409'));
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('/api/orders/abc123/confirm'));
     httpMock.verify();
   });
 });

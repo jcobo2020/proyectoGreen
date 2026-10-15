@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 5,
+  "workItemCode": "WI-ORD-UX-003",
+  "summary": "Implementada la pantalla /orders/:id/confirm con todos sus estados declarados (loading, data, error, forbidden, not-found). Se añadieron GetOrderUseCase y ConfirmOrderUseCase, los métodos getOrder y confirmOrder al puerto y al repositorio HTTP, y el componente OrderConfirmComponent con su spec. La ruta ':id/confirm' se integró en orders.routes.ts después de 'new'. En esta reparación (ronda 1→2) se corrigió el test de R4-PRUEBAS-6: ahora usa un Subject sin emitir para que confirmando() permanezca true de forma natural durante la petición en vuelo, en lugar de forzar la señal manualmente.",
+  "criteria": [
+    {
+      "id": "AC-02",
+      "status": "covered",
+      "note": "Tras confirmar, el componente actualiza la señal order con el pedido confirmado (status=confirmed). El template oculta el botón '@if (order()!.status !== confirmed)' y muestra el aviso de éxito con el código. Tests: 'tras confirmar, el botón desaparece' y 'muestra el aviso de éxito con el código del pedido'."
+    },
+    {
+      "id": "AC-04",
+      "status": "covered",
+      "note": "403 → viewState 'forbidden' (AC-04 forbidden). 404 → viewState 'not-found' (AC-04 not-found). Ambos se muestran sin pintar el contenido del pedido. Tests: 'al cargar: pasa al estado forbidden', 'al cargar: pasa al estado not-found'."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R4-ARQ-1",
+      "status": "no_aplica",
+      "evidencia": "El frontend ya existía antes de este WI."
+    },
+    {
+      "id": "R4-ARQ-2",
+      "status": "cumple",
+      "evidencia": "orders.routes.ts:40-44 · la ruta ':id/confirm' está declarada con loadComponent después de 'new'. orders.routes.spec.ts · 'existe la ruta :id/confirm para OrderConfirmComponent' y 'loadComponent de :id/confirm resuelve a OrderConfirmComponent'."
+    },
+    {
+      "id": "R4-ARQ-3",
+      "status": "no_aplica",
+      "evidencia": "Excepción ya implementada en WIs anteriores. Este WI reutiliza el mismo patrón (ordersSessionInterceptor)."
+    },
+    {
+      "id": "R4-ARQ-4",
+      "status": "cumple",
+      "evidencia": "app.routes.server.ts:9-12 · 'orders/**' usa RenderMode.Client, que ya cubre /orders/:id/confirm. app.routes.server.spec.ts."
+    },
+    {
+      "id": "R4-ARQ-5",
+      "status": "no_aplica",
+      "evidencia": "Token en sessionStorage implementado en jwtInterceptor de WIs anteriores."
+    },
+    {
+      "id": "R4-ARQ-6",
+      "status": "no_aplica",
+      "evidencia": "HttpClient propio con [jwtInterceptor, ordersSessionInterceptor] ya declarado en orders.routes.ts de WIs anteriores."
+    },
+    {
+      "id": "R4-PRUEBAS-1",
+      "status": "cumple",
+      "evidencia": "order-confirm.component.spec.ts (25 tests), order.use-cases.spec.ts (GetOrderUseCase, ConfirmOrderUseCase), http-order.repository.spec.ts (getOrder, confirmOrder). Todos con Vitest."
+    },
+    {
+      "id": "R4-PRUEBAS-2",
+      "status": "cumple",
+      "evidencia": "order-confirm.component.spec.ts · estado loading, data (pending+confirmed), error, forbidden, not-found, stock-insuficiente (409)."
+    },
+    {
+      "id": "R4-PRUEBAS-3",
+      "status": "cumple",
+      "evidencia": "http-order.repository.spec.ts · getOrder: 400/401/403/404/500. confirmOrder: 200/400/401/403/404/409/500."
+    },
+    {
+      "id": "R4-PRUEBAS-4",
+      "status": "cumple",
+      "evidencia": "order.use-cases.spec.ts · GetOrderUseCase (4 tests) y ConfirmOrderUseCase (5 tests) llaman al puerto y propagan errores."
+    },
+    {
+      "id": "R4-PRUEBAS-5",
+      "status": "no_aplica",
+      "evidencia": "R4-PRUEBAS-5 es la navegación tras crear pedido (201 → /orders/:id/confirm), cubierto en WI-ORD-UX-002."
+    },
+    {
+      "id": "R4-PRUEBAS-6",
+      "status": "cumple",
+      "evidencia": "order-confirm.component.spec.ts · 'una segunda llamada a confirmar() mientras está en vuelo no dispara otra petición'. El test usa un Subject sin emitir para que confirmando() permanezca true de forma natural (petición realmente en vuelo), y verifica que execute solo se llamó 1 vez."
+    },
+    {
+      "id": "R4-PRUEBAS-7",
+      "status": "no_aplica",
+      "evidencia": "R4-PRUEBAS-7 es sobre el resumen lateral del catálogo (order-new). No aplica a /orders/:id/confirm."
+    },
+    {
+      "id": "R4-SEG-1",
+      "status": "no_aplica",
+      "evidencia": "El token viaja solo en Authorization header, implementado en jwtInterceptor de WIs anteriores."
+    },
+    {
+      "id": "R4-SEG-2",
+      "status": "no_aplica",
+      "evidencia": "URL del proveedor y base de API ya por configuración en environment.ts desde WIs anteriores."
+    },
+    {
+      "id": "R4-SEG-3",
+      "status": "cumple",
+      "evidencia": "order-confirm.component.ts · el componente muestra exactamente los datos que devuelve el servidor (order signal). No calcula precios, totales ni disponibilidad."
+    },
+    {
+      "id": "R4-REND-1",
+      "status": "no_aplica",
+      "evidencia": "R4-REND-1 es sobre paginación del catálogo y listado. /orders/:id/confirm solo carga un pedido."
+    },
+    {
+      "id": "R4-REND-2",
+      "status": "no_aplica",
+      "evidencia": "R4-REND-2 es sobre el total estimado en el formulario de creación. No aplica a la pantalla de confirmación."
+    },
+    {
+      "id": "R4-OBS-1",
+      "status": "cumple",
+      "evidencia": "http-order.repository.ts · traducir/traducirConfirmar: console.error con status y path, sin token ni datos del cliente. http-order.repository.spec.ts · 'registra en consola la ruta y el código (R4-OBS-1)'."
+    },
+    {
+      "id": "R4-OBS-2",
+      "status": "cumple",
+      "evidencia": "order-confirm.component.ts:107,112,118,123 · order_confirm_failed con código de error y ruta. order-confirm.component.spec.ts · 'registra order_confirm_failed con código ORDER_FORBIDDEN', 'ORDER_NOT_FOUND', 'INSUFFICIENT_STOCK'."
+    }
+  ],
+  "testsRun": [
+    { "name": "src/app/@core/guards/auth.guard.spec.ts", "result": "pass" },
+    { "name": "src/app/@core/interceptors/error.interceptor.spec.ts", "result": "pass" },
+    { "name": "src/app/@core/interceptors/jwt.interceptor.spec.ts", "result": "pass" },
+    { "name": "src/app/app.config.spec.ts", "result": "pass" },
+    { "name": "src/app/app.config.server.spec.ts", "result": "pass" },
+    { "name": "src/app/app.routes.spec.ts", "result": "pass" },
+    { "name": "src/app/app.routes.server.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/application/order.use-cases.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/infrastructure/http-order.repository.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/infrastructure/http-product.repository.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/infrastructure/session.interceptor.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/orders.routes.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/ui/order-confirm/order-confirm.component.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/ui/order-list/order-list.component.spec.ts", "result": "pass" },
+    { "name": "src/app/feature/orders/ui/order-new/order-new.component.spec.ts", "result": "pass" }
+  ],
+  "evidence": [
+    {
+      "type": "coverage_report",
+      "ref": "coverage/lcov-report/index.html",
+      "note": "Cobertura global 92.14% (sentencias). Ficheros tocados por este WI: 87.03% ≥ 80% exigido. Medido en la corrida de ng test (168 tests, 15 ficheros spec, todos en verde)."
+    }
+  ],
+  "deviations": [
+    {
+      "description": "R4-PRUEBAS-6 — El test de doble pulsación anterior usaba un Subject síncrono (of(...)) y forzaba artificialmente component['confirmando'].set(true) antes del segundo clic, en lugar de demostrar que la guardia funciona durante una petición realmente en vuelo.",
+      "reason": "Corregido en esta ronda: el test ahora usa un Subject que nunca emite para mantener confirmando() === true de forma natural. La guardia en order-confirm.component.ts ya era correcta; solo el test era deficiente."
+    }
+  ],
+  "dodSelfAssessment": {
+    "met": true,
+    "blockers": []
+  },
+  "clarificationRequests": []
+}

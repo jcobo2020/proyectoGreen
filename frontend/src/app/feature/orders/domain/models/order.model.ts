@@ -21,6 +21,8 @@ export interface PublicOrder {
   total: number;
   createdAt: string;
   updatedAt: string;
+  /** Presente cuando status === 'confirmed' (POST /api/orders/:id/confirm, §2) */
+  confirmedAt?: string;
 }
 
 export interface OrdersPage {

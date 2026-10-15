@@ -1,0 +1,86 @@
+/* Estilos de la pantalla /orders/:id/confirm */
+.container {
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.loading,
+.error,
+.forbidden,
+.not-found {
+  text-align: center;
+  padding: 2rem;
+}
+
+.error {
+  color: #c0392b;
+}
+
+.success-banner {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  color: #155724;
+}
+
+.order-detail {
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.order-detail table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.order-detail th,
+.order-detail td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.order-detail th {
+  font-weight: bold;
+  background-color: #f8f9fa;
+}
+
+.total-row td {
+  font-weight: bold;
+}
+
+.actions {
+  margin-top: 1rem;
+}
+
+button {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-confirmar {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-confirmar:not(:disabled):hover {
+  background-color: #0056b3;
+}
+
+.stock-error {
+  color: #c0392b;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}

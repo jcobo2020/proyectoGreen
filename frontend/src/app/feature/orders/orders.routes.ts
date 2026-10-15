@@ -7,7 +7,7 @@ import { ORDER_REPOSITORY } from './domain/ports/order-repository.port';
 import { PRODUCT_REPOSITORY } from './domain/ports/product-repository.port';
 import { HttpOrderRepository } from './infrastructure/http-order.repository';
 import { HttpProductRepository } from './infrastructure/http-product.repository';
-import { ListOrdersUseCase, ListProductsUseCase, CreateOrderUseCase } from './application/order.use-cases';
+import { ListOrdersUseCase, ListProductsUseCase, CreateOrderUseCase, GetOrderUseCase, ConfirmOrderUseCase } from './application/order.use-cases';
 
 /**
  * Rutas de la feature orders (R4-ARQ-2, R4-ARQ-6):
@@ -25,7 +25,9 @@ export const ordersRoutes: Routes = [
       { provide: PRODUCT_REPOSITORY, useClass: HttpProductRepository },
       ListOrdersUseCase,
       ListProductsUseCase,
-      CreateOrderUseCase
+      CreateOrderUseCase,
+      GetOrderUseCase,
+      ConfirmOrderUseCase
     ],
     children: [
       {
@@ -37,6 +39,11 @@ export const ordersRoutes: Routes = [
         path: 'new',
         loadComponent: () =>
           import('./ui/order-new/order-new.component').then(m => m.OrderNewComponent)
+      },
+      {
+        path: ':id/confirm',
+        loadComponent: () =>
+          import('./ui/order-confirm/order-confirm.component').then(m => m.OrderConfirmComponent)
       }
     ]
   }

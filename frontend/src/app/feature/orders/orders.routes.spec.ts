@@ -4,7 +4,7 @@ import { ORDER_REPOSITORY } from './domain/ports/order-repository.port';
 import { PRODUCT_REPOSITORY } from './domain/ports/product-repository.port';
 import { HttpOrderRepository } from './infrastructure/http-order.repository';
 import { HttpProductRepository } from './infrastructure/http-product.repository';
-import { ListOrdersUseCase, ListProductsUseCase, CreateOrderUseCase } from './application/order.use-cases';
+import { ListOrdersUseCase, ListProductsUseCase, CreateOrderUseCase, GetOrderUseCase, ConfirmOrderUseCase } from './application/order.use-cases';
 
 /**
  * Spec de orders.routes.ts (R4-ARQ-2, R4-ARQ-6):
@@ -65,6 +65,18 @@ describe('ordersRoutes (orders.routes.ts)', () => {
     expect(providers).toContain(CreateOrderUseCase);
   });
 
+  it('los providers incluyen GetOrderUseCase', () => {
+    const rutaRaiz = ordersRoutes[0];
+    const providers = rutaRaiz.providers as unknown[];
+    expect(providers).toContain(GetOrderUseCase);
+  });
+
+  it('los providers incluyen ConfirmOrderUseCase', () => {
+    const rutaRaiz = ordersRoutes[0];
+    const providers = rutaRaiz.providers as unknown[];
+    expect(providers).toContain(ConfirmOrderUseCase);
+  });
+
   it('la ruta hija "" carga OrderListComponent con loadComponent (R4-ARQ-2)', () => {
     const rutaRaiz = ordersRoutes[0];
     const rutas = rutaRaiz.children ?? [];
@@ -107,5 +119,21 @@ describe('ordersRoutes (orders.routes.ts)', () => {
     if (idxParam >= 0) {
       expect(idxNew).toBeLessThan(idxParam);
     }
+  });
+
+  it('existe la ruta ":id/confirm" para OrderConfirmComponent (R4-ARQ-2)', () => {
+    const rutaRaiz = ordersRoutes[0];
+    const rutas = rutaRaiz.children ?? [];
+    const rutaConfirm = rutas.find(r => r.path === ':id/confirm');
+    expect(rutaConfirm).toBeDefined();
+    expect(typeof rutaConfirm?.loadComponent).toBe('function');
+  });
+
+  it('loadComponent de ":id/confirm" resuelve a OrderConfirmComponent', async () => {
+    const rutaRaiz = ordersRoutes[0];
+    const rutas = rutaRaiz.children ?? [];
+    const rutaConfirm = rutas.find(r => r.path === ':id/confirm');
+    const componente = await (rutaConfirm?.loadComponent as () => Promise<unknown>)();
+    expect(componente).toBeDefined();
   });
 });

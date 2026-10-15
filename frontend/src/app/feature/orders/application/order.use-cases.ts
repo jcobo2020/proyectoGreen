@@ -43,3 +43,29 @@ export class CreateOrderUseCase {
     return this.repo.createOrder(payload);
   }
 }
+
+/**
+ * Caso de uso: obtener el detalle de un pedido por id.
+ * Usado por /orders/:id/confirm para cargar el pedido antes de confirmarlo (§2).
+ */
+@Injectable()
+export class GetOrderUseCase {
+  private readonly repo = inject(ORDER_REPOSITORY);
+
+  execute(id: string): Observable<PublicOrder> {
+    return this.repo.getOrder(id);
+  }
+}
+
+/**
+ * Caso de uso: confirmar un pedido pendiente.
+ * Envía POST /api/orders/:id/confirm; el backend descuenta el stock (§2).
+ */
+@Injectable()
+export class ConfirmOrderUseCase {
+  private readonly repo = inject(ORDER_REPOSITORY);
+
+  execute(id: string): Observable<PublicOrder> {
+    return this.repo.confirmOrder(id);
+  }
+}

@@ -1,0 +1,103 @@
+<!-- Pantalla /orders/:id/confirm — estados declarados en §2 -->
+
+<!-- Estado: cargando -->
+@if (viewState() === 'loading') {
+  <div class="loading" aria-live="polite" aria-busy="true">
+    <p>Cargando pedido…</p>
+  </div>
+}
+
+<!-- Estado: sin permiso (403) -->
+@if (viewState() === 'forbidden') {
+  <div class="forbidden" role="alert">
+    <h2>Sin permiso</h2>
+    <p>No tienes permiso para acceder a este pedido.</p>
+  </div>
+}
+
+<!-- Estado: no encontrado (404) -->
+@if (viewState() === 'not-found') {
+  <div class="not-found" role="alert">
+    <h2>Pedido no encontrado</h2>
+    <p>El pedido solicitado no existe.</p>
+  </div>
+}
+
+<!-- Estado: error genérico -->
+@if (viewState() === 'error') {
+  <div class="error" role="alert">
+    <h2>Error</h2>
+    <p>{{ errorMessage() }}</p>
+    <button (click)="reintentar()">Reintentar</button>
+  </div>
+}
+
+<!-- Estado: datos (pending_confirmation o confirmed) -->
+@if (viewState() === 'data' && order()) {
+  <div class="container">
+
+    <!-- Aviso de éxito al confirmarse — AC-02 -->
+    @if (order()!.status === 'confirmed') {
+      <div class="success-banner" role="status" aria-live="polite">
+        <strong>¡Pedido confirmado!</strong> Código: <strong>{{ order()!.code }}</strong>
+        @if (order()!.confirmedAt) {
+          · Confirmado el {{ order()!.confirmedAt | date:'dd/MM/yyyy HH:mm' }}
+        }
+      </div>
+    }
+
+    <!-- Stock insuficiente durante la confirmación -->
+    @if (stockError()) {
+      <div class="stock-error" role="alert">
+        {{ stockError() }}
+      </div>
+    }
+
+    <!-- Detalle del pedido -->
+    <div class="order-detail">
+      <h2>Pedido {{ order()!.code }}</h2>
+      <p>Estado: <strong>{{ order()!.status }}</strong></p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>SKU</th>
+            <th>Precio unit.</th>
+            <th>Cant.</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of order()!.items; track item.sku) {
+            <tr>
+              <td>{{ item.name }}</td>
+              <td>{{ item.sku }}</td>
+              <td>{{ item.unitPrice | currency:'EUR' }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>{{ item.lineTotal | currency:'EUR' }}</td>
+            </tr>
+          }
+          <tr class="total-row">
+            <td colspan="4">Total</td>
+            <td>{{ order()!.total | currency:'EUR' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Botón confirmar — solo visible si el pedido está pendiente (AC-02) -->
+    @if (order()!.status !== 'confirmed') {
+      <div class="actions">
+        <button
+          class="btn-confirmar"
+          [disabled]="confirmando()"
+          (click)="confirmar()"
+          aria-label="Confirmar pedido">
+          @if (confirmando()) { Confirmando… } @else { Confirmar pedido }
+        </button>
+      </div>
+    }
+
+  </div>
+}
