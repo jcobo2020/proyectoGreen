@@ -1,0 +1,132 @@
+<!-- Estado: cargando -->
+@if (viewState() === 'loading') {
+  <div class="estado-cargando" role="status">
+    <p>Cargando catálogo de productos...</p>
+  </div>
+}
+
+<!-- Estado: sin permiso -->
+@if (viewState() === 'unauthorized') {
+  <div class="estado-sin-permiso" role="alert">
+    <p>No tienes permiso para acceder a esta página. Redirigiendo al inicio de sesión...</p>
+  </div>
+}
+
+<!-- Estado: error -->
+@if (viewState() === 'error') {
+  <div class="estado-error" role="alert">
+    <p>{{ errorMessage() }}</p>
+    <button (click)="reintentar()">Reintentar</button>
+  </div>
+}
+
+<!-- Estado: con datos -->
+@if (viewState() === 'data') {
+  <div class="orden-nueva">
+    <h1>Nuevo pedido</h1>
+
+    <div class="contenido">
+      <!-- Catálogo de productos -->
+      <div class="catalogo">
+        <h2>Catálogo de productos</h2>
+
+        <table class="tabla-productos">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>SKU</th>
+              <th>Precio unitario</th>
+              <th>Disponible</th>
+              <th>Cantidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (producto of products(); track producto.id) {
+              <tr [class.fila-error-stock]="stockErrors()[producto.id]">
+                <td>{{ producto.name }}</td>
+                <td>{{ producto.sku }}</td>
+                <td>{{ producto.unitPrice | currency:'EUR' }}</td>
+                <td class="disponible">
+                  {{ producto.available }}
+                  @if (stockErrors()[producto.id]) {
+                    <span class="error-stock" role="alert">
+                      (disponible: {{ stockErrors()[producto.id].available }})
+                    </span>
+                  }
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    [attr.aria-label]="'Cantidad de ' + producto.name"
+                    [value]="getQuantity(producto.id)"
+                    min="0"
+                    max="99"
+                    (input)="setQuantity(producto.id, +($any($event.target).value))"
+                  />
+                  @if (stockErrors()[producto.id]) {
+                    <p class="mensaje-error-stock" role="alert">
+                      Stock insuficiente. Disponible: {{ stockErrors()[producto.id].available }}
+                    </p>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <!-- Paginador del catálogo -->
+        @if (totalPages() > 1) {
+          <div class="paginador">
+            <button
+              [disabled]="page() <= 1"
+              (click)="irAPagina(page() - 1)">
+              Anterior
+            </button>
+            <span>Página {{ page() }} de {{ totalPages() }} ({{ totalItems() }} productos)</span>
+            <button
+              [disabled]="page() >= totalPages()"
+              (click)="irAPagina(page() + 1)">
+              Siguiente
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Resumen lateral del pedido -->
+      <div class="resumen-pedido">
+        <h2>Resumen del pedido</h2>
+
+        @if (lineasResumen().length === 0) {
+          <p class="resumen-vacio">Selecciona productos para añadirlos al pedido.</p>
+        } @else {
+          <ul class="lineas-resumen">
+            @for (linea of lineasResumen(); track linea.product.id) {
+              <li>
+                <span>{{ linea.product.name }}</span>
+                <span>× {{ linea.quantity }}</span>
+                <span>{{ linea.lineTotal | currency:'EUR' }}</span>
+              </li>
+            }
+          </ul>
+          <p class="total-estimado">
+            Total estimado: <strong>{{ totalEstimado() | currency:'EUR' }}</strong>
+          </p>
+        }
+
+        <!-- AC-06: botón deshabilitado si alguna cantidad es inválida -->
+        <button
+          class="btn-continuar"
+          [disabled]="continuarDeshabilitado()"
+          (click)="continuar()">
+          Continuar
+        </button>
+
+        @if (continuarDeshabilitado() && lineasResumen().length > 0) {
+          <p class="aviso-validacion" role="alert">
+            Comprueba las cantidades: deben estar entre 1 y 99 y no superar el stock disponible.
+          </p>
+        }
+      </div>
+    </div>
+  </div>
+}

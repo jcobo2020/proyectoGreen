@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
+import { provideRouter } from '@angular/router';
 import { createSpyObj } from '../../../../../testing/spy-obj';
 import { OrderListComponent } from './order-list.component';
 import { ListOrdersUseCase } from '../../application/order.use-cases';
@@ -22,6 +23,7 @@ function crear() {
   TestBed.configureTestingModule({
     imports: [OrderListComponent],
     providers: [
+      provideRouter([]),
       ListOrdersUseCase,
       { provide: ORDER_REPOSITORY, useValue: repoSpy }
     ]
@@ -35,8 +37,8 @@ function crear() {
 const paginaVacia: OrdersPage = { items: [], total: 0, page: 1, pageSize: 20 };
 const paginaConDatos: OrdersPage = {
   items: [
-    { code: 'ORD-001', createdAt: '2024-01-15T10:00:00Z', total: 150.5, status: 'confirmed' },
-    { code: 'ORD-002', createdAt: '2024-01-16T11:00:00Z', total: 200, status: 'pending_confirmation' }
+    { id: 'o1', code: 'ORD-001', createdAt: '2024-01-15T10:00:00Z', updatedAt: '2024-01-15T10:00:00Z', total: 150.5, status: 'confirmed', items: [] },
+    { id: 'o2', code: 'ORD-002', createdAt: '2024-01-16T11:00:00Z', updatedAt: '2024-01-16T11:00:00Z', total: 200, status: 'pending_confirmation', items: [] }
   ],
   total: 2,
   page: 1,
@@ -234,7 +236,7 @@ describe('OrderListComponent', () => {
       const { fixture, repoSpy } = crear();
       // El repositorio devuelve el estado confirmado directamente (el backend lo gestiona)
       const paginaConConfirmado: OrdersPage = {
-        items: [{ code: 'ORD-001', createdAt: '2024-01-15T10:00:00Z', total: 150.5, status: 'confirmed' }],
+        items: [{ id: 'o1', code: 'ORD-001', createdAt: '2024-01-15T10:00:00Z', updatedAt: '2024-01-15T10:00:00Z', total: 150.5, status: 'confirmed', items: [] }],
         total: 1, page: 1, pageSize: 20
       };
       repoSpy.listOrders.mockReturnValue(of(paginaConConfirmado));

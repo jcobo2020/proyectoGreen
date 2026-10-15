@@ -2,14 +2,16 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { OrdersPage } from '../domain/models/order.model';
+import { OrdersPage, PublicOrder, CreateOrderPayload } from '../domain/models/order.model';
 import { OrderRepositoryPort } from '../domain/ports/order-repository.port';
 import {
   InvalidOrderInputError,
   OrderForbiddenError,
   OrderInfrastructureError,
   OrderNotFoundError,
-  OrderUnauthorizedError
+  OrderUnauthorizedError,
+  InsufficientStockError,
+  ProductNotFoundError
 } from '../domain/errors/order.errors';
 
 @Injectable()
@@ -22,6 +24,13 @@ export class HttpOrderRepository implements OrderRepositoryPort {
     return this.http
       .get<OrdersPage>(url, { params: { page: String(page), pageSize: String(pageSize) } })
       .pipe(catchError((err) => throwError(() => this.traducir(err, url))));
+  }
+
+  createOrder(payload: CreateOrderPayload): Observable<PublicOrder> {
+    const url = `${this.base}/api/orders`;
+    return this.http
+      .post<PublicOrder>(url, payload)
+      .pipe(catchError((err) => throwError(() => this.traducirCrear(err, url))));
   }
 
   private traducir(err: HttpErrorResponse, path: string): Error {
@@ -37,6 +46,24 @@ export class HttpOrderRepository implements OrderRepositoryPort {
         return new OrderForbiddenError();
       case 404:
         return new OrderNotFoundError();
+      default:
+        return new OrderInfrastructureError(err.status, path);
+    }
+  }
+
+  private traducirCrear(err: HttpErrorResponse, path: string): Error {
+    // R4-OBS-1: registrar error sin token ni datos del cliente
+    console.error(`[HTTP Error] ${err.status} · ${path}`);
+
+    switch (err.status) {
+      case 400:
+        return new InvalidOrderInputError(err.error?.details);
+      case 401:
+        return new OrderUnauthorizedError();
+      case 404:
+        return new ProductNotFoundError(err.error?.details);
+      case 409:
+        return new InsufficientStockError(err.error?.details ?? []);
       default:
         return new OrderInfrastructureError(err.status, path);
     }

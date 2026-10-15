@@ -38,7 +38,7 @@ describe('HttpOrderRepository', () => {
     it('devuelve la página de pedidos del servidor', () => {
       const { repo, httpMock } = crear();
       const respuesta = {
-        items: [{ code: 'ORD-001', createdAt: '2024-01-01T00:00:00Z', total: 100, status: 'confirmed' }],
+        items: [{ id: 'o1', code: 'ORD-001', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z', total: 100, status: 'confirmed', items: [] }],
         total: 1, page: 1, pageSize: 20
       };
 
@@ -146,5 +146,141 @@ describe('HttpOrderRepository', () => {
       );
       httpMock.verify();
     });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// createOrder
+// ─────────────────────────────────────────────────────────────────────────────
+
+import {
+  InsufficientStockError,
+  ProductNotFoundError
+} from '../domain/errors/order.errors';
+import { CreateOrderPayload, PublicOrder } from '../domain/models/order.model';
+
+describe('HttpOrderRepository · createOrder', () => {
+  const payload: CreateOrderPayload = {
+    items: [{ productId: 'prod-001', quantity: 2 }]
+  };
+
+  const pedidoCreado: PublicOrder = {
+    id: 'order-abc',
+    code: 'ORD-001',
+    status: 'pending_confirmation',
+    items: [{ productId: 'prod-001', sku: 'SKU-001', name: 'Prod A', unitPrice: 10, quantity: 2, lineTotal: 20 }],
+    total: 20,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  };
+
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    TestBed.resetTestingModule();
+  });
+
+  it('201 → devuelve el pedido creado', () => {
+    const { repo, httpMock } = crear();
+    let resultado: unknown;
+    repo.createOrder(payload).subscribe(r => resultado = r);
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders') && r.method === 'POST');
+    req.flush(pedidoCreado, { status: 201, statusText: 'Created' });
+
+    expect(resultado).toEqual(pedidoCreado);
+    httpMock.verify();
+  });
+
+  it('400 → InvalidOrderInputError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.createOrder(payload).subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders') && r.method === 'POST');
+    req.flush(
+      { code: 'VALIDATION_ERROR', message: 'inválido', details: [] },
+      { status: 400, statusText: 'Bad Request' }
+    );
+
+    expect(error).toBeInstanceOf(InvalidOrderInputError);
+    httpMock.verify();
+  });
+
+  it('401 → OrderUnauthorizedError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.createOrder(payload).subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders') && r.method === 'POST');
+    req.flush(
+      { code: 'UNAUTHORIZED', message: 'Sin token' },
+      { status: 401, statusText: 'Unauthorized' }
+    );
+
+    expect(error).toBeInstanceOf(OrderUnauthorizedError);
+    httpMock.verify();
+  });
+
+  it('404 → ProductNotFoundError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.createOrder(payload).subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders') && r.method === 'POST');
+    req.flush(
+      { code: 'PRODUCT_NOT_FOUND', message: 'No existe', details: [{ productId: 'prod-001' }] },
+      { status: 404, statusText: 'Not Found' }
+    );
+
+    expect(error).toBeInstanceOf(ProductNotFoundError);
+    httpMock.verify();
+  });
+
+  it('409 → InsufficientStockError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.createOrder(payload).subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders') && r.method === 'POST');
+    req.flush(
+      { code: 'INSUFFICIENT_STOCK', message: 'Stock insuficiente', details: [{ productId: 'prod-001', requested: 2, available: 1 }] },
+      { status: 409, statusText: 'Conflict' }
+    );
+
+    expect(error).toBeInstanceOf(InsufficientStockError);
+    const stockError = error as InsufficientStockError;
+    expect(stockError.details[0].available).toBe(1);
+    httpMock.verify();
+  });
+
+  it('500 → OrderInfrastructureError', () => {
+    const { repo, httpMock } = crear();
+    let error: unknown;
+    repo.createOrder(payload).subscribe({ error: e => error = e });
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders') && r.method === 'POST');
+    req.flush(
+      { code: 'INTERNAL_ERROR', message: 'Error interno' },
+      { status: 500, statusText: 'Internal Server Error' }
+    );
+
+    expect(error).toBeInstanceOf(OrderInfrastructureError);
+    httpMock.verify();
+  });
+
+  it('registra en consola el error con ruta y código (R4-OBS-1)', () => {
+    const { repo, httpMock } = crear();
+    repo.createOrder(payload).subscribe({ error: () => {} });
+
+    const req = httpMock.expectOne(r => r.url.includes('/api/orders') && r.method === 'POST');
+    req.flush({}, { status: 409, statusText: 'Conflict' });
+
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('409'));
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('/api/orders'));
+    httpMock.verify();
   });
 });

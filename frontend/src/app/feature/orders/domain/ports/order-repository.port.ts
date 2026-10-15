@@ -1,6 +1,6 @@
 import { InjectionToken } from '@angular/core';
 import { Observable } from 'rxjs';
-import { OrdersPage } from '../models/order.model';
+import { OrdersPage, PublicOrder, CreateOrderPayload } from '../models/order.model';
 
 /**
  * Puerto del repositorio de pedidos.
@@ -8,6 +8,7 @@ import { OrdersPage } from '../models/order.model';
  */
 export interface OrderRepositoryPort {
   listOrders(page: number, pageSize: number): Observable<OrdersPage>;
+  createOrder(payload: CreateOrderPayload): Observable<PublicOrder>;
 }
 
 export const ORDER_REPOSITORY = new InjectionToken<OrderRepositoryPort>(

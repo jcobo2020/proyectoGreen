@@ -47,3 +47,19 @@ export class OrderInfrastructureError extends Error {
     super(`Error de infraestructura ${status} en ${path}`);
   }
 }
+
+export class InsufficientStockError extends Error {
+  override readonly name = 'InsufficientStockError';
+  constructor(
+    public readonly details: Array<{ productId: string; requested: number; available: number }>
+  ) {
+    super('Stock insuficiente para uno o más productos');
+  }
+}
+
+export class ProductNotFoundError extends Error {
+  override readonly name = 'ProductNotFoundError';
+  constructor(public readonly details?: Array<{ productId: string }>) {
+    super('Uno o más productos no existen o no están activos');
+  }
+}

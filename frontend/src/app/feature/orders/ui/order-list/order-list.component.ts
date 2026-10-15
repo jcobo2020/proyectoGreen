@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ListOrdersUseCase } from '../../application/order.use-cases';
 import { PublicOrder, OrdersPage } from '../../domain/models/order.model';
 import {
@@ -14,7 +15,7 @@ type ViewState = 'loading' | 'empty' | 'error' | 'unauthorized' | 'data';
 @Component({
   selector: 'app-order-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './order-list.component.html',
   styleUrl: './order-list.component.css'
 })

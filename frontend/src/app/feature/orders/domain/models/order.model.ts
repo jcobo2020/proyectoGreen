@@ -1,14 +1,26 @@
 /**
  * Modelo de dominio para un pedido público.
- * Solo contiene los campos que devuelve GET /api/orders (§2).
+ * Contiene los campos que devuelven GET /api/orders y POST /api/orders (§2).
  */
 export type OrderStatus = 'pending_confirmation' | 'confirmed' | 'cancelled';
 
+export interface OrderLine {
+  productId: string;
+  sku: string;
+  name: string;
+  unitPrice: number;
+  quantity: number;
+  lineTotal: number;
+}
+
 export interface PublicOrder {
+  id: string;
   code: string;
-  createdAt: string;
-  total: number;
   status: OrderStatus;
+  items: OrderLine[];
+  total: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface OrdersPage {
@@ -17,3 +29,11 @@ export interface OrdersPage {
   page: number;
   pageSize: number;
 }
+
+/**
+ * Payload para crear un pedido (POST /api/orders).
+ */
+export interface CreateOrderPayload {
+  items: Array<{ productId: string; quantity: number }>;
+}
+
