@@ -2,15 +2,13 @@
 
 ## Qué pide la spec
 
-El endpoint [ancla:endpoint GET /api/products] sirve el catálogo de productos activos con su precio y su disponibilidad [spec:endpoint GET /api/products]. Su propósito es que el frontend de GREEN-ORD-UX-001 (pantalla `/orders/new`) pueda presentar al cliente qué productos puede pedir y en qué cantidad antes de componer un pedido [spec:acceptance_criteria AC-06].
+[ancla:endpoint GET /api/products] es el primer punto de contacto del usuario con el backend de pedidos de GREEN-H2: antes de componer un pedido en la pantalla `/orders/new`, la interfaz necesita conocer qué productos están disponibles y a qué precio. [spec:endpoint GET /api/products] define ese contrato: devolver el catálogo de productos activos con su precio y su disponibilidad, protegido por JWT. Cubre [spec:acceptance_criteria AC-06] y [spec:acceptance_criteria AC-07], y da soporte a [ancla:user_story HU-01].
 
-La spec delimita el alcance de este endpoint con precisión: proporciona datos de lectura pura sobre la entidad [ancla:entity Product] [spec:entidad Product] — campos `_id`, `sku`, `name`, `unitPrice`, `available` y `active` — sin que el cliente pueda influir en ninguno de esos valores. Los precios los calcula siempre el servidor [spec:business_rule RN-05]; el catálogo y su gestión están fuera de alcance de esta API (son responsabilidad de otro sistema). La disponibilidad que devuelve este endpoint es informativa: la comprobación vinculante ocurre en el momento de crear y confirmar el pedido [spec:business_rule RN-03] [spec:business_rule RN-04].
+La spec prohíbe que el cliente envíe precios ([spec:business_rule RN-05]): es el servidor quien los sirve desde el catálogo. La disponibilidad que devuelve este endpoint es informativa; la comprobación bloqueante ocurre al crear y confirmar pedidos ([spec:business_rule RN-03] y [spec:business_rule RN-04]), que corresponden a otros work items. Sin token válido, el endpoint responde 401 UNAUTHORIZED ([spec:business_rule RN-06]).
 
-El acceso requiere un JWT válido en todos los endpoints sin excepción [spec:business_rule RN-06], y este no es distinto [spec:acceptance_criteria AC-07]. Sin token, o con un token sin `sub` o sin `exp`, la respuesta es 401 [spec:error UNAUTHORIZED].
+La spec también exige que se rechacen los parámetros de query desconocidos con 400 VALIDATION_ERROR en todos los endpoints, GET /api/products incluido (restricción `security` de la spec).
 
-Los endpoints de pedidos (POST /api/orders, GET /api/orders, GET /api/orders/:id, POST /api/orders/:id/confirm) y su documentación son responsabilidad de [wi:WI-ORD-API-005] y [wi:WI-ORD-API-006] respectivamente; no se describen aquí.
-
----
+Fuera del alcance de este work item quedan los endpoints de pedidos ([spec:endpoint POST /api/orders], [spec:endpoint GET /api/orders], [spec:endpoint GET /api/orders/:id], [spec:endpoint POST /api/orders/:id/confirm]), documentados en [wi:WI-ORD-API-006].
 
 ## El trabajo y su historia
 
@@ -20,10 +18,12 @@ Los endpoints de pedidos (POST /api/orders, GET /api/orders, GET /api/orders/:id
 | WI-ORD-API-002 | [Documentation] Orders — documento técnico | Documentación | Cancelado | sin asignar |
 | WI-ORD-API-003 | [Backend] Products — implementar endpoints | Backend | Cancelado | Jorge Developer |
 | WI-ORD-API-004 | [Documentation] Products — documento técnico | Documentación | Cancelado | sin asignar |
-| WI-ORD-API-005 | [Backend] Orders — implementar endpoints | Backend | Generado | sin asignar |
-| WI-ORD-API-006 | [Documentation] Orders — documento técnico | Documentación | Generado | sin asignar |
+| WI-ORD-API-005 | [Backend] Orders — implementar endpoints | Backend | Cerrado | Jorge Developer |
+| WI-ORD-API-006 | [Documentation] Orders — documento técnico | Documentación | Cerrado | Jorge Developer |
 | WI-ORD-API-007 | [Backend] Products — implementar endpoints | Backend | Cerrado | Jorge Developer |
-| WI-ORD-API-008 | [Documentation] Products — documento técnico | Documentación | Asignado | Jorge Developer |
+| WI-ORD-API-008 | [Documentation] Products — documento técnico | Documentación | Retrabajo | Jorge Developer |
+| WI-ORD-API-009 | [Backend] Products — implementar endpoints | Backend | Cancelado | sin asignar |
+| WI-ORD-API-010 | [Backend] Products — implementar endpoints · evolución a la v9 | Backend | Validado | Jorge Developer |
 
 | fecha y hora (UTC) | work item | qué pasó | quién | motivo |
 |---|---|---|---|---|
@@ -59,17 +59,92 @@ Los endpoints de pedidos (POST /api/orders, GET /api/orders, GET /api/orders/:id
 | 2026-10-13 03:04 | WI-ORD-API-007 | «MR Abierto · en revisión» → «Validado» | Administrador Global | — |
 | 2026-10-13 03:05 | WI-ORD-API-007 | «Validado» → «Mergeado» | Administrador Global | sugerencia de git aceptada |
 | 2026-10-13 03:05 | WI-ORD-API-007 | «Mergeado» → «Cerrado» | Administrador Global | — |
+| 2026-10-13 03:24 | WI-ORD-API-008 | PR #2 abierto | git | WI-ORD-API-008 · documento técnico |
 | 2026-10-13 11:38 | WI-ORD-API-008 | «Generado» → «Contexto Listo» | Administrador Global | context pack preparado |
 | 2026-10-13 11:38 | WI-ORD-API-008 | «Contexto Listo» → «Aprobado» | Administrador Global | — |
 | 2026-10-13 11:39 | WI-ORD-API-008 | «Aprobado» → «Asignado» | Administrador Global | asignación de work item |
+| 2026-10-13 11:40 | WI-ORD-API-008 | «Asignado» → «En Progreso» | Administrador Global | Documento compuesto por el Technical Writer |
+| 2026-10-13 12:37 | WI-ORD-API-005 | «Generado» → «Contexto Listo» | Administrador Global | context pack preparado |
+| 2026-10-13 12:41 | WI-ORD-API-005 | «Contexto Listo» → «Aprobado» | Administrador Global | — |
+| 2026-10-13 12:41 | WI-ORD-API-005 | «Aprobado» → «Asignado» | Administrador Global | asignación de work item |
+| 2026-10-13 12:42 | WI-ORD-API-005 | «Asignado» → «En Progreso» | Administrador Global | Run autónomo 4e9d9848-26dc-4675-b2bd-981bdbb85fdf (agente developer) |
+| 2026-10-13 12:54 | WI-ORD-API-005, WI-ORD-API-009 | PR #3 abierto | git | WI-ORD-API-005 · implementación autónoma |
+| 2026-10-13 13:04 | WI-ORD-API-008 | PR #2 mergeado | git | WI-ORD-API-008 · documento técnico |
+| 2026-10-13 19:11 | WI-ORD-API-006 | «Generado» → «Contexto Listo» | Administrador Global | context pack preparado |
+| 2026-10-13 19:21 | WI-ORD-API-005 | «En Progreso» → «MR Abierto · en revisión» | Administrador Global | sugerencia de git aceptada |
+| 2026-10-13 19:23 | WI-ORD-API-005 | «MR Abierto · en revisión» → «Retrabajo» | Administrador Global | PR jcobo2020/proyectoGreen#3 no mergeable. La confirmación no comprueba el estado del pedido dentro de la transacción (puede descontar dos veces) y convierte todo WriteConflict en 409. OrderService lee ProductModel. La transacción va sin readConcern, writeConcern ni maxCommitTimeMS. Los servicios se crean en el router y no en createApp(). TransactionContext no es opaco. Falta el evento stock_insufficient. Faltan las pruebas de 500, de E11000 y de la doble confirmación concurrente. Rehacer contra |
+| 2026-10-13 19:24 | WI-ORD-API-008 | «En Progreso» → «MR Abierto · en revisión» | Administrador Global | — |
+| 2026-10-13 19:24 | WI-ORD-API-008 | «MR Abierto · en revisión» → «Retrabajo» | Administrador Global | PR jcobo2020/proyectoGreen#3 no mergeable. La confirmación no comprueba el estado del pedido dentro de la transacción (puede descontar dos veces) y convierte todo WriteConflict en 409. OrderService lee ProductModel. La transacción va sin readConcern, writeConcern ni maxCommitTimeMS. Los servicios se crean en el router y no en createApp(). TransactionContext no es opaco. Falta el evento stock_insufficient. Faltan las pruebas de 500, de E11000 y de la doble confirmación concurrente. Rehacer contra |
+| 2026-10-13 19:27 | WI-ORD-API-005 | «Retrabajo» → «En Progreso» | Administrador Global | Run autónomo 4ffc0128-c5c6-4c52-9487-dae4865388b1 (agente developer) |
+| 2026-10-13 19:27 | WI-ORD-API-005 | «En Progreso» → «Bloqueado» | Administrador Global | AEP_REPO_AVANZO: La rama main está en f1711e6c7093 y el pack describe e5a5753ef4fb: el repositorio avanzó desde el snapshot. Cambiaron 1 fichero(s): docs/WI-ORD-API-008/README.md. No se sabe si tocan el trabajo: sus anclas no tienen fichero en el snapshot (p. ej. un endpoint que aún no existe). Hacen falta DOS pasos, en este orden: (1) toma un snapshot del proyecto, para que el commit nuevo exista en el control plane; (2) vuelve a preparar el contexto del work item («Preparar contexto» en su ficha), que es lo único que reescribe el commit base del pack. Con el snapshot solo NO basta: el pack conserva el suyo hasta que se recompila. Después, relanza el agente desde aquí mismo. |
+| 2026-10-13 19:29 | WI-ORD-API-005 | «Bloqueado» → «En Progreso» | Administrador Global | Run autónomo 88fb5f11-a21e-4a83-b109-208d4f429e44 (agente developer) |
+| 2026-10-13 19:44 | WI-ORD-API-005 | «En Progreso» → «Bloqueado» | Administrador Global | Se superó el techo de dinero de ESTE run (`llmBudget.maxCostPerRunUsd`). Este bucle gastó 2.01 USD. Es llmBudget.maxCostPerRunUsd, con override por proyecto en Parámetros → Presupuesto LLM. |
+| 2026-10-13 19:55 | WI-ORD-API-005 | «Bloqueado» → «En Progreso» | Administrador Global | Run autónomo 5f717520-a7bb-44d6-b020-91d06f37e764 (agente developer) |
+| 2026-10-13 23:10 | WI-ORD-API-005 | «En Progreso» → «MR Abierto · en revisión» | Administrador Global | sugerencia de git aceptada |
+| 2026-10-13 23:11 | WI-ORD-API-005 | «MR Abierto · en revisión» → «Retrabajo» | Administrador Global | PR #3 no mergeable (revisión del run 5f717520): los tests «500» comprueban 404/400; faltan las pruebas de 500 en los 4 endpoints y la de E11000 (1 + 3 reintentos, 500 al cuarto fallo); falta el evento stock_insufficient; OrderService llama a unwrapSession (solo la infraestructura); IUnitOfWork cuenta llamadas a withTransaction, no intentos de fn; GET /:id y confirm no rechazan query desconocida; el router conserva un else que instancia servicios; el informe dice met:true con desviaciones falsas. |
+| 2026-10-13 23:12 | WI-ORD-API-005 | «Retrabajo» → «En Progreso» | Administrador Global | Run autónomo 5584ea21-65e5-4fcd-a000-58a390048276 (agente developer) |
+| 2026-10-13 23:24 | WI-ORD-API-005 | «En Progreso» → «Bloqueado» | Administrador Global | Se para antes de cruzar el techo del run: quedan 0.1244 USD y el último turno costó 0.2280. Pedir otro lo rebasaría, y un turno no se puede devolver. Este bucle gastó 1.88 USD. Es llmBudget.maxCostPerRunUsd, con override por proyecto en Parámetros → Presupuesto LLM. |
+| 2026-10-13 23:29 | WI-ORD-API-005 | «Bloqueado» → «En Progreso» | Administrador Global | Run autónomo 7ed6ef66-ad2f-4512-8014-a818c0a4128f (agente developer) |
+| 2026-10-13 23:31 | WI-ORD-API-005 | «En Progreso» → «Bloqueado» | Administrador Global | El run 7ed6ef66-ad2f-4512-8014-a818c0a4128f del agente developer murió sin terminar: Alguien canceló el run: el bucle se paró antes de pedir el turno siguiente |
+| 2026-10-14 00:05 | WI-ORD-API-005 | «Bloqueado» → «En Progreso» | Administrador Global | Run autónomo bf0ffb39-cf4a-4369-b2d1-394900b8cc01 (agente developer) |
+| 2026-10-14 01:29 | WI-ORD-API-005 | «En Progreso» → «MR Abierto · en revisión» | Administrador Global | sugerencia de git aceptada |
+| 2026-10-14 01:29 | WI-ORD-API-005 | «MR Abierto · en revisión» → «Retrabajo» | Administrador Global | Revisión del run bf0ffb39: E11000 hace 3 intentos y deben ser 4 (1+3 reintentos); la prueba «cuatro colisiones» afirma 3 y falta 3 colisiones+éxito→201. OrderService sigue aplicando la sesión con withTx: persistencia a un adaptador de infraestructura o clarificationRequest. Faltan pruebas de MongoUnitOfWork, del 500 por caída de la transacción y del evento stock_insufficient. POST no rechaza query desconocida; items:[null] da 500. migration.log pisa el de WI-007. Informe met:true falso. |
+| 2026-10-14 01:29 | WI-ORD-API-005 | «Retrabajo» → «En Progreso» | Administrador Global | Run autónomo 13a5c8f4-32b1-45ac-af7b-8ba99b8c604c (agente developer) |
+| 2026-10-14 01:41 | WI-ORD-API-005 | «En Progreso» → «Bloqueado» | Administrador Global | Se para antes de cruzar el techo del run: quedan 0.0375 USD y el último turno costó 0.0384. Pedir otro lo rebasaría, y un turno no se puede devolver. Este bucle gastó 0.21 USD. Es llmBudget.maxCostPerRunUsd, con override por proyecto en Parámetros → Presupuesto LLM. |
+| 2026-10-14 02:19 | WI-ORD-API-005 | «Bloqueado» → «En Progreso» | Administrador Global | Run autónomo 02440b15-f5a5-499d-8fbf-79876e0c34c0 (agente developer) |
+| 2026-10-14 03:18 | WI-ORD-API-005 | «En Progreso» → «MR Abierto · en revisión» | Administrador Global | sugerencia de git aceptada |
+| 2026-10-14 03:18 | WI-ORD-API-005 | «MR Abierto · en revisión» → «Retrabajo» | Administrador Global | Revisión del run 02440b15: OrderService no puede usar withTx ni OrderModel; la persistencia de pedidos va a un repositorio de infraestructura que recibe el TransactionContext (aclaración respondida: se exige el adaptador). Faltan, como pide §4: el 500 de cada endpoint forzando la caída de la transacción (no un servicio falso) y las unitarias de OrderService con dobles de sus puertos (total, código y cada rama de confirm); borra las que no afirman nada. Informe met:true falso. |
+| 2026-10-14 03:18 | WI-ORD-API-005 | «Retrabajo» → «En Progreso» | Administrador Global | Run autónomo f658378c-d9b2-45e0-8709-b0f8916eb1d2 (agente developer) |
+| 2026-10-14 03:18 | WI-ORD-API-005 | «En Progreso» → «Bloqueado» | Administrador Global | Presupuesto mensual del proyecto excedido: $20.04 de $20.00 — ajustable en Configuración → llm_budget Este bucle gastó 0.08 USD. Es llmBudget.maxMonthlyCostPerProjectUsd (el gasto de TODO el proyecto en el mes, no solo de este run), con override por proyecto en Parámetros → Presupuesto LLM. |
+| 2026-10-14 03:19 | WI-ORD-API-005 | «Bloqueado» → «En Progreso» | Administrador Global | Run autónomo 391fc401-9a2c-4dab-91d3-122e8d75fc9d (agente developer) |
+| 2026-10-14 03:49 | WI-ORD-API-005 | «En Progreso» → «MR Abierto · en revisión» | Administrador Global | sugerencia de git aceptada |
+| 2026-10-14 03:50 | WI-ORD-API-005 | «MR Abierto · en revisión» → «Retrabajo» | Administrador Global | Revisión del run 391fc401: el 500 de confirm se provoca antes de abrir la transacción (falla findById en la comprobación previa). Falta una prueba HTTP con el fallo DENTRO de la transacción tras una escritura, que afirme 500 INTERNAL_ERROR, el pedido en pending_confirmation y el stock intacto. Borra lib/withSession.ts (sin uso). GET /orders: ?pageSize=0x10 salta el máximo y ?page=0x1 da 500 (Number frente a parseInt). Informe: una sola cifra de cobertura y met acorde. |
+| 2026-10-14 03:50 | WI-ORD-API-005 | «Retrabajo» → «En Progreso» | Administrador Global | Run autónomo b7507420-bd98-42e0-9cf0-2620ff46cbf7 (agente developer) |
+| 2026-10-14 04:50 | WI-ORD-API-005, WI-ORD-API-009 | PR #3 mergeado | git | WI-ORD-API-005 · implementación autónoma |
+| 2026-10-14 05:18 | WI-ORD-API-005 | «En Progreso» → «MR Abierto · en revisión» | Administrador Global | — |
+| 2026-10-14 05:18 | WI-ORD-API-005 | «MR Abierto · en revisión» → «Validado» | Administrador Global | — |
+| 2026-10-14 05:18 | WI-ORD-API-005 | «Validado» → «Mergeado» | Administrador Global | sugerencia de git aceptada |
+| 2026-10-14 05:19 | WI-ORD-API-005 | «Mergeado» → «Cerrado» | Administrador Global | — |
+| 2026-10-14 05:19 | WI-ORD-API-006 | «Contexto Listo» → «Aprobado» | Administrador Global | — |
+| 2026-10-14 05:20 | WI-ORD-API-006 | «Aprobado» → «Asignado» | Administrador Global | asignación de work item |
+| 2026-10-14 05:22 | WI-ORD-API-006 | PR #4 abierto | git | WI-ORD-API-006 · documento técnico |
+| 2026-10-14 05:22 | WI-ORD-API-006 | «Asignado» → «En Progreso» | Administrador Global | Documento compuesto por el Technical Writer |
+| 2026-10-14 11:23 | WI-ORD-API-006 | PR #4 mergeado | git | WI-ORD-API-006 · documento técnico |
+| 2026-10-14 12:03 | WI-ORD-API-009 | nace en «Generado» | Administrador Global | nacimiento del work item |
+| 2026-10-14 12:05 | WI-ORD-API-009 | «Generado» → «Cancelado» | Administrador Global | Nació con el paquete WP-ORD-API-001 (el de Orders, rama ya mergeada) por un defecto de numeración de paquetes que este mismo hito arregla (LOS-PAQUETES-REPITEN-CODIGO-Y-RAMA-001). Se vuelve a crear desde la spec con un paquete nuevo. |
+| 2026-10-14 12:05 | WI-ORD-API-010 | nace en «Generado» | Administrador Global | nacimiento del work item |
+| 2026-10-14 12:25 | WI-ORD-API-006 | «En Progreso» → «MR Abierto · en revisión» | Administrador Global | — |
+| 2026-10-14 12:30 | WI-ORD-API-006 | «MR Abierto · en revisión» → «Validado» | Administrador Global | Validado con excepción de las puertas: PR jcobo2020/proyectoGreen#4 revisado y mergeado por Jorge; sus afirmaciones se contrastaron con el código de main (IProductCatalog, transacción snapshot/majority, JWT, parseInt, log de migración). El Technical Writer no entrega informe de finalización, por eso la puerta no puede cumplirse sola. |
+| 2026-10-14 12:37 | WI-ORD-API-006 | «Validado» → «Mergeado» | Administrador Global | Validado con excepción de las puertas: El PR jcobo2020/proyectoGreen#4 ya está mergeado en GitHub (lo confirma la sugerencia de git de esta ficha). La puerta no puede cumplirse porque el Technical Writer no entrega informe de finalización |
+| 2026-10-14 12:38 | WI-ORD-API-006 | «Mergeado» → «Cerrado» | Administrador Global | — |
+| 2026-10-14 12:40 | WI-ORD-API-010 | «Generado» → «Contexto Listo» | Administrador Global | context pack preparado |
+| 2026-10-14 12:40 | WI-ORD-API-010 | «Contexto Listo» → «Aprobado» | Administrador Global | — |
+| 2026-10-14 12:40 | WI-ORD-API-010 | «Aprobado» → «Asignado» | Administrador Global | asignación de work item |
+| 2026-10-14 12:41 | WI-ORD-API-010 | «Asignado» → «En Progreso» | Administrador Global | Run autónomo e434c28e-146f-4ee5-95be-7bf684905903 (agente developer) |
+| 2026-10-14 12:41 | WI-ORD-API-010 | «En Progreso» → «Bloqueado» | Administrador Global | AEP_REPO_AVANZO: La rama main está en 039b606de5e4 y el pack describe f1711e6c7093: el repositorio avanzó desde el snapshot. Cambiaron 21 fichero(s): .sdd/completion-report-WI-ORD-API-005.json, .sdd/evidence/migration-WI-ORD-API-005.log, .sdd/evidence/test-results.txt, api/src/__tests__/migration.spec.ts, api/src/__tests__/mongoUnitOfWork.spec.ts, api/src/__tests__/orderService.unit.spec.ts, api/src/__tests__/orders.spec.ts, api/src/app.ts, api/src/controllers/OrderController.ts, api/src/lib/MongoOrderRepository.ts y 11 más. 1 toca(n) el alcance de este work item: api/src/routes/api.routes.ts. Revisa el cambio antes de relanzar. Hacen falta DOS pasos, en este orden: (1) toma un snapshot del proyecto, para que el commit nuevo exista en el control plane; (2) vuelve a preparar el contexto del work item («Preparar contexto» en su ficha), que es lo único que reescribe el commit base del pack. Con el snapshot solo NO basta: el pack conserva el suyo hasta que se recompila. Después, relanza el agente desde aquí mismo. |
+| 2026-10-14 12:42 | WI-ORD-API-010 | «Bloqueado» → «En Progreso» | Administrador Global | Run autónomo fd8761c8-d336-481f-b18c-7f483cab0656 (agente developer) |
+| 2026-10-14 12:56 | WI-ORD-API-010 | PR #5 abierto | git | WI-ORD-API-010 · implementación autónoma |
+| 2026-10-14 13:00 | WI-ORD-API-010 | «En Progreso» → «MR Abierto · en revisión» | Administrador Global | sugerencia de git aceptada: PR jcobo2020/proyectoGreen#5 abierto |
+| 2026-10-14 13:16 | WI-ORD-API-010 | PR #5 mergeado | git | WI-ORD-API-010 · implementación autónoma |
+| 2026-10-14 13:31 | WI-ORD-API-010 | «MR Abierto · en revisión» → «Validado» | Administrador Global | Puertas cumplidas y revisión independiente del PR jcobo2020/proyectoGreen#5: el validador rechaza query desconocida con 400 VALIDATION_ERROR y dos pruebas lo provocan. La objeción restante del revisor es del informe (cobertura de services/, que el WI no toca). |
+| 2026-10-14 13:35 | WI-ORD-API-008 | PR #6 abierto | git | WI-ORD-API-008 · documento técnico |
+| 2026-10-14 13:35 | WI-ORD-API-008 | «Retrabajo» → «En Progreso» | Administrador Global | Documento compuesto por el Technical Writer |
+| 2026-10-14 13:37 | WI-ORD-API-008 | «En Progreso» → «MR Abierto · en revisión» | Administrador Global | sugerencia de git aceptada: PR jcobo2020/proyectoGreen#6 abierto |
+| 2026-10-14 13:37 | WI-ORD-API-008 | «MR Abierto · en revisión» → «Retrabajo» | Administrador Global | - El documento dice que el PR #5 de WI-ORD-API-010 modificó api/src/routes/api.routes.ts. Es falso: el PR #5 solo tocó api/src/validators/product.validator.ts y api/src/__tests__/products.spec.ts. Los cambios de api.routes.ts que aparecen en la cronología (el motivo de AEP_REPO_AVANZO) son del merge del PR #3 de WI-ORD-API-005. - El documento atribuye el rechazo de parámetros de query desconocidos al informe de WI-ORD-API-007. Lo añadió WI-ORD-API-010 (PR #5), por la v9 de la spec. |
 
-La historia de este work item comienza con una reorganización del reparto. El 12 de octubre de 2026 nacieron cuatro work items iniciales [estado:WI-ORD-API-001] [estado:WI-ORD-API-002] [estado:WI-ORD-API-003] [estado:WI-ORD-API-004]. El backend de productos, [wi:WI-ORD-API-003], llegó a ejecutarse pero quedó bloqueado porque el informe de finalización no declaraba cubiertas las puertas de RN-01 y RN-02 [estado:WI-ORD-API-003]. A las 23:08 UTC del mismo día, los cuatro work items originales fueron cancelados porque habían sido generados antes de que se corrigiera el descomponedor de entidades por recurso: el pack de contexto mezclaba entidades ajenas [estado:WI-ORD-API-001] [estado:WI-ORD-API-002] [estado:WI-ORD-API-003] [estado:WI-ORD-API-004].
+El package arrancó con cuatro work items generados a la vez el 2026-10-12 ([estado:WI-ORD-API-001], [estado:WI-ORD-API-002], [estado:WI-ORD-API-003], [estado:WI-ORD-API-004]). Los cuatro se cancelaron ese mismo día porque el descomponedor mezclaba entidades de recursos distintos en el mismo pack [estado:WI-ORD-API-003]. El 2026-10-12 23:08 se regeneró el package con el descomponedor corregido, naciendo [wi:WI-ORD-API-007] (backend de Products), [wi:WI-ORD-API-008] (este documento) y [wi:WI-ORD-API-005] (backend de Orders).
 
-En ese mismo momento nacieron los cuatro work items de la segunda generación [estado:WI-ORD-API-005] [estado:WI-ORD-API-006] [estado:WI-ORD-API-007] [estado:WI-ORD-API-008]. El backend [wi:WI-ORD-API-007] arrancó a las 23:09 UTC, sufrió una segunda interrupción por cancelación externa del run [estado:WI-ORD-API-007], se retomó a las 01:15 UTC del 13 de octubre, abrió [git:PR #1] a las 01:23 UTC y lo vio mergeado a las 02:03 UTC. El estado «Cerrado» se alcanzó a las 03:05 UTC [estado:WI-ORD-API-007].
+[wi:WI-ORD-API-007] sufrió una interrupción temprana por cancelación del run [estado:WI-ORD-API-007] antes de retomarse y completarse: el PR #1 se abrió el 2026-10-13 01:23 y se mergeó el 2026-10-13 02:03 [git:PR #1]. El work item pasó a «Cerrado» el 2026-10-13 03:05 [estado:WI-ORD-API-007].
 
-El presente work item de documentación, WI-ORD-API-008, nació a las 23:08 UTC del 12 de octubre y permaneció en «Generado» hasta el 13 de octubre a las 11:38 UTC, cuando el contexto quedó listo y fue aprobado y asignado en sucesión [estado:WI-ORD-API-008].
+El documento técnico (este work item, WI-ORD-API-008) tuvo una primera entrega con el PR #2 abierto el 2026-10-13 03:24 y mergeado el 2026-10-13 13:04 [git:PR #2]. Sin embargo, el work item entró en «Retrabajo» el 2026-10-13 19:24 por problemas del PR #3 de [wi:WI-ORD-API-005] que hacían el documento incompatible con el estado real del código [estado:WI-ORD-API-008].
 
----
+Mientras tanto, [wi:WI-ORD-API-005] pasó por múltiples rondas de retrabajo a lo largo del 2026-10-13 y el 2026-10-14, con bloqueos por límite de presupuesto y cancelaciones de run [estado:WI-ORD-API-005], hasta que su PR #3 se mergeó el 2026-10-14 04:50 y el work item cerró el 2026-10-14 05:19.
+
+Una vez estabilizado el backend de Orders, nació [wi:WI-ORD-API-010] para aplicar la evolución a la v9 de la spec sobre el endpoint GET /api/products. Su PR #5 se abrió el 2026-10-14 12:56 y se mergeó el 2026-10-14 13:16 [git:PR #5], y el work item quedó en «Validado» [estado:WI-ORD-API-010].
+
+La segunda entrega de este documento abrió el PR #6 el 2026-10-14 13:35 [git:PR #6]. Ese PR también pasó a «Retrabajo» [estado:WI-ORD-API-008] por los dos errores corregidos en esta versión (véase «Notas para el mantenedor»). El work item permanece en estado «Retrabajo» a la fecha del doc-pack.
+
+[wi:WI-ORD-API-009] nació con el paquete de Orders por un defecto de numeración y se canceló el mismo día [estado:WI-ORD-API-009].
 
 ## Lo que se tocó
 
@@ -120,42 +195,56 @@ El presente work item de documentación, WI-ORD-API-008, nació a las 23:08 UTC 
 | `api/src/config/connectDB.ts` | añadido | 11 | 0 |
 | `api/src/lib/obfuscate.ts` | añadido | 9 | 0 |
 
-El PR [git:PR #1] construyó el backend desde cero (el repositorio solo contenía `README.md` antes de este trabajo [informe:WI-ORD-API-007]). Los 25 ficheros añadidos con +7911 líneas representan la estructura completa de la capa backend siguiendo la plantilla del stack.
+### WI-ORD-API-007 — construcción desde cero (PR #1)
 
-Los contratos del código que acredita el package son [codigo:GET /api/products] y [codigo:model:Product]. El informe [informe:WI-ORD-API-007] declara un único criterio cubierto — AC-06 — y enumera las evidencias que lo respaldan: 30 tests en verde (29 en `products.spec.ts` y 1 en `migration.spec.ts`), cobertura del 90,51 % de líneas sobre los 11 ficheros tocados (umbral exigido: 80 %) y el log de migración que acredita la creación de los índices.
+[informe:WI-ORD-API-007] describe un proyecto completamente greenfield: solo existía `README.md`. El PR #1 añadió 25 ficheros con 7 911 líneas netas [git:PR #1].
 
-El informe [informe:WI-ORD-API-007] recoge además dos desviaciones declaradas: la ausencia de `attachAuthenticatedUser` y `requireAdmin`, justificada por la excepción explícita de la spec (la identidad es externa, no hay colección de usuarios ni roles); y una decisión de orden de carga de variables de entorno para que los tests puedan fijarlas antes de crear la app.
+El núcleo funcional del endpoint se distribuyó así:
 
----
+- `api/src/models/product.ts` — define [codigo:model:Product], el modelo Mongoose de [spec:entidad Product] con los campos `_id`, `sku`, `name`, `unitPrice`, `available` y `active`.
+- `api/src/services/ProductService.ts` — lógica de negocio: consulta solo productos con `active: true` y los devuelve ordenados.
+- `api/src/controllers/ProductController.ts` — adaptador HTTP: traduce la petición, llama al servicio y serializa la respuesta.
+- `api/src/validators/product.validator.ts` — valida los parámetros de entrada del endpoint [codigo:GET /api/products].
+- `api/src/routes/api.routes.ts` — registra la ruta GET /api/products e inyecta el middleware de autenticación [arista:GET /api/products→route · api.routes.ts].
+- `api/src/middlewares/authenticate.middleware.ts` — verifica el JWT conforme a [spec:business_rule RN-06].
+- `api/src/middlewares/errorHandler.middleware.ts` y `api/src/lib/errors.ts` — catálogo de errores y su serialización.
+- `api/src/app.ts`, `api/src/server.ts`, `api/src/config/` — infraestructura de arranque, conexión a MongoDB y Swagger.
+- `api/src/__tests__/products.spec.ts` y `api/src/__tests__/migration.spec.ts` — suite de integración y prueba de migración de índices.
+- `.sdd/evidence/migration.log` — confirma la creación de los índices `sku` (único) y `{active, name, sku}` (compuesto) en MongoDB in-memory [informe:WI-ORD-API-007].
+
+[informe:WI-ORD-API-007] declaró una desviación respecto a la plantilla: el middleware `attachAuthenticatedUser` no se incluyó porque la spec lo exime explícitamente al ser la identidad externa.
+
+### WI-ORD-API-010 — evolución a la v9 (PR #5)
+
+[wi:WI-ORD-API-010] añadió el rechazo de parámetros de query desconocidos exigido por la v9 de la spec. El PR #5 tocó exclusivamente dos ficheros [git:PR #5]:
+
+- `api/src/validators/product.validator.ts` — se amplió para detectar y rechazar parámetros de query no declarados (400 VALIDATION_ERROR).
+- `api/src/__tests__/products.spec.ts` — se añadieron dos pruebas que verifican ese rechazo.
+
+El fichero `api/src/routes/api.routes.ts` **no fue modificado por el PR #5**; los cambios en ese fichero que aparecen en la cronología como motivo del bloqueo `AEP_REPO_AVANZO` de [wi:WI-ORD-API-010] proceden del merge del PR #3 de [wi:WI-ORD-API-005] [estado:WI-ORD-API-010].
 
 ## Cómo está construido
 
-El siguiente diagrama refleja la arquitectura derivada del grafo de conocimiento del repositorio:
+El diagrama de arquitectura derivado del grafo muestra cómo fluye una petición a [ancla:endpoint GET /api/products]:
 
 ```mermaid
 flowchart LR
   n0["GET /api/products"]
-  n1["Product"]
+  n1["controller · OrderController.ts"]
   n2["controller · ProductController.ts"]
-  n3["logic · ProductService.ts"]
-  n4["middleware · authenticate.middleware.ts"]
-  n5["route · api.routes.ts"]
-  n0 -->|endpoint_reads_model · read| n1
-  n0 -->|implemented_by| n5
-  n5 -->|route_imports_controller| n2
-  n5 -->|route_imports_logic| n3
-  n5 -->|route_imports_middleware| n4
+  n3["middleware · authenticate.middleware.ts"]
+  n4["route · api.routes.ts"]
+  n0 -->|implemented_by| n4
+  n4 -->|route_imports_controller| n1
+  n4 -->|route_imports_controller| n2
+  n4 -->|route_imports_middleware| n3
 ```
 
-La petición entra por [arista:GET /api/products→route · api.routes.ts]. El router `api.routes.ts` compone tres piezas [arista:route · api.routes.ts→middleware · authenticate.middleware.ts] [arista:route · api.routes.ts→controller · ProductController.ts] [arista:route · api.routes.ts→logic · ProductService.ts]:
+La ruta [arista:GET /api/products→route · api.routes.ts] recibe la petición. Antes de llegar al controlador, el middleware de autenticación [arista:route · api.routes.ts→middleware · authenticate.middleware.ts] valida el JWT: algoritmo HS256, firma con `JWT_SECRET` (y `JWT_SECRET_PREVIOUS` durante una rotación), claim `exp` obligatorio con 30 s de tolerancia de reloj y claim `sub` no vacío; sin cualquiera de ellos devuelve [spec:error UNAUTHORIZED]. A continuación, el validador comprueba los parámetros de query; si detecta alguno desconocido responde [spec:error VALIDATION_ERROR]. Si la entrada es válida, el controlador [arista:route · api.routes.ts→controller · ProductController.ts] delega en `ProductService`, que consulta MongoDB filtrando `active: true`.
 
-1. **`authenticate.middleware.ts`** — verifica el JWT antes de dejar pasar la petición [spec:business_rule RN-06]. Cualquier petición sin token válido termina aquí con 401 [spec:error UNAUTHORIZED].
-2. **`ProductController.ts`** — recibe la petición ya autenticada, delega en el servicio y serializa la respuesta.
-3. **`ProductService.ts`** — ejecuta la consulta contra la colección `products`, filtrando por `active: true` y ordenando por `name`/`sku` [informe:WI-ORD-API-007], y devuelve la lista al controlador.
+El diagrama incluye también una arista hacia `OrderController.ts` [arista:route · api.routes.ts→controller · OrderController.ts]: esto refleja que `api.routes.ts` es el fichero de rutas compartido del backend, que registra todos los endpoints de la API; los endpoints de pedidos son competencia de [wi:WI-ORD-API-005] y [wi:WI-ORD-API-006].
 
-El endpoint [arista:GET /api/products→Product] lee el modelo `Product` [ancla:entity Product]; ninguna otra colección se toca en esta ruta.
-
-El modelo de datos real, extraído del contrato ORM [codigo:model:Product]:
+El modelo de datos real expuesto por el ORM es el siguiente:
 
 ```mermaid
 erDiagram
@@ -168,56 +257,52 @@ erDiagram
   }
 ```
 
-El campo `active` es el que controla la visibilidad en el catálogo: solo los productos con `active: true` aparecen en la respuesta [spec:acceptance_criteria AC-06]. El campo `_id` está presente en la colección pero no se modela explícitamente en el diagrama ER; `sku` tiene índice único y la combinación `{active, name, sku}` tiene índice compuesto para la consulta del catálogo [informe:WI-ORD-API-007]. Los precios se entregan con dos decimales fijos [informe:WI-ORD-API-007].
-
-El resto de la infraestructura transversal creada por [wi:WI-ORD-API-007] — `app.ts`, `server.ts`, `connectDB.ts`, `errors.ts`, `errorHandler.middleware.ts`, `requestLogger.middleware.ts`, `obfuscate.ts`, `env.ts`, `swagger.ts` y los ficheros de configuración de proyecto — es la base sobre la que [wi:WI-ORD-API-005] construirá los endpoints de pedidos; no se detalla aquí.
-
----
+Los campos coinciden con [spec:entidad Product]. El índice `sku` es único; el índice compuesto `{active, name, sku}` sirve a la consulta del catálogo ordenada por nombre [informe:WI-ORD-API-007].
 
 ## Reglas de negocio
 
-Las reglas que afectan directamente a [ancla:endpoint GET /api/products] son:
+Las reglas que gobiernan este endpoint son las siguientes:
 
-- **RN-05** [spec:business_rule RN-05]: los precios y el total los calcula el servidor con el precio del catálogo. El cliente nunca envía precios; el catálogo es la fuente de verdad para cualquier cálculo posterior.
-- **RN-06** [spec:business_rule RN-06]: sin token válido el endpoint responde 401 [spec:error UNAUTHORIZED]. El JWT debe usar HS256, incluir `exp` (con tolerancia de reloj de 30 s) y `sub` no vacío; durante una rotación también se acepta `JWT_SECRET_PREVIOUS`.
+- **Autenticación obligatoria** ([spec:business_rule RN-06]): sin token válido, la petición recibe 401 UNAUTHORIZED antes de llegar al controlador.
+- **Precios desde el catálogo** ([spec:business_rule RN-05]): el endpoint sirve `unitPrice` tal como está en la base de datos; el cliente nunca envía ni altera precios.
+- **Lectura sin caché** ([spec:business_rule RN-01]): la disponibilidad y el precio se leen de la base en cada petición, sin cachés interpuestas.
+- **Rechazo de parámetros desconocidos**: todo parámetro de query no declarado en el contrato provoca [spec:error VALIDATION_ERROR] (400), añadido por [wi:WI-ORD-API-010] en la v9 de la spec.
+- **Solo productos activos**: el filtro `active: true` excluye del catálogo los productos retirados; un producto inactivo no aparece en el listado (y, si se pide en un pedido, se trata como no disponible conforme a [spec:business_rule RN-03]).
 
-Las reglas RN-01 a RN-04 [spec:business_rule RN-01] [spec:business_rule RN-02] [spec:business_rule RN-03] [spec:business_rule RN-04] rigen la creación y confirmación de pedidos y son responsabilidad de [wi:WI-ORD-API-005].
-
----
+Las reglas [spec:business_rule RN-02], [spec:business_rule RN-03] y [spec:business_rule RN-04] no aplican a este endpoint: pertenecen al ciclo de vida de los pedidos, documentado en [wi:WI-ORD-API-006].
 
 ## Cómo verificarlo
 
-El informe [informe:WI-ORD-API-007] declara **AC-06** cubierto [spec:acceptance_criteria AC-06]: el test de integración en `api/src/__tests__/products.spec.ts` (489 líneas) verifica los siguientes casos:
+[informe:WI-ORD-API-007] declaró 1 de 1 criterio cubierto y una cobertura del 90,51 % de líneas en los ficheros tocados, por encima del mínimo del 80 % exigido por la spec.
 
-- **Lista vacía** cuando no hay productos en la colección.
-- **Solo productos activos**: los inactivos no aparecen en la respuesta.
-- **Orden por `name`/`sku`**: la lista llega ordenada.
-- **Paginación**: el informe la menciona como caso verificado; el doc-pack no detalla los parámetros de paginación más allá de esto.
-- **Formato de `unitPrice`**: devuelto con dos decimales.
-- **`available` ≥ 0**: nunca se devuelve un valor negativo.
+La suite `api/src/__tests__/products.spec.ts` (29 pruebas de integración y unitarias) cubre [spec:acceptance_criteria AC-06] verificando:
 
-El criterio **AC-07** [spec:acceptance_criteria AC-07] (401 sin token válido) está cubierto por `authenticate.middleware.ts` y sus pruebas asociadas dentro del mismo fichero de spec. El informe menciona expresamente que un JWT sin `sub` o sin `exp` da 401 [informe:WI-ORD-API-007].
+- Lista vacía cuando no hay productos activos.
+- Solo se devuelven los productos con `active: true`.
+- Orden por `name` / `sku`.
+- Paginación correcta.
+- Formato de `unitPrice` con dos decimales.
+- Campo `available` ≥ 0.
 
-El fichero `api/src/__tests__/migration.spec.ts` (103 líneas, 1 test) verifica que la migración crea la colección `products` con los índices `sku` (único) y `{active, name, sku}` compuesto en MongoDB en memoria [informe:WI-ORD-API-007].
+[spec:acceptance_criteria AC-07] se verifica con las pruebas de 401: un JWT sin `sub` o sin `exp` devuelve UNAUTHORIZED.
 
-La cobertura medida sobre los 11 ficheros del package es del **90,51 %** de líneas, por encima del 80 % exigido por la spec.
+[wi:WI-ORD-API-010] añadió dos pruebas adicionales en `api/src/__tests__/products.spec.ts` que provocan un parámetro de query desconocido y afirman que la respuesta es 400 VALIDATION_ERROR [estado:WI-ORD-API-010].
 
-Los criterios AC-01 a AC-05 y AC-08 [spec:acceptance_criteria AC-01] [spec:acceptance_criteria AC-02] [spec:acceptance_criteria AC-03] [spec:acceptance_criteria AC-04] [spec:acceptance_criteria AC-05] [spec:acceptance_criteria AC-08] son responsabilidad de [wi:WI-ORD-API-005].
+`api/src/__tests__/migration.spec.ts` (1 prueba) verifica que los índices `sku` (único) y `{active, name, sku}` (compuesto) existen en la colección `products` [informe:WI-ORD-API-007].
 
----
+Los criterios [spec:acceptance_criteria AC-01], [spec:acceptance_criteria AC-02], [spec:acceptance_criteria AC-03], [spec:acceptance_criteria AC-04], [spec:acceptance_criteria AC-05] y [spec:acceptance_criteria AC-08] corresponden a los endpoints de pedidos y se verifican en [wi:WI-ORD-API-006].
 
 ## Notas para el mantenedor
 
-**Primera generación cancelada.** Los work items [wi:WI-ORD-API-003] y [wi:WI-ORD-API-004] (cancelados) tenían en su pack de contexto entidades mezcladas entre recursos. El agente de [wi:WI-ORD-API-003] llegó a ejecutarse y fue bloqueado por no declarar cubiertas RN-01 y RN-02 en su informe [estado:WI-ORD-API-003]; esas reglas no pertenecen al endpoint de productos sino al flujo de pedidos, lo que confirma que el descomponedor original estaba mal configurado [estado:WI-ORD-API-001].
+**Correcciones de ronda 2 (`DEV2-1` y `DEV2-2`):** este documento fue devuelto por dos errores factuales que esta versión corrige:
 
-**Interrupción del run de [wi:WI-ORD-API-007].** El primer run autónomo sobre el work item de backend de segunda generación fue cancelado externamente antes de completarse [estado:WI-ORD-API-007]; el segundo run completó la implementación sin incidencias. El mantenedor no necesita actuar sobre esto, pero el historial de estados refleja ese hueco entre las 23:28 y las 01:15 UTC [estado:WI-ORD-API-007].
+- `DEV2-1`: el PR #5 de [wi:WI-ORD-API-010] **no modificó** `api/src/routes/api.routes.ts`. Solo tocó `api/src/validators/product.validator.ts` y `api/src/__tests__/products.spec.ts` [git:PR #5]. La mención de `api.routes.ts` en la cronología [estado:WI-ORD-API-010] corresponde al fichero que cambió en el repo entre el snapshot del pack y el relanzamiento del agente, consecuencia del merge del PR #3 de [wi:WI-ORD-API-005] [estado:WI-ORD-API-005].
+- `DEV2-2`: el rechazo de parámetros de query desconocidos **no lo implementó** [wi:WI-ORD-API-007]; lo añadió [wi:WI-ORD-API-010] (PR #5) al aplicar la v9 de la spec [estado:WI-ORD-API-010].
 
-**Paginación.** El informe [informe:WI-ORD-API-007] menciona la paginación como caso verificado en los tests, pero la spec [spec:endpoint GET /api/products] no describe parámetros de paginación en su contrato. El doc-pack no incluye información sobre los parámetros concretos (página, límite, cursor…) ni sobre el formato de la respuesta paginada. Quien mantenga este endpoint debe consultar el contrato del código [codigo:GET /api/products] para conocer el comportamiento real.
+**Estado del work item:** WI-ORD-API-008 sigue en «Retrabajo» a la fecha del doc-pack [estado:WI-ORD-API-008]. El doc-pack no incluye información sobre si existirá una ronda de revisión adicional tras esta entrega.
 
-**Ausencia de `attachAuthenticatedUser` y `requireAdmin`.** La desviación respecto a la plantilla está declarada y justificada en el informe [informe:WI-ORD-API-007]: la identidad es externa y no existe colección de usuarios ni roles. La spec prevalece sobre la plantilla en este punto.
+**Work items cancelados:** [wi:WI-ORD-API-001], [wi:WI-ORD-API-002], [wi:WI-ORD-API-003] y [wi:WI-ORD-API-004] se cancelaron por un defecto del descomponedor que mezclaba entidades de recursos distintos [estado:WI-ORD-API-003]; [wi:WI-ORD-API-009] se canceló por un defecto de numeración de paquetes [estado:WI-ORD-API-009]. No hay código suyo en main.
 
-**Orden de carga de variables de entorno.** El informe [informe:WI-ORD-API-007] advierte que `env.ts` se diseñó para que los tests puedan fijar las variables antes de crear la aplicación. Cualquier refactor de la inicialización debe preservar ese contrato o los tests de integración fallarán.
+**Subgrafo truncado:** el diagrama de arquitectura muestra la arista hacia `OrderController.ts` porque `api.routes.ts` centraliza todas las rutas. El doc-pack no proyecta al grafo las aristas internas de ProductService ni su relación con el modelo; la cadena `ProductController → ProductService → Product (model)` se infiere del informe [informe:WI-ORD-API-007] pero no tiene aristas explícitas en el vocabulario de citas de este pack.
 
-**Secretos.** `MONGODB_URI`, `JWT_SECRET` y `JWT_SECRET_PREVIOUS` solo se suministran por entorno; el fichero `api/.env.example` existe sin valores reales [informe:WI-ORD-API-007]. No deben aparecer en el repositorio.
-
-**Work items de pedidos pendientes.** [wi:WI-ORD-API-005] (backend de pedidos) está en estado «Generado» y [wi:WI-ORD-API-006] (su documentación) también [estado:WI-ORD-API-005] [estado:WI-ORD-API-006]. La infraestructura creada por [wi:WI-ORD-API-007] — errores, middleware de autenticación, logger, conexión a base de datos — está diseñada para ser compartida por ambos; cualquier cambio en esos ficheros transversales puede afectar a los endpoints de pedidos cuando se implementen.
+**Secretos y observabilidad:** ningún secreto debe estar en el repositorio; `MONGODB_URI`, `JWT_SECRET` y `JWT_SECRET_PREVIOUS` se cargan solo por entorno, con `.env.example` sin valores reales [git:PR #1]. Los logs no llevan el token ni datos personales; el `customerId` (claim `sub`) es un identificador opaco que sí puede registrarse.
