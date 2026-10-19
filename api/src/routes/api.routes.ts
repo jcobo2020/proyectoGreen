@@ -7,12 +7,19 @@ import {
   validateListOrdersQuery,
   validateOrderIdQuery,
 } from '../validators/order.validator';
+import {
+  validateCreateCustomerBody,
+  validateListCustomersQuery,
+  validateUpdateCustomerBody,
+} from '../validators/customer.validator';
 import { ProductController } from '../controllers/ProductController';
 import { OrderController } from '../controllers/OrderController';
+import { CustomerController } from '../controllers/CustomerController';
 
 export interface ApiRouterDeps {
   productController: ProductController;
   orderController: OrderController;
+  customerController: CustomerController;
 }
 
 /**
@@ -23,7 +30,7 @@ export interface ApiRouterDeps {
 export function createApiRouter(deps: ApiRouterDeps): Router {
   const router = Router();
 
-  const { productController, orderController } = deps;
+  const { productController, orderController, customerController } = deps;
 
   // GET /api/products — catálogo de productos activos
   router.get(
@@ -65,6 +72,18 @@ export function createApiRouter(deps: ApiRouterDeps): Router {
     validateOrderIdQuery,
     orderController.confirmOrder
   );
+
+  // GET /api/customers — listado paginado de clientes
+  router.get('/customers', authenticate, validateListCustomersQuery, customerController.list);
+
+  // POST /api/customers — alta de un cliente
+  router.post('/customers', authenticate, validateCreateCustomerBody, customerController.create);
+
+  // GET /api/customers/:id — ficha de un cliente
+  router.get('/customers/:id', authenticate, customerController.getById);
+
+  // PUT /api/customers/:id — edición de un cliente
+  router.put('/customers/:id', authenticate, validateUpdateCustomerBody, customerController.update);
 
   return router;
 }

@@ -47,10 +47,11 @@ export function errorHandler(
       return;
     }
 
-    // Errores de dominio que solo tienen code, statusCode, message
+    // Resto de errores de dominio: todo error viaja como {code, message, details}
     res.status(err.statusCode).json({
       code: err.code,
       message: err.message,
+      details: err.details ?? [],
     });
     return;
   }
@@ -60,5 +61,6 @@ export function errorHandler(
   res.status(500).json({
     code: 'INTERNAL_ERROR',
     message: 'Error interno del servidor',
+    details: [],
   });
 }

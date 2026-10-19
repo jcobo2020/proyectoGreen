@@ -1,0 +1,16 @@
+=== Migration Log — WI-H2-API-CLIENTES-001 (Customer, Counter) ===
+Fecha: 2026-10-19T22:17:27.087Z
+MongoDB: 6.0.14
+
+Colecciones: counters, customers
+
+Índices en la colección 'customers':
+  - _id_: {"_id":1}
+  - code_1: {"code":1} [UNIQUE]
+  - idNumber_1: {"idNumber":1} [UNIQUE]
+  - createdAt_-1__id_-1: {"createdAt":-1,"_id":-1}
+
+Índices en la colección 'counters':
+  - _id_: {"_id":1}
+
+Resultado: OK — colecciones customers y counters creadas con sus índices

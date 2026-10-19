@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 5,
+  "workItemCode": "WI-H2-API-CLIENTES-001",
+  "summary": "Recurso customers en el backend api/ (modelo Customer y Counter, CustomerService, CustomerController, validador y rutas bajo /api con el JWT de /api/orders): POST, GET (listado paginado con ejecutivo y oportunidades abiertas), GET /:id y PUT /:id, con código PRO-AAAA-NNN de contador atómico, migración de esquema y 66 pruebas de contrato e integración más 4 de migración.",
+  "criteria": [
+    {
+      "id": "AC-04",
+      "status": "covered",
+      "note": "PUT actualiza y responde 200 con el cliente completo; 404 CUSTOMER_NOT_FOUND si no existe o el id no es un ObjectId; 400 con mensajes literales (RN-03, RN-09); RN-05 ignora idType/idNumber/personType. api/src/__tests__/customers.spec.ts:674-845"
+    },
+    {
+      "id": "AC-05",
+      "status": "covered",
+      "note": "{items,total,page,pageSize}, orden createdAt desc con desempate _id desc, page ≥ 1, pageSize 1-100 (defecto 20), fuera de rango 400; openOpportunities/openValue y accountExecutive. api/src/__tests__/customers.spec.ts:448-632"
+    },
+    {
+      "id": "AC-01",
+      "status": "covered",
+      "note": "201 con id, code PRO-AAAA-NNN, los datos enviados y createdAt; secuencia 001, 002, 003; concurrencia RN-06. api/src/__tests__/customers.spec.ts:159-270"
+    },
+    {
+      "id": "AC-02",
+      "status": "covered",
+      "note": "Segunda alta con la misma idNumber → 409 CUSTOMER_DUPLICATE con el mensaje literal y sin crear nada (countDocuments = 1), también con dos POST simultáneos. api/src/__tests__/customers.spec.ts:272-299"
+    },
+    {
+      "id": "AC-03",
+      "status": "covered",
+      "note": "400 VALIDATION_ERROR con details [{field,message}] y el mensaje literal de RN-02, RN-03 y RN-09. api/src/__tests__/customers.spec.ts:301-446"
+    },
+    {
+      "id": "AC-07",
+      "status": "covered",
+      "note": "Los 4 endpoints sin Authorization y con un token firmado con otra clave → 401 UNAUTHORIZED; POST con token caducado → 401 sin crear. api/src/__tests__/customers.spec.ts:124-157"
+    },
+    {
+      "id": "AC-06",
+      "status": "covered",
+      "note": "GET /:id → 200 con el cliente completo (id, code, datos del alta, createdAt, más accountExecutive); 404 CUSTOMER_NOT_FOUND si no existe o el id no es un ObjectId. api/src/__tests__/customers.spec.ts:634-671"
+    }
+  ],
+  "gates": [
+    {
+      "businessRuleId": "RN-01",
+      "status": "cumple",
+      "note": "api/src/__tests__/customers.spec.ts:273 «POST dos veces con la misma ident: la segunda responde 409 CUSTOMER_DUPLICATE sin crear nada»; unicidad en el servicio (api/src/services/CustomerService.ts:230) y en el índice único idNumber_1 (api/src/__tests__/customerMigration.spec.ts)"
+    },
+    {
+      "businessRuleId": "RN-02",
+      "status": "cumple",
+      "note": "api/src/__tests__/customers.spec.ts:302 «RUC de 12 dígitos → 400» y api/src/__tests__/customers.spec.ts:315 «cédula de 9 dígitos → 400», con su mensaje literal; además RUC sin 001, pasaporte inválido e idType fuera de la lista (api/src/__tests__/customers.spec.ts:301-345)"
+    },
+    {
+      "businessRuleId": "RN-03",
+      "status": "cumple",
+      "note": "api/src/__tests__/customers.spec.ts:348 «jurídica sin nombre, con correo inválido y sin canal → 400 con el mensaje de cada campo»; natural sin nombres, contactEmail inválido, personType inválido (api/src/__tests__/customers.spec.ts:347-409) y en la edición (api/src/__tests__/customers.spec.ts:791, :812)"
+    },
+    {
+      "businessRuleId": "RN-AUTH",
+      "status": "cumple",
+      "note": "api/src/__tests__/customers.spec.ts:133 y :141 (it.each sobre PUT /:id, GET, POST y GET /:id): sin Authorization y con firma ajena → 401 UNAUTHORIZED"
+    },
+    {
+      "businessRuleId": "RN-05",
+      "status": "cumple",
+      "note": "api/src/__tests__/customers.spec.ts:716 «PUT con ident o tipo distintos los ignora y responde 200 con los de siempre» (también comprueba la base) y api/src/__tests__/customers.spec.ts:736"
+    },
+    {
+      "businessRuleId": "RN-06",
+      "status": "cumple",
+      "note": "api/src/__tests__/customers.spec.ts:249 «dos POST concurrentes dan PRO-AAAA-001 y PRO-AAAA-002» (AAAA = año UTC en curso: 2026 hoy) y api/src/__tests__/customers.spec.ts:259 con 20 altas concurrentes; findOneAndUpdate con $inc sobre counters, _id customers-AAAA (api/src/services/CustomerService.ts:393). Saboteado: con $set en vez de $inc las dos pruebas fallan"
+    },
+    {
+      "businessRuleId": "RN-07",
+      "status": "cumple",
+      "note": "api/src/__tests__/customers.spec.ts:507 (pageSize=101 y otros fuera de rango → 400) y api/src/__tests__/customers.spec.ts:470 «dos clientes del mismo instante salen en orden de id»; openOpportunities/openValue en api/src/__tests__/customers.spec.ts:527"
+    },
+    {
+      "businessRuleId": "RN-08",
+      "status": "cumple",
+      "note": "api/src/__tests__/customers.spec.ts:289 «dos POST iguales a la vez: uno 201 y otro 409»"
+    },
+    {
+      "businessRuleId": "RN-09",
+      "status": "cumple",
+      "note": "api/src/__tests__/customers.spec.ts:412 «POST con un ejecutivo inexistente → 400 Selecciona un ejecutivo válido.»; inactivo (api/src/__tests__/customers.spec.ts:422), id malformado (api/src/__tests__/customers.spec.ts:429) y en PUT (api/src/__tests__/customers.spec.ts:830)"
+    },
+    {
+      "businessRuleId": "RN-10",
+      "status": "cumple",
+      "note": "api/src/__tests__/customers.spec.ts:579 «desactivar un ejecutivo no cambia el accountExecutive de sus clientes» en GET /api/customers (y en la ficha)"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R4-ARQ-1",
+      "status": "cumple",
+      "evidencia": "api/src/models/customer.ts, api/src/models/counter.ts, api/src/services/CustomerService.ts, api/src/controllers/CustomerController.ts, api/src/routes/api.routes.ts:76-86 (authenticate de /api/orders), composición en api/src/app.ts · customers.spec.ts entero"
+    },
+    {
+      "id": "R4-ARQ-2",
+      "status": "cumple",
+      "evidencia": "api/src/services/CustomerService.ts:180-216 (agregación paginada con $lookup a executives y a opportunities status=open) y api/src/services/CustomerService.ts:379 (RN-09 con consulta directa a la colección executives, sin HTTP) · api/src/__tests__/customers.spec.ts:527, :541, :570"
+    },
+    {
+      "id": "R4-ARQ-3",
+      "status": "cumple",
+      "evidencia": "api/src/services/CustomerService.ts:193 ($lookup localField _id / foreignField customerId + $match status) · api/src/__tests__/customers.spec.ts:557 comprueba con explain('executionStats') que usa customerId_1_status_1 (el índice se crea solo en la base de la prueba: es de la colección opportunities, de otro work item). Saboteado: sin el índice la prueba falla"
+    },
+    {
+      "id": "R4-ARQ-4",
+      "status": "cumple",
+      "evidencia": "api/src/__tests__/customers.spec.ts:541 (sin ejecutivo ni oportunidades → accountExecutive '' y 0/0) y api/src/__tests__/customers.spec.ts:547 (fallo de la base → 500 {code, message, details}, sin página a medias)"
+    },
+    {
+      "id": "R4-PRUEBAS-1",
+      "status": "cumple",
+      "evidencia": "api/src/__tests__/customers.spec.ts y api/src/__tests__/customerMigration.spec.ts: Jest con MongoMemoryReplSet (wiredTiger) y JWT HS256 firmados en la prueba con un secreto aleatorio (crypto.randomBytes); tests escritos antes de la implementación (primera corrida: 65 fallos)"
+    },
+    {
+      "id": "R4-PRUEBAS-2",
+      "status": "cumple",
+      "evidencia": "api/src/__tests__/customers.spec.ts: caso feliz por endpoint (:160, :455, :635, :674), cada 400 con su mensaje literal RN-02/RN-03 (:301-409), 409 (:273), 404 (:654, :767), 401 (:133) y concurrencia del código (:249)"
+    },
+    {
+      "id": "R4-SEG-1",
+      "status": "cumple",
+      "evidencia": "api/src/routes/api.routes.ts:76-86 usa authenticate (HS256 con JWT_SECRET, el de /api/orders) · customers.spec.ts:133, :141, :147"
+    },
+    {
+      "id": "R4-SEG-2",
+      "status": "cumple",
+      "evidencia": "Sin autorización por rol ni 403 en las rutas de customers (api/src/routes/api.routes.ts:76-86); cualquier token válido lista, ve y edita · customers.spec.ts usa un único sub"
+    },
+    {
+      "id": "R4-SEG-3",
+      "status": "cumple",
+      "evidencia": "api/src/middlewares/errorHandler.middleware.ts:54 y :64 (todo error lleva details; [] si no trae) · api/src/__tests__/customers.spec.ts:137 (401 con details []), :547 (500), :645 (404), :282 (409 con details [{field: idNumber}]), 400 con details [{field, message}]"
+    },
+    {
+      "id": "R4-REND-1",
+      "status": "cumple",
+      "evidencia": "api/src/__tests__/customers.spec.ts:598 (50 GET concurrentes, p95 < 300 ms en local con MongoDB en memoria); índice {createdAt:-1,_id:-1} usado por el orden sin SORT en memoria (api/src/__tests__/customerMigration.spec.ts, prueba «el listado ordenado usa el índice») e índice único idNumber_1 (migration.log)"
+    },
+    {
+      "id": "R4-OBS-1",
+      "status": "cumple",
+      "evidencia": "api/src/middlewares/requestLogger.middleware.ts (mismo middleware que /api/orders; corregido para registrar la ruta completa /api/customers) · api/src/__tests__/customers.spec.ts:226"
+    },
+    {
+      "id": "R4-OBS-2",
+      "status": "cumple",
+      "evidencia": "api/src/services/CustomerService.ts:274 console.log({event:'cliente_creado', codigo}) · api/src/__tests__/customers.spec.ts:226 comprueba el evento exacto y que no aparecen ni el correo ni el teléfono en los logs"
+    }
+  ],
+  "testsRun": [
+    {
+      "name": "customers.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "customerMigration.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "orders.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "products.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "orderService.unit.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "mongoUnitOfWork.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "migration.spec.ts",
+      "result": "pass"
+    }
+  ],
+  "evidence": [
+    {
+      "type": "test_results",
+      "ref": ".sdd/evidence/WI-H2-API-CLIENTES-001/test-results.txt",
+      "note": "Salida completa sin editar de npm test -- --coverage --coverageReporters=text --coverageReporters=json-summary: 7 suites, 213 tests en verde, código 0"
+    },
+    {
+      "type": "api_docs",
+      "ref": "api/src/controllers/CustomerController.ts",
+      "note": "Bloques @swagger de GET/POST /api/customers y GET/PUT /api/customers/{id}, con esquemas PublicCustomer*, CreateCustomerBody, UpdateCustomerBody y los errores; /api-docs/ responde 200 en el arranque de comprobar.js"
+    },
+    {
+      "type": "migration_log",
+      "ref": ".sdd/evidence/WI-H2-API-CLIENTES-001/migration.log",
+      "note": "Salida de customerMigration.spec.ts: crea customers y counters, sincroniza índices (code_1 y idNumber_1 únicos, createdAt_-1__id_-1) y lista lo que tiene la base"
+    },
+    {
+      "type": "coverage_report",
+      "ref": ".sdd/evidence/WI-H2-API-CLIENTES-001/coverage-summary.json",
+      "note": "coverage-summary.json real de la corrida: 98,63 % de sentencias (360/365) sobre los 10 ficheros de api/src que toca este WI; total del repo 97,84 %"
+    }
+  ],
+  "deviations": [
+    {
+      "description": "Rama feature/WI-H2-API-CLIENTES-001 en vez de la del package (feature/GREEN-H2-API-CLIENTES-001/WP-H2-API-CLIENTES-001) que nombra la cabecera del pack.",
+      "reason": "Instrucción explícita de la persona que asignó el trabajo; el PR lo abre una persona y debe llevar WI-H2-API-CLIENTES-001 en el título."
+    },
+    {
+      "description": "El controlador vive en api/src/controllers/CustomerController.ts y las rutas en api/src/routes/api.routes.ts, aunque R4-ARQ-1 dice «controlador y rutas en routes/».",
+      "reason": "La plantilla de stack (§7, 1-2 y §4) y el código existente ponen los controladores en controllers/, y swagger.ts solo recoge ./src/controllers/*.ts; poner el controlador en routes/ dejaría los endpoints fuera de /api-docs."
+    },
+    {
+      "description": "Cadena de middlewares authenticate → validación → controller, sin attachAuthenticatedUser ni autorización de rol (plantilla §3).",
+      "reason": "attachAuthenticatedUser no existe en el repo (authenticate ya adjunta el sub) y R4-SEG-2 dice que no hay permisos por rol; es la misma cadena que /api/orders."
+    },
+    {
+      "description": "Cambié dos middlewares compartidos con /api/orders: errorHandler.middleware.ts añade siempre details (lista vacía si el error no trae) y requestLogger.middleware.ts registra la ruta completa (req.originalUrl) en vez de req.path.",
+      "reason": "R4-SEG-3 exige {code, message, details} en todo error con el errorHandler de /api/orders, y R4-OBS-1 exige la ruta: con req.path las peticiones que resolvía el router se registraban como /customers, sin el prefijo /api. Es aditivo: las pruebas de pedidos y productos siguen en verde, pero los errores de /api/orders llevan ahora details: [] y su log muestra /api/orders/..."
+    },
+    {
+      "description": "Además de los campos del contrato, la ficha (GET /:id) devuelve accountExecutive y el listado devuelve accountExecutive, openOpportunities y openValue.",
+      "reason": "RN-07, RN-10 y R4-ARQ-2/4 los piden (RN-10: «el listado y la ficha siguen enseñando su nombre»), pero §2 solo dice «lista de Clientes» y no da su forma: elegí accountExecutive = nombre del ejecutivo (texto, '' si no se encuentra)."
+    },
+    {
+      "description": "La migración y las pruebas corren sobre el MongoDB 6.0.14 que trae mongodb-memory-server 9, no sobre MongoDB 7.x.",
+      "reason": "Es la versión que fija la plantilla (§7, 6) y el arranque de comprobar.js; no cambié la dependencia."
+    }
+  ],
+  "dodSelfAssessment": {
+    "met": true,
+    "blockers": []
+  },
+  "clarificationRequests": [
+    {
+      "question": "¿Qué esquema tiene la colección executives? Supuse {_id: ObjectId, name: string, active: boolean}.",
+      "blocking": false,
+      "context": "§4 R4-ARQ-2 y RN-09 piden validar un «ejecutivo activo» y resolver «el nombre» con $lookup a executives, pero ni §3 ni §6 describen esa colección (es de GREEN-H2-API-EJECUTIVOS-001 y no existe en el repo). sdd_mcp_get_spec no acepta el código de esa spec y sdd_mcp_search_code no encuentra nada."
+    },
+    {
+      "question": "¿Qué esquema tiene opportunities? Supuse customerId ObjectId (no string), status 'open' para las abiertas y el valor en el campo value.",
+      "blocking": false,
+      "context": "RN-07 y R4-ARQ-2/3 dan customerId y status (por el índice {customerId, status}) pero no el nombre del campo del valor ni el tipo de customerId."
+    },
+    {
+      "question": "¿Qué forma tiene accountExecutive en el listado y en la ficha? Elegí el nombre del ejecutivo como texto ('' si no existe).",
+      "blocking": false,
+      "context": "RN-10 y R4-ARQ-4 nombran accountExecutive («vacío») pero §2 y §3 no lo definen."
+    },
+    {
+      "question": "«Desempate por id»: ¿ascendente o descendente? Elegí _id descendente (índice {createdAt:-1, _id:-1}).",
+      "blocking": false,
+      "context": "RN-07 dice «dos clientes del mismo instante salen en orden de id» sin sentido; R4-REND-1 dice índice {createdAt, _id} sin dirección."
+    },
+    {
+      "question": "¿Qué mensaje literal llevan idType y personType ausentes o inválidos, un texto opcional que no es texto y page/pageSize fuera de rango? Usé «Selecciona el tipo de identificación.», «Selecciona el tipo de persona.», «Valor no válido.», «page debe ser un entero mayor o igual a 1» y «pageSize debe ser un entero entre 1 y 100».",
+      "blocking": false,
+      "context": "AC-03 exige el mensaje literal de cada campo, pero RN-02/RN-03/RN-07 solo dan los de idNumber, nombre, correo, canal y ejecutivo."
+    },
+    {
+      "question": "En PUT, ¿sourceChannel es obligatorio? Lo traté como opcional (si se envía, no puede ir vacío), con email obligatorio como dice el contrato; el nombre se exige sobre el cliente resultante según su personType guardado.",
+      "blocking": false,
+      "context": "§2 PUT solo marca email como requerido; RN-03 dice que el canal es obligatorio sin distinguir alta y edición."
+    },
+    {
+      "question": "El año del código PRO-AAAA-NNN: ¿UTC u hora local (Ecuador, UTC-5)? Usé el año UTC.",
+      "blocking": false,
+      "context": "RN-06 dice «el año de creación» sin zona horaria; difiere solo entre el 31-dic 19:00 y medianoche local."
+    }
+  ]
+}
