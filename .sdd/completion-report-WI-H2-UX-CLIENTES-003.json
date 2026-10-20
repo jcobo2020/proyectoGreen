@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 5,
+  "workItemCode": "WI-H2-UX-CLIENTES-003",
+  "summary": "Pantalla /nuevo-prospecto («Nuevo cliente») en frontend/src/app/feature/customers por capas (domain/application/infrastructure/ui): formulario de 4 pasos con sus 16 campos, validaciones y mensajes literales, reglas de «Tipo de persona», carga de «Ejecutivo asignado» (GET /api/executives) con sus estados cargando/vacío/error/200/401, y «Guardar cliente» (POST /api/customers) con 201 (aviso y navegación a /prospectos/:id), 400, 401 y 409 (conserva lo escrito y recarga los ejecutivos). 221 pruebas en verde; cobertura de sentencias 95,96 % sobre los ficheros tocados.",
+  "criteria": [
+    {
+      "id": "AC-18",
+      "status": "covered",
+      "note": "200 de GET /api/executives → «Datos al día.» (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:156)."
+    },
+    {
+      "id": "AC-19",
+      "status": "covered",
+      "note": "201 de POST /api/customers → «Se guardó correctamente.» y navega a /prospectos/:id con el aviso en el state de la navegación (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:427)."
+    },
+    {
+      "id": "AC-20",
+      "status": "covered",
+      "note": "400 → «Revisa los datos marcados.», cada campo de details con su mensaje literal del servidor y lo escrito se conserva (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:440)."
+    },
+    {
+      "id": "AC-21",
+      "status": "covered",
+      "note": "401 en la carga (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:193) y al guardar (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:465) → «Tu sesión terminó: vuelve a entrar.»; el interceptor de la feature limpia la sesión y lleva al inicio de sesión (frontend/src/app/feature/customers/infrastructure/session.interceptor.spec.ts:46). El texto del AC en el pack está mal formado («el sistema debe Tu sesión terminó…»); se tomó el literal de view_states de la spec."
+    },
+    {
+      "id": "AC-22",
+      "status": "covered",
+      "note": "409 → «Ya existe un cliente con esta identificación.» en «Número de identificación» y como aviso, conserva lo escrito y vuelve a cargar las opciones de «Ejecutivo asignado» (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:477)."
+    },
+    {
+      "id": "AC-23",
+      "status": "pending",
+      "note": "El pack lo lista en §1-bis y §11 pero §2 dice «(no encontrado en la spec — reportar)»: no tiene texto, así que no hay nada que demostrar. Los estados de vista de la spec que no llevan AC (cargando «Cargando…», vacío «No hay datos que mostrar.», error «No se pudo cargar. Vuelve a intentarlo.») están implementados y probados en frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:148, :171 y :178; si AC-23..27 son esos estados, ya están cubiertos."
+    },
+    {
+      "id": "AC-24",
+      "status": "pending",
+      "note": "El pack lo lista en §1-bis y §11 pero §2 dice «(no encontrado en la spec — reportar)»: no tiene texto, así que no hay nada que demostrar. Los estados de vista de la spec que no llevan AC (cargando «Cargando…», vacío «No hay datos que mostrar.», error «No se pudo cargar. Vuelve a intentarlo.») están implementados y probados en frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:148, :171 y :178; si AC-23..27 son esos estados, ya están cubiertos."
+    },
+    {
+      "id": "AC-25",
+      "status": "pending",
+      "note": "El pack lo lista en §1-bis y §11 pero §2 dice «(no encontrado en la spec — reportar)»: no tiene texto, así que no hay nada que demostrar. Los estados de vista de la spec que no llevan AC (cargando «Cargando…», vacío «No hay datos que mostrar.», error «No se pudo cargar. Vuelve a intentarlo.») están implementados y probados en frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:148, :171 y :178; si AC-23..27 son esos estados, ya están cubiertos."
+    },
+    {
+      "id": "AC-26",
+      "status": "pending",
+      "note": "El pack lo lista en §1-bis y §11 pero §2 dice «(no encontrado en la spec — reportar)»: no tiene texto, así que no hay nada que demostrar. Los estados de vista de la spec que no llevan AC (cargando «Cargando…», vacío «No hay datos que mostrar.», error «No se pudo cargar. Vuelve a intentarlo.») están implementados y probados en frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:148, :171 y :178; si AC-23..27 son esos estados, ya están cubiertos."
+    },
+    {
+      "id": "AC-27",
+      "status": "pending",
+      "note": "El pack lo lista en §1-bis y §11 pero §2 dice «(no encontrado en la spec — reportar)»: no tiene texto, así que no hay nada que demostrar. Los estados de vista de la spec que no llevan AC (cargando «Cargando…», vacío «No hay datos que mostrar.», error «No se pudo cargar. Vuelve a intentarlo.») están implementados y probados en frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:148, :171 y :178; si AC-23..27 son esos estados, ya están cubiertos."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R4-ARQ-1",
+      "status": "cumple",
+      "evidencia": "El componente solo usa casos de uso; los repositorios HTTP hablan con /api (frontend/src/app/feature/customers/infrastructure/http-customer.repository.ts:20, http-executive.repository.ts:18)."
+    },
+    {
+      "id": "R4-ARQ-2",
+      "status": "cumple",
+      "evidencia": "Ningún acceso a datos fuera de HttpClient sobre /api."
+    },
+    {
+      "id": "R4-ARQ-3",
+      "status": "cumple",
+      "evidencia": "Cuerpo y respuestas de POST /api/customers según GREEN-H2-API-CLIENTES-001 v8 (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:369); GET /api/executives según GREEN-H2-API-EJECUTIVOS-001 v4, que está in_review (ver clarificationRequests)."
+    },
+    {
+      "id": "R4-ARQ-4",
+      "status": "cumple",
+      "evidencia": "La identificación repetida la decide el servidor: el 409 se pinta en el campo (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:477); el frontend no la comprueba."
+    },
+    {
+      "id": "R4-ARQ-5",
+      "status": "cumple",
+      "evidencia": "El frontend no presupone la unicidad ni la validez del ejecutivo (el 400 «Selecciona un ejecutivo válido.» lo pinta del servidor, frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:440). Sí replica los validadores de formato que la ux_flow declara en el campo (custom-1..3), que el servidor vuelve a validar."
+    },
+    {
+      "id": "R4-ARQ-6",
+      "status": "cumple",
+      "evidencia": "La pantalla no guarda el cliente en ningún estado local persistente: tras el 201 navega a /prospectos/:id."
+    },
+    {
+      "id": "R4-ARQ-7",
+      "status": "cumple",
+      "evidencia": "Sin caché: ListExecutivesUseCase pide en cada ejecución (frontend/src/app/feature/customers/application/executive.use-cases.spec.ts) y el 409 vuelve a pedir (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:477)."
+    },
+    {
+      "id": "R4-PRUEBAS-1",
+      "status": "no_aplica",
+      "evidencia": "Restricción de /prospectos: otra pantalla del package (§10: «Otras pantallas de la spec»)."
+    },
+    {
+      "id": "R4-PRUEBAS-2",
+      "status": "no_aplica",
+      "evidencia": "Restricción de /prospectos («Guardar cambios»): otra pantalla del package (§10: «Otras pantallas de la spec»)."
+    },
+    {
+      "id": "R4-PRUEBAS-3",
+      "status": "no_aplica",
+      "evidencia": "Restricción de /prospectos («Cargar la lista»): otra pantalla del package (§10: «Otras pantallas de la spec»)."
+    },
+    {
+      "id": "R4-PRUEBAS-4",
+      "status": "no_aplica",
+      "evidencia": "Restricción de /prospectos (diálogo; el mismo GET /api/executives de esta pantalla se prueba en R4-PRUEBAS-11): otra pantalla del package (§10: «Otras pantallas de la spec»)."
+    },
+    {
+      "id": "R4-PRUEBAS-5",
+      "status": "no_aplica",
+      "evidencia": "Restricción de /prospectos («Cargar el cliente a editar»): otra pantalla del package (§10: «Otras pantallas de la spec»)."
+    },
+    {
+      "id": "R4-PRUEBAS-6",
+      "status": "no_aplica",
+      "evidencia": "Restricción de /prospectos/:id: otra pantalla del package (§10: «Otras pantallas de la spec»)."
+    },
+    {
+      "id": "R4-PRUEBAS-7",
+      "status": "no_aplica",
+      "evidencia": "Restricción de /prospectos/:id («Cargar Oportunidades»): otra pantalla del package (§10: «Otras pantallas de la spec»)."
+    },
+    {
+      "id": "R4-PRUEBAS-8",
+      "status": "no_aplica",
+      "evidencia": "Restricción de /prospectos/:id («Cargar el elemento»): otra pantalla del package (§10: «Otras pantallas de la spec»)."
+    },
+    {
+      "id": "R4-PRUEBAS-9",
+      "status": "cumple",
+      "evidencia": "Estados cargando frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:148, vacío :171, error :178; obligatorios con su literal :206; navegación «Al guardar» :427 y «Clientes» :538."
+    },
+    {
+      "id": "R4-PRUEBAS-10",
+      "status": "cumple",
+      "evidencia": "201 frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:427, 400 :440, 401 :465, 409 :477 (conserva lo escrito y recarga los ejecutivos); traducción de cada código en frontend/src/app/feature/customers/infrastructure/http-customer.repository.spec.ts:61-103."
+    },
+    {
+      "id": "R4-PRUEBAS-11",
+      "status": "cumple",
+      "evidencia": "200 frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:156 y frontend/src/app/feature/customers/infrastructure/http-executive.repository.spec.ts:38; 401 frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:193 y frontend/src/app/feature/customers/infrastructure/http-executive.repository.spec.ts:51."
+    },
+    {
+      "id": "R4-PRUEBAS-12",
+      "status": "cumple",
+      "evidencia": "AC-18..AC-22 tienen cada uno su prueba (ver criteria). AC-23..AC-27 no existen en la spec: pending."
+    },
+    {
+      "id": "R4-PRUEBAS-13",
+      "status": "cumple",
+      "evidencia": "Lado frontend: cada código del contrato de los dos endpoints se traduce y se prueba (frontend/src/app/feature/customers/infrastructure/http-customer.repository.spec.ts:61-103, frontend/src/app/feature/customers/infrastructure/http-executive.repository.spec.ts:38-59). Las pruebas del endpoint en sí son del backend."
+    },
+    {
+      "id": "R4-PRUEBAS-14",
+      "status": "cumple",
+      "evidencia": "Cargando :148, vacío :171, error :178 y sin permiso :193 en frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts."
+    },
+    {
+      "id": "R4-PRUEBAS-15",
+      "status": "cumple",
+      "evidencia": "node comprobar.js sale con 0: npm ci, npm test con cobertura (221 pruebas), npm run build y arranque sin 5xx en /, /orders, /orders/new y /nuevo-prospecto."
+    },
+    {
+      "id": "R4-SEG-1",
+      "status": "cumple",
+      "evidencia": "Ningún secreto en el código; los tokens de las pruebas se generan con crypto.randomUUID() (frontend/src/app/feature/customers/infrastructure/http-customer.repository.spec.ts:111, frontend/src/app/feature/customers/infrastructure/session.interceptor.spec.ts:37)."
+    },
+    {
+      "id": "R4-SEG-2",
+      "status": "no_aplica",
+      "evidencia": "Lo exige el backend. El frontend adjunta el token con jwtInterceptor en el HttpClient de la feature (frontend/src/app/feature/customers/customers.routes.ts)."
+    },
+    {
+      "id": "R4-SEG-3",
+      "status": "no_aplica",
+      "evidencia": "Permisos por recurso: los decide el backend; esta pantalla solo da de alta."
+    },
+    {
+      "id": "R4-SEG-4",
+      "status": "no_aplica",
+      "evidencia": "Lo cumple el servidor; el frontend valida además y pinta los details del 400 (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:440)."
+    },
+    {
+      "id": "R4-SEG-5",
+      "status": "cumple",
+      "evidencia": "El log de error lleva código y ruta, sin cuerpo, datos del cliente ni token (frontend/src/app/feature/customers/infrastructure/http-customer.repository.spec.ts:110)."
+    },
+    {
+      "id": "R4-SEG-6",
+      "status": "cumple",
+      "evidencia": "/nuevo-prospecto dice «Tu sesión terminó: vuelve a entrar.» con 401 en la carga (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:193) y al guardar (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:465)."
+    },
+    {
+      "id": "R4-REND-1",
+      "status": "cumple",
+      "evidencia": "Mismo invariante que R4-ARQ-6."
+    },
+    {
+      "id": "R4-REND-2",
+      "status": "cumple",
+      "evidencia": "Mismo invariante que R4-ARQ-7: sin caché de los ejecutivos."
+    },
+    {
+      "id": "R4-OBS-1",
+      "status": "cumple",
+      "evidencia": "Mismo que R4-SEG-5 (frontend/src/app/feature/customers/infrastructure/http-customer.repository.spec.ts:110)."
+    }
+  ],
+  "testsRun": [
+    {
+      "name": "customer-new.component.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "http-customer.repository.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "http-executive.repository.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "session.interceptor.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "customer.use-cases.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "executive.use-cases.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "customers.routes.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "validation.service.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "app.routes.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "app.routes.server.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "resto de la suite del frontend (13 ficheros, orders y @core)",
+      "result": "pass"
+    }
+  ],
+  "evidence": [
+    {
+      "type": "coverage_report",
+      "ref": ".sdd/evidence/WI-H2-UX-CLIENTES-003/coverage-summary.json",
+      "note": "Salida de npm test -- --coverage --coverage-reporters=json-summary de la corrida de comprobar.js (frontend/coverage/greenfield-frontend/coverage-summary.json), con las claves pasadas a rutas relativas a la raíz del repositorio. Sentencias: 95,96 % (451/470) sobre los 15 ficheros que toca este work item; 93,73 % del frontend entero."
+    }
+  ],
+  "deviations": [
+    {
+      "description": "/nuevo-prospecto se sirve con RenderMode.Client en app.routes.server.ts.",
+      "reason": "La plantilla (§5) dice Prerender para las rutas sin parámetros, pero el authGuard y el token viven en sessionStorage, que no existe en el servidor; es el mismo criterio que ya usa /orders/** en el repo."
+    },
+    {
+      "description": "Ante un 401 el interceptor lleva a environment.identityProviderUrl con returnUrl, no a /login.",
+      "reason": "La plantilla (§3) dice /login, pero el repo no tiene esa ruta: el authGuard y el interceptor de orders ya usan identityProviderUrl. La pantalla muestra «Tu sesión terminó: vuelve a entrar.» mientras se redirige."
+    },
+    {
+      "description": "Los mensajes de validación los pinta el componente; no se usa errorTailorImports.",
+      "reason": "La plantilla (§3) nombra errorTailorImports de @core/components/validation, que no existe en el repo ni en package.json (@ngneat/error-tailor); añadir la dependencia no lo autoriza el pack. ValidationService sí se creó en @core/services (validación de correo)."
+    },
+    {
+      "description": "Los 4 pasos (kind: step) se presentan como 4 secciones numeradas de un mismo formulario, no como un asistente paso a paso.",
+      "reason": "La spec no declara controles ni textos para pasar de un paso a otro (controles: [], textos: []); un asistente obligaría a inventar los botones."
+    },
+    {
+      "description": "El botón «Reintentar» del estado de error no está en la spec.",
+      "reason": "Sin él, el estado de error no tiene salida; el texto sigue el de la pantalla /orders/new."
+    },
+    {
+      "description": "Las reglas de «Tipo de persona» se aplican al cambiarlo (trigger on change): antes de elegirlo, Razón social, Nombres y Apellidos siguen ocultos.",
+      "reason": "La regla «≠ legal» se cumpliría con el campo vacío y contradice «oculto al empezar»; se siguió el trigger declarado."
+    },
+    {
+      "description": "Con un error no previsto al guardar (500 u otro), el aviso es «No se pudo cargar. Vuelve a intentarlo.».",
+      "reason": "La pantalla no declara un mensaje para el 500 de «Guardar cliente»; se usa el de error de la pantalla, según la regla «Si falla: el aviso es el de la pantalla para ese código»."
+    }
+  ],
+  "dodSelfAssessment": {
+    "met": false,
+    "blockers": [
+      "AC-23..AC-27 los exige el pack pero no tienen texto en la spec («no encontrado en la spec — reportar»): quedan pending hasta que se aclaren.",
+      "GET /api/executives se consume según GREEN-H2-API-EJECUTIVOS-001 v4, que está in_review y no mergeado: el pack lo marca «sin contrato gobernado».",
+      "/prospectos y /prospectos/:id (destinos de «Clientes» y de «Al guardar») son de otros work items y aún no existen en el repo: la navegación se prueba con pantallas de relleno."
+    ]
+  },
+  "clarificationRequests": [
+    {
+      "question": "¿Qué son AC-23..AC-27? El pack los pide pero §2 dice «(no encontrado en la spec — reportar)». ¿Son los estados cargando / vacío / error de view_states (que no llevan AC)?",
+      "blocking": false,
+      "context": "§1-bis, §2 y §11 del pack; sdd_mcp_get_spec de GREEN-H2-UX-CLIENTES-001 v4 no tiene acceptance_criteria."
+    },
+    {
+      "question": "¿Se puede dar por bueno el contrato de GET /api/executives de GREEN-H2-API-EJECUTIVOS-001 v4 (in_review)? El pack dice «sin contrato gobernado y sin rastro en el código» y la ux_flow lo enlaza a la v2 «active».",
+      "blocking": false,
+      "context": "§2 del pack («Contratos que esta pantalla consume») frente a sdd_mcp_get_spec 14780ca5-… y ui_api_map.contract.spec_version 2."
+    },
+    {
+      "question": "¿Cómo debe llegar «Se guardó correctamente.» a /prospectos/:id? Aquí viaja en history.state (state.aviso) de la navegación; la pantalla de destino es de otro work item.",
+      "blocking": false,
+      "context": "§2 «Lo que pasa tras cada acción»: «va a /prospectos/:id; avisa …», sin decir quién lo muestra."
+    },
+    {
+      "question": "¿Un estado «vacío» y un «Datos al día.» tienen sentido en un formulario de alta? Se aplicaron a la carga de «Ejecutivo asignado», la única carga de la pantalla.",
+      "blocking": false,
+      "context": "view_states de /nuevo-prospecto (sdd_mcp_get_spec) y R4-PRUEBAS-9."
+    }
+  ]
+}

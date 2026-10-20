@@ -1,0 +1,101 @@
+.cliente-nuevo {
+  max-width: 720px;
+  padding: 1rem;
+}
+
+.migas a {
+  color: #2a6e2a;
+}
+
+.paso {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin: 0 0 1rem;
+  padding: 1rem;
+}
+
+.paso legend {
+  font-weight: 600;
+  padding: 0 0.25rem;
+}
+
+.numero-paso {
+  display: inline-block;
+  min-width: 1.5rem;
+  border-radius: 50%;
+  background-color: #2a6e2a;
+  color: white;
+  text-align: center;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.etiqueta,
+.campo label {
+  font-weight: 500;
+}
+
+.opcion-radio {
+  font-weight: normal;
+}
+
+.campo input[type='text'],
+.campo select,
+.campo textarea {
+  padding: 0.4rem;
+  border: 1px solid #999;
+  border-radius: 4px;
+  font: inherit;
+}
+
+.campo [aria-invalid='true'] {
+  border-color: #c00;
+}
+
+.ayuda {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.mensaje-error {
+  color: #c00;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.estado-cargando,
+.estado-vacio,
+.estado-al-dia {
+  color: #555;
+}
+
+.estado-error,
+.estado-sin-sesion,
+.aviso-error {
+  color: #c00;
+}
+
+.aviso-exito {
+  color: #2a6e2a;
+}
+
+.btn-guardar {
+  padding: 0.75rem 1.5rem;
+  background-color: #2a6e2a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-guardar:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+}
