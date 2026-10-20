@@ -551,6 +551,22 @@ describe('RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la s
     expect(await ExecutiveModel.countDocuments()).toBe(6);
   });
 
+  it('en una base de la v4 (name_1 con es strength 2), si syncIndexes no lo sustituye, sale con 1: un name_1 con otra intercalación no vale', async () => {
+    await ExecutiveModel.collection.drop().catch(() => undefined);
+    await ExecutiveModel.collection.createIndex({ name: 1 }, { unique: true, collation: { locale: 'es', strength: 2 } });
+    await ExecutiveModel.collection.createIndex({ active: 1, name: 1 }, { collation: { locale: 'es', strength: 2 } });
+    await ExecutiveModel.collection.insertOne({ name: 'Ana López', active: true });
+    const sync = jest.spyOn(ExecutiveModel, 'syncIndexes').mockResolvedValue([]);
+    try {
+      const c = capture();
+      expect(await seedExecutivesCli([], c.deps)).toBe(1);
+      expect(c.err.join('\n')).toMatch(/falta el índice name_1 \(con su intercalación\)/);
+      expect(await ExecutiveModel.countDocuments()).toBe(1);
+    } finally {
+      sync.mockRestore();
+    }
+  });
+
   it('aunque syncIndexes no avise (la carrera con el autoIndex de Mongoose), comprueba los índices y sale con 1', async () => {
     // Sin repetidos ni índices: la comprobación previa pasa, syncIndexes «no hace nada» y la de después lo detecta
     await ExecutiveModel.collection.drop().catch(() => undefined);
@@ -593,5 +609,60 @@ describe('RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la s
     expect(stderr).toContain('11000');
     expect(stderr).not.toContain('Karla Mendoza');
     expect(stderr).not.toContain('dup key');
+  });
+});
+
+describe('M1 · el arranque de la API (server.ts, autoIndex por defecto) no crea los índices de executives', () => {
+  const DB = 'arranque_con_repetidos';
+
+  it('el esquema de Executive no tiene autoIndex: sus índices solo los crea la siembra (R4-ARQ-2)', () => {
+    expect(ExecutiveModel.schema.get('autoIndex')).toBe(false);
+  });
+
+  it('con «Nana Torres» y «Ñaña Torres» en la base y sin name_1, arrancar no intenta crear el índice ni deja el nombre en el log de MongoDB', async () => {
+    const previousEnv = { ...process.env };
+    const db = mongoose.connection.useDb(DB);
+    await db.collection('executives').drop().catch(() => undefined);
+    await db.collection('executives').insertMany(['Nana Torres', 'Ñaña Torres'].map((name) => ({ name, active: true })));
+
+    process.env['MONGODB_URI'] = replSet.getUri(DB);
+    process.env['JWT_SECRET'] = crypto.randomBytes(32).toString('hex');
+    process.env['PORT'] = '0';
+
+    // El arranque real (server.ts: validateConfig → connectDB() → createApp → listen), con módulos
+    // propios: su mongoose es otra instancia, conectada con las opciones por defecto (autoIndex activo)
+    let bootMongoose: typeof mongoose | undefined;
+    let listen: jest.SpyInstance | undefined;
+    jest.isolateModules(() => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const express = require('express');
+      listen = jest.spyOn(express.application, 'listen');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      bootMongoose = require('mongoose');
+      require('../server');
+    });
+    try {
+      for (let i = 0; i < 200 && listen!.mock.calls.length === 0; i++) await new Promise((r) => setTimeout(r, 25));
+      expect(listen!.mock.calls.length).toBe(1);
+      expect(bootMongoose!.connection.readyState).toBe(1);
+      expect(bootMongoose!.connection.get('autoIndex')).not.toBe(false);
+
+      // Espera a lo que el arranque haga con los índices del modelo; si intentara name_1, fallaría aquí
+      const initError = await bootMongoose!.model('Executive').init().then(() => undefined, (err: unknown) => err);
+      expect(initError).toBeUndefined();
+
+      const indexes = (await db.collection('executives').listIndexes().toArray()).map((i) => i.name);
+      expect(indexes).toEqual(['_id_']);
+      const log = (await mongoose.connection.db!.admin().command({ getLog: 'global' })) as { log: string[] };
+      const aboutCollection = log.log.filter((l) => l.includes(`${DB}.executives`));
+      expect(aboutCollection.filter((l) => /Index build|E11000|dup key/.test(l))).toEqual([]);
+      expect(log.log.filter((l) => /Torres/i.test(l))).toEqual([]);
+    } finally {
+      const server = listen?.mock.results[0]?.value as { close: (cb: () => void) => void } | undefined;
+      if (server) await new Promise<void>((r) => server.close(() => r()));
+      listen?.mockRestore();
+      await bootMongoose?.disconnect();
+      process.env = previousEnv;
+    }
   });
 });

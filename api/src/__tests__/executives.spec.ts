@@ -125,6 +125,19 @@ describe('GET /api/executives — AC-01: ejecutivos activos como opciones', () =
     ]);
   });
 
+  it('RN-01 · la ñ decide: «Nora Sol» va antes que «Ñandú Paz» (con la intercalación es; con la raíz de Unicode sería al revés)', async () => {
+    // Con es la ñ es una letra propia tras la n: «Nora» < «Ñandú». Con en (la de la unicidad), la ñ es
+    // una n con tilde y «Ñandú» (n-a) iría antes que «Nora» (n-o): este par distingue las dos intercalaciones
+    await ExecutiveModel.create([{ name: 'Ñandú Paz' }, { name: 'Nora Sol' }]);
+
+    const res = await request(app)
+      .get('/api/executives')
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(res.status).toBe(200);
+    expect((res.body as Array<{ label: string }>).map((o) => o.label)).toEqual(['Nora Sol', 'Ñandú Paz']);
+  });
+
   it('RN-01 · el equipo del prototipo sale en orden alfabético español', async () => {
     await ExecutiveModel.create(
       ['Daniela Ríos', 'Mauricio León', 'Paola Cedeño', 'Andrés Villacís', 'Karla Mendoza'].map((name) => ({ name }))
@@ -299,12 +312,13 @@ describe('GET /api/executives — R4-REND-1: consulta por el índice {active, na
     // Insertados fuera de orden; con active_1_name_1 oculto el planificador no puede devolverlos
     // en el orden del índice: sin .sort() saldrían en el de inserción, y sin la intercalación, en binario
     await ExecutiveModel.syncIndexes();
-    await ExecutiveModel.create(['Zoe Vera', 'andrés Gil', 'Óscar Paz', 'Álvaro Díaz', 'Ñusta Rey', 'Nora Sol'].map((name) => ({ name })));
+    await ExecutiveModel.create(['Zoe Vera', 'Ñandú Paz', 'andrés Gil', 'Óscar Paz', 'Álvaro Díaz', 'Nora Sol'].map((name) => ({ name })));
     const db = mongoose.connection.db!;
     await db.command({ collMod: 'executives', index: { name: 'active_1_name_1', hidden: true } });
     try {
       const options = await new ExecutiveService().listActive();
-      expect(options.map((o) => o.label)).toEqual(['Álvaro Díaz', 'andrés Gil', 'Nora Sol', 'Ñusta Rey', 'Óscar Paz', 'Zoe Vera']);
+      // «Nora Sol» antes que «Ñandú Paz»: con la intercalación en de la unicidad saldría al revés
+      expect(options.map((o) => o.label)).toEqual(['Álvaro Díaz', 'andrés Gil', 'Nora Sol', 'Ñandú Paz', 'Óscar Paz', 'Zoe Vera']);
     } finally {
       await db.command({ collMod: 'executives', index: { name: 'active_1_name_1', hidden: false } });
     }
