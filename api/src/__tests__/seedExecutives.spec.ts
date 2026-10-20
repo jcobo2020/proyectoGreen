@@ -1,7 +1,8 @@
 /**
- * Tests del esquema y de la siembra de executives (WI-H2-API-EJECUTIVOS-001)
- * §3 (índices {name} único sin distinguir mayúsculas y {active, name}, con intercalación es),
- * AC-03 / RN-03 (la siembra crea los del equipo que falten y nunca toca a los que existen) y R4-ARQ-2.
+ * Tests del esquema y de la siembra de executives (WI-H2-API-EJECUTIVOS-001, evolución a la v6 en WI-H2-API-EJECUTIVOS-003)
+ * §3 (índices {name} único sin distinguir mayúsculas, tildes ni la ñ, y {active, name} con intercalación es),
+ * AC-03 / RN-03 (la siembra crea los del equipo que falten y nunca toca a los que existen; con nombres
+ * previos repetidos con esa equivalencia sale con error sin sembrar y sin escribir nombres) y R4-ARQ-2.
  * No escriben ficheros versionados: la evidencia de migración sale de ejecutar `npm run seed:executives`.
  */
 import fs from 'fs';
@@ -13,8 +14,9 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import { createApp } from '../app';
-import { ExecutiveModel } from '../models/executive';
-import { ExecutiveService, normalizeExecutiveName } from '../services/ExecutiveService';
+import { ExecutiveModel, EXECUTIVE_NAME_COLLATION } from '../models/executive';
+import { ExecutiveService, normalizeExecutiveName, uniqueExecutiveNames } from '../services/ExecutiveService';
+import * as connectDBModule from '../config/connectDB';
 import { parseExecutiveSeed } from '../validators/executive.validator';
 import {
   readExecutiveSeedFile,
@@ -32,11 +34,14 @@ const TEAM = ['Daniela Ríos', 'Mauricio León', 'Paola Cedeño', 'Andrés Villa
 let replSet: MongoMemoryReplSet;
 let tmpDir: string;
 
-/** Los índices que la siembra tiene que dejar (§3): {name} único y {active, name}, los dos con intercalación es. */
+/**
+ * Los índices que la siembra tiene que dejar (§3, v6): {name} único sin distinguir mayúsculas, tildes
+ * ni la ñ (intercalación raíz de Unicode, fuerza 1) y {active, name} con la intercalación es del orden.
+ */
 async function expectExecutiveSchema(): Promise<void> {
   const indexes = await ExecutiveModel.collection.listIndexes().toArray();
   const byName = new Map(indexes.map((i) => [i.name as string, i]));
-  expect(byName.get('name_1')).toMatchObject({ key: { name: 1 }, unique: true, collation: { locale: 'es', strength: 2 } });
+  expect(byName.get('name_1')).toMatchObject({ key: { name: 1 }, unique: true, collation: { locale: 'en', strength: 1 } });
   expect(byName.get('active_1_name_1')).toMatchObject({
     key: { active: 1, name: 1 },
     collation: { locale: 'es', strength: 2 },
@@ -60,14 +65,15 @@ beforeEach(async () => {
 });
 
 describe('Esquema de Executive (§3)', () => {
-  it('crea la colección executives con {name} único y {active, name}, los dos con intercalación es sin distinguir mayúsculas', async () => {
+  it('crea la colección executives con {name} único sin distinguir mayúsculas, tildes ni la ñ y {active, name} con intercalación es', async () => {
     await ExecutiveModel.syncIndexes();
     const indexes = await ExecutiveModel.collection.listIndexes().toArray();
 
     expect(ExecutiveModel.collection.collectionName).toBe('executives');
     const nameIndex = indexes.find((i) => JSON.stringify(i.key) === JSON.stringify({ name: 1 }));
     expect(nameIndex?.unique).toBe(true);
-    expect(nameIndex?.collation).toMatchObject({ locale: 'es', strength: 2 });
+    expect(nameIndex?.collation).toMatchObject({ locale: 'en', strength: 1 });
+    expect(EXECUTIVE_NAME_COLLATION).toEqual({ locale: 'en', strength: 1 });
     const listIndex = indexes.find((i) => JSON.stringify(i.key) === JSON.stringify({ active: 1, name: 1 }));
     expect(listIndex).toBeDefined();
     expect(listIndex?.collation).toMatchObject({ locale: 'es', strength: 2 });
@@ -82,19 +88,63 @@ describe('Esquema de Executive (§3)', () => {
     await expect(ExecutiveModel.create({ name: 'Ana López' })).rejects.toThrow();
   });
 
-  it('RN-03 · el nombre es único sin distinguir mayúsculas: el índice rechaza «daniela ríos» si ya está «Daniela Ríos»', async () => {
+  it('RN-03 · el nombre es único sin distinguir mayúsculas ni tildes: el índice rechaza «daniela rios» y «DANIELA RÍOS» si ya está «Daniela Ríos»', async () => {
     await ExecutiveModel.syncIndexes();
     await ExecutiveModel.create({ name: 'Daniela Ríos' });
 
-    await expect(ExecutiveModel.create({ name: 'daniela ríos' })).rejects.toThrow(/duplicate key/);
+    await expect(ExecutiveModel.create({ name: 'daniela rios' })).rejects.toThrow(/duplicate key/);
     await expect(ExecutiveModel.create({ name: 'DANIELA RÍOS' })).rejects.toThrow(/duplicate key/);
+    await expect(ExecutiveModel.create({ name: 'Daniela Rios' })).rejects.toThrow(/duplicate key/);
     expect(await ExecutiveModel.countDocuments()).toBe(1);
+  });
+
+  it('RN-03 · ni la ñ: el índice rechaza «Nana Torres» y «nana torres» si ya está «Ñaña Torres»', async () => {
+    await ExecutiveModel.syncIndexes();
+    await ExecutiveModel.create({ name: 'Ñaña Torres' });
+
+    await expect(ExecutiveModel.create({ name: 'Nana Torres' })).rejects.toThrow(/duplicate key/);
+    await expect(ExecutiveModel.create({ name: 'nana torres' })).rejects.toThrow(/duplicate key/);
+    await expect(ExecutiveModel.create({ name: 'ÑAÑA TORRES' })).rejects.toThrow(/duplicate key/);
+    expect(await ExecutiveModel.countDocuments()).toBe(1);
+  });
+
+  it('RN-03 · la equivalencia no es la de la intercalación es: con es (aun con fuerza 1) la ñ es otra letra', async () => {
+    // Por eso el índice único no usa la intercalación es del orden: con ella «Nana» y «Ñaña» serían dos
+    const probe = mongoose.connection.db!.collection('executives_collation_probe');
+    await probe.drop().catch(() => undefined);
+    await probe.createIndex({ name: 1 }, { unique: true, collation: { locale: 'es', strength: 1 } });
+    try {
+      await probe.insertOne({ name: 'Ñaña Torres' });
+      await expect(probe.insertOne({ name: 'Nana Torres' })).resolves.toBeDefined();
+    } finally {
+      await probe.drop();
+    }
+  });
+
+  it('RN-03 · otros nombres distintos siguen siendo distintos (la equivalencia solo quita mayúsculas, tildes y la ñ)', async () => {
+    await ExecutiveModel.syncIndexes();
+    await ExecutiveModel.create([{ name: 'Ana López' }, { name: 'Ana Lopes' }, { name: 'Anna López' }, { name: 'Nana Torre' }, { name: 'Ñaña Torres' }]);
+    expect(await ExecutiveModel.countDocuments()).toBe(5);
   });
 });
 
 describe('normalizeExecutiveName', () => {
   it('recorta y colapsa espacios', () => {
     expect(normalizeExecutiveName('  Ana   López ')).toBe('Ana López');
+  });
+});
+
+describe('uniqueExecutiveNames — la misma equivalencia que el índice único (RN-03)', () => {
+  it('«daniela rios», «DANIELA RÍOS» y «Daniela Ríos» son el mismo; se queda la primera forma', () => {
+    expect(uniqueExecutiveNames(['Daniela Ríos', 'daniela rios', 'DANIELA RÍOS'])).toEqual(['Daniela Ríos']);
+  });
+
+  it('«Ñaña Torres», «Nana Torres» y «nana torres» son el mismo', () => {
+    expect(uniqueExecutiveNames(['Ñaña Torres', 'Nana Torres', 'nana torres'])).toEqual(['Ñaña Torres']);
+  });
+
+  it('nombres distintos siguen siendo distintos', () => {
+    expect(uniqueExecutiveNames(['Ana López', 'Anna López', 'Ana Lopes'])).toEqual(['Ana López', 'Anna López', 'Ana Lopes']);
   });
 });
 
@@ -159,21 +209,30 @@ describe('ExecutiveService.seedMissing — RN-03: crea los que falten y nunca to
     expect(after?.active).toBe(false);
   });
 
-  it('no cambia el nombre de uno que ya existe con otra capitalización ni crea otro', async () => {
-    const existing = await ExecutiveModel.create({ name: 'daniela ríos' });
+  it('no cambia el nombre de uno que ya existe con otras mayúsculas o tildes ni crea otro', async () => {
+    const existing = await ExecutiveModel.create({ name: 'daniela rios' });
 
     const result = await service.seedMissing(['Daniela Ríos']);
     expect(result).toEqual({ created: 0, unchanged: 1 });
     expect(await ExecutiveModel.countDocuments()).toBe(1);
-    expect((await ExecutiveModel.findById(existing._id))?.name).toBe('daniela ríos');
+    expect((await ExecutiveModel.findById(existing._id))?.name).toBe('daniela rios');
   });
 
-  it('un repetido con otra capitalización dentro de la misma lista cuenta una vez y no crea otro', async () => {
-    // El servicio quita los repetidos sin distinguir mayúsculas antes de escribir: no depende
+  it('con «Ñaña Torres» en la base, «Nana Torres» en la lista no crea otro ni la toca', async () => {
+    const existing = await ExecutiveModel.create({ name: 'Ñaña Torres', active: false });
+
+    expect(await service.seedMissing(['Nana Torres'])).toEqual({ created: 0, unchanged: 1 });
+    const after = await ExecutiveModel.findById(existing._id).lean();
+    expect(after).toMatchObject({ name: 'Ñaña Torres', active: false });
+    expect(await ExecutiveModel.countDocuments()).toBe(1);
+  });
+
+  it('un repetido con otras mayúsculas, tildes o ñ dentro de la misma lista cuenta una vez y no crea otro', async () => {
+    // El servicio quita los repetidos con la equivalencia del índice antes de escribir: no depende
     // del orden en que la base ejecute las escrituras
     const bulkWrite = jest.spyOn(ExecutiveModel, 'bulkWrite');
     try {
-      const result = await service.seedMissing(['Daniela Ríos', 'daniela ríos', 'DANIELA RÍOS']);
+      const result = await service.seedMissing(['Daniela Ríos', 'daniela rios', 'DANIELA RÍOS']);
       expect(result).toEqual({ created: 1, unchanged: 0 });
       expect(bulkWrite).toHaveBeenCalledTimes(1);
       expect(bulkWrite.mock.calls[0][0]).toHaveLength(1);
@@ -184,8 +243,23 @@ describe('ExecutiveService.seedMissing — RN-03: crea los que falten y nunca to
     expect((await ExecutiveModel.findOne({}).lean())?.name).toBe('Daniela Ríos');
   });
 
-  it('las tildes sí distinguen: «Daniela Rios» y «Daniela Ríos» son dos', async () => {
-    expect(await service.seedMissing(['Daniela Ríos', 'Daniela Rios'])).toEqual({ created: 2, unchanged: 0 });
+  it('las tildes y la ñ no distinguen: «Daniela Rios» y «Daniela Ríos» son uno, «Nana Torres» y «Ñaña Torres» otro', async () => {
+    expect(await service.seedMissing(['Daniela Ríos', 'Daniela Rios', 'Ñaña Torres', 'Nana Torres'])).toEqual({
+      created: 2,
+      unchanged: 0,
+    });
+    expect((await ExecutiveModel.find({}).lean()).map((d) => d.name).sort()).toEqual(['Daniela Ríos', 'Ñaña Torres']);
+  });
+
+  it('cada escritura busca el nombre con la intercalación del índice único', async () => {
+    const bulkWrite = jest.spyOn(ExecutiveModel, 'bulkWrite');
+    try {
+      await service.seedMissing(['Ana López']);
+      const ops = bulkWrite.mock.calls[0][0] as Array<{ updateOne: { collation: unknown } }>;
+      expect(ops[0].updateOne.collation).toEqual(EXECUTIVE_NAME_COLLATION);
+    } finally {
+      bulkWrite.mockRestore();
+    }
   });
 
   it('no toca a los ejecutivos que no están en la lista', async () => {
@@ -210,7 +284,7 @@ describe('AC-03 · npm run seed:executives dos veces, y otra tras dar de baja a 
     logError: () => undefined,
   };
 
-  it('deja los 5 del equipo, Paola inactiva y fuera de GET /api/executives, y «daniela ríos» no crea otro', async () => {
+  it('deja los 5 del equipo, Paola inactiva y fuera de GET /api/executives, y «daniela rios» no crea otro', async () => {
     // Collection limpia y sin índices: la siembra crea el esquema ella misma
     await ExecutiveModel.collection.drop().catch(() => undefined);
 
@@ -224,9 +298,9 @@ describe('AC-03 · npm run seed:executives dos veces, y otra tras dar de baja a 
     await ExecutiveModel.updateOne({ name: 'Paola Cedeño' }, { $set: { active: false } });
     expect(await seedExecutivesCli([], cliDeps)).toBe(0);
 
-    // «daniela ríos» es la misma que «Daniela Ríos»
+    // «daniela rios» (sin mayúsculas ni tilde) es la misma que «Daniela Ríos»
     const lowercaseFile = path.join(tmpDir, 'daniela-minusculas.json');
-    fs.writeFileSync(lowercaseFile, JSON.stringify(['daniela ríos']), 'utf8');
+    fs.writeFileSync(lowercaseFile, JSON.stringify(['daniela rios']), 'utf8');
     expect(await seedExecutivesCli([lowercaseFile], cliDeps)).toBe(0);
 
     const docs = await ExecutiveModel.find({}).lean();
@@ -277,7 +351,8 @@ describe('Script seed:executives', () => {
     expect(output).toContain('active_1_name_1');
     expect(output).toContain('name_1');
     expect(output).toContain('[UNIQUE]');
-    expect(output).toContain('[collation es strength 2]');
+    expect(output).toContain('name_1: {"name":1} [UNIQUE] [collation en strength 1]');
+    expect(output).toContain('active_1_name_1: {"active":1,"name":1} [collation es strength 2]');
     expect(output).toContain('Creados: 2 · Ya existían (sin tocar): 0');
     expect(output).toContain('Ejecutivos activos: 2');
     await expectExecutiveSchema();
@@ -328,7 +403,21 @@ describe('Script seed:executives', () => {
       expect(d.out.join('\n')).not.toContain('Ana López');
     });
 
-    it('sin MONGODB_URI la conexión de la siembra falla con un SeedExecutivesError legible', async () => {
+    it('la siembra conecta sin autoIndex: ningún índice se intenta crear antes de comprobar los repetidos', async () => {
+    const previous = process.env['MONGODB_URI'];
+    process.env['MONGODB_URI'] = 'mongodb://127.0.0.1:1/seed-sin-autoindex';
+    const connect = jest.spyOn(connectDBModule, 'connectDB').mockResolvedValue(mongoose);
+    try {
+      await connectForSeed();
+      expect(connect).toHaveBeenCalledWith('mongodb://127.0.0.1:1/seed-sin-autoindex', { autoIndex: false });
+    } finally {
+      connect.mockRestore();
+      if (previous === undefined) delete process.env['MONGODB_URI'];
+      else process.env['MONGODB_URI'] = previous;
+    }
+  });
+
+  it('sin MONGODB_URI la conexión de la siembra falla con un SeedExecutivesError legible', async () => {
       const previous = process.env['MONGODB_URI'];
       delete process.env['MONGODB_URI'];
       try {
@@ -352,8 +441,8 @@ describe('Script seed:executives', () => {
   });
 });
 
-describe('M1 · la siembra falla CERRADA si no queda el índice único {name}', () => {
-  const PEOPLE = ['Karla Mendoza', 'karla mendoza'];
+describe('RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la siembra sale con error sin sembrar', () => {
+  const PEOPLE = ['Nana Torres', 'Ñaña Torres'];
 
   function capture() {
     const out: string[] = [];
@@ -370,44 +459,112 @@ describe('M1 · la siembra falla CERRADA si no queda el índice único {name}', 
     };
   }
 
-  beforeEach(async () => {
-    // Datos previos repetidos sin distinguir mayúsculas y sin índices: name_1 no se puede crear
+  /** Datos previos sin índices (una base anterior, o la v4 con su índice que sí distinguía la ñ). */
+  async function previousData(names: string[]): Promise<void> {
     await ExecutiveModel.collection.drop().catch(() => undefined);
-    await ExecutiveModel.collection.insertMany(PEOPLE.map((name) => ({ name, active: true })));
-  });
+    await ExecutiveModel.collection.insertMany(names.map((name) => ({ name, active: true })));
+  }
 
-  it('con repetidos por mayúsculas sale con 1, dice qué hacer, no siembra y no escribe ningún nombre', async () => {
+  async function expectFailsWithoutSeedingNorNames(names: string[]): Promise<void> {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const consoleLog = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    const consoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const sync = jest.spyOn(ExecutiveModel, 'syncIndexes');
     try {
       const c = capture();
       expect(await seedExecutivesCli([], c.deps)).toBe(1);
 
       const stderr = c.err.join('\n');
-      expect(stderr).toContain('name_1');
       expect(stderr).toContain('npm run seed:executives');
-      expect(stderr).toMatch(/mismo nombre/);
-      const everything = [...c.out, ...c.err, ...consoleError.mock.calls.flat(), ...consoleLog.mock.calls.flat()]
+      expect(stderr).toMatch(/mismo nombre sin distinguir mayúsculas, tildes ni la ñ/);
+      expect(stderr).toMatch(/No se ha sembrado nada/);
+      const everything = [
+        ...c.out,
+        ...c.err,
+        ...consoleError.mock.calls.flat(),
+        ...consoleLog.mock.calls.flat(),
+        ...consoleWarn.mock.calls.flat(),
+      ]
         .map(String)
         .join('\n');
-      for (const name of [...PEOPLE, ...TEAM]) expect(everything).not.toContain(name);
+      for (const name of [...names, ...TEAM]) expect(everything).not.toContain(name);
       expect(everything).not.toContain('dup key');
 
-      // No sembró nada: siguen los dos de antes
-      expect(await ExecutiveModel.countDocuments()).toBe(2);
+      // Ni siquiera intentó crear el índice único (la base registraría el nombre repetido en su propio log)
+      expect(sync).not.toHaveBeenCalled();
+      expect((await ExecutiveModel.collection.listIndexes().toArray()).map((i) => i.name)).not.toContain('name_1');
+      // No sembró nada: siguen los de antes
+      expect(await ExecutiveModel.countDocuments()).toBe(names.length);
     } finally {
+      sync.mockRestore();
       consoleError.mockRestore();
       consoleLog.mockRestore();
+      consoleWarn.mockRestore();
     }
+  }
+
+  it('con «Nana Torres» y «Ñaña Torres» previos sale con 1, dice qué hacer, no siembra y no escribe ningún nombre', async () => {
+    await previousData(PEOPLE);
+    await expectFailsWithoutSeedingNorNames(PEOPLE);
+  });
+
+  it('con «Daniela Rios» y «Daniela Ríos» previos (solo difieren en una tilde) también', async () => {
+    const names = ['Daniela Rios', 'Daniela Ríos'];
+    await previousData(names);
+    await expectFailsWithoutSeedingNorNames(names);
+  });
+
+  it('con «Karla Mendoza» y «karla mendoza» previos (solo difieren en mayúsculas) también', async () => {
+    const names = ['Karla Mendoza', 'karla mendoza'];
+    await previousData(names);
+    await expectFailsWithoutSeedingNorNames(names);
+  });
+
+  it('dice cuántos nombres se repiten, sin decir cuáles', async () => {
+    await previousData([...PEOPLE, 'Karla Mendoza', 'KARLA MENDOZA', 'Ana López']);
+    const c = capture();
+    expect(await seedExecutivesCli([], c.deps)).toBe(1);
+    expect(c.err.join('\n')).toMatch(/2 nombres se repiten/);
+  });
+
+  it('una base de la v4 (name_1 con la intercalación es, que distinguía tildes y ñ) y sin repetidos: la siembra sustituye el índice', async () => {
+    await ExecutiveModel.collection.drop().catch(() => undefined);
+    await ExecutiveModel.collection.createIndex({ name: 1 }, { unique: true, collation: { locale: 'es', strength: 2 } });
+    await ExecutiveModel.collection.insertOne({ name: 'Ana López', active: true });
+
+    const c = capture();
+    expect(await seedExecutivesCli([], c.deps)).toBe(0);
+    await expectExecutiveSchema();
+    expect(await ExecutiveModel.countDocuments()).toBe(6);
   });
 
   it('aunque syncIndexes no avise (la carrera con el autoIndex de Mongoose), comprueba los índices y sale con 1', async () => {
+    // Sin repetidos ni índices: la comprobación previa pasa, syncIndexes «no hace nada» y la de después lo detecta
+    await ExecutiveModel.collection.drop().catch(() => undefined);
+    await ExecutiveModel.collection.insertOne({ name: 'Ana López', active: true });
     const sync = jest.spyOn(ExecutiveModel, 'syncIndexes').mockResolvedValue([]);
     try {
       const c = capture();
       expect(await seedExecutivesCli([], c.deps)).toBe(1);
       expect(c.err.join('\n')).toContain('name_1');
-      expect(await ExecutiveModel.countDocuments()).toBe(2);
+      expect(await ExecutiveModel.countDocuments()).toBe(1);
+    } finally {
+      sync.mockRestore();
+    }
+  });
+
+  it('si la creación del índice falla por un repetido que entró después de comprobar, no propaga el nombre y sale con 1', async () => {
+    await ExecutiveModel.collection.drop().catch(() => undefined);
+    await ExecutiveModel.collection.insertOne({ name: 'Ana López', active: true });
+    const sync = jest
+      .spyOn(ExecutiveModel, 'syncIndexes')
+      .mockRejectedValue(Object.assign(new Error('E11000 duplicate key error dup key: { name: "Ana López" }'), { code: 11000 }));
+    try {
+      const c = capture();
+      expect(await seedExecutivesCli([], c.deps)).toBe(1);
+      expect(c.err.join('\n')).toContain('name_1');
+      expect(c.err.join('\n')).not.toContain('Ana López');
+      expect(await ExecutiveModel.countDocuments()).toBe(1);
     } finally {
       sync.mockRestore();
     }
