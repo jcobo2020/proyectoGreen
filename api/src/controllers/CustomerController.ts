@@ -5,7 +5,7 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  * @swagger
  * tags:
  *   name: Customers
- *   description: Clientes del CRM (personas jurídicas y naturales) — contrato GREEN-H2-API-CLIENTES-001 v6
+ *   description: Clientes del CRM (personas jurídicas y naturales) — contrato GREEN-H2-API-CLIENTES-001
  */
 
 /**
@@ -26,9 +26,9 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *         lastNames: { type: string, description: Apellidos (persona natural) }
  *         email: { type: string, format: email, description: 'Correo electrónico, en minúsculas y sin espacios alrededor (RN-11)' }
  *         mobilePhone: { type: string, description: Teléfono celular }
- *         city: { type: string, description: Ciudad }
+ *         city: { type: string, enum: [guayaquil, quito, manta, cuenca, duran, ambato, machala, riobamba], description: Ciudad }
  *         address: { type: string, description: Dirección }
- *         sourceChannel: { type: string, description: Canal de origen }
+ *         sourceChannel: { type: string, enum: [referido_de_cliente, cartera_propia, campana_digital, alianza_bancaria, cuenta_estrategica], description: Canal de origen }
  *         accountExecutiveId: { type: string, description: _id del ejecutivo asignado }
  *         notes: { type: string, description: Observaciones }
  *         contactName: { type: string, description: 'Contacto principal: nombre' }
@@ -50,9 +50,9 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *         lastNames: { type: string, description: Apellidos }
  *         email: { type: string, format: email, description: 'Correo electrónico, en minúsculas (RN-11)' }
  *         mobilePhone: { type: string, description: Teléfono celular }
- *         city: { type: string, description: Ciudad }
+ *         city: { type: string, enum: [guayaquil, quito, manta, cuenca, duran, ambato, machala, riobamba], description: Ciudad }
  *         address: { type: string, description: Dirección }
- *         sourceChannel: { type: string, description: Canal de origen }
+ *         sourceChannel: { type: string, enum: [referido_de_cliente, cartera_propia, campana_digital, alianza_bancaria, cuenta_estrategica], description: Canal de origen }
  *         accountExecutiveId: { type: string, description: Ejecutivo asignado }
  *         notes: { type: string, description: Observaciones }
  *         contactName: { type: string, description: Nombre }
@@ -78,7 +78,7 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *         id: { type: string, description: 'Abre /prospectos/:id' }
  *         name: { type: string, description: 'legalName, o firstNames + lastNames si es persona natural' }
  *         idNumber: { type: string, description: Identificación }
- *         city: { type: string, description: Ciudad }
+ *         city: { type: string, enum: [guayaquil, quito, manta, cuenca, duran, ambato, machala, riobamba], description: Ciudad }
  *         primaryContact: { type: string, description: contactName del alta }
  *         accountExecutive: { type: string, description: 'name del ejecutivo asignado; vacío si no tiene. Se conserva aunque se desactive (RN-10)' }
  *         openOpportunities: { type: integer, description: 'Número de oportunidades abiertas (0 si no tiene)' }
@@ -92,9 +92,9 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *         lastNames: { type: string, description: Apellidos }
  *         email: { type: string, format: email, description: 'Correo electrónico; se guarda en minúsculas y sin espacios (RN-11)' }
  *         mobilePhone: { type: string, description: Teléfono celular }
- *         city: { type: string, description: Ciudad }
+ *         city: { type: string, enum: [guayaquil, quito, manta, cuenca, duran, ambato, machala, riobamba], description: 'Ciudad: uno de los valores de la lista; otro, 400 «El valor de Ciudad no es válido.» (RN-12)' }
  *         address: { type: string, description: Dirección }
- *         sourceChannel: { type: string, description: Canal de origen }
+ *         sourceChannel: { type: string, enum: [referido_de_cliente, cartera_propia, campana_digital, alianza_bancaria, cuenta_estrategica], description: 'Canal de origen: uno de los valores de la lista; otro, 400 «El valor de Canal de origen no es válido.» (RN-12)' }
  *         accountExecutiveId: { type: string, description: '_id de un ejecutivo activo (RN-09)' }
  *         notes: { type: string, description: Observaciones }
  *         contactName: { type: string, description: 'Contacto principal: nombre' }
@@ -128,7 +128,9 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *     CreateCustomerBody:
  *       description: >
  *         Obligatorios: personType, idType, idNumber, email y sourceChannel; además, según el tipo de
- *         persona, legalName (legal) o firstNames y lastNames (natural).
+ *         persona, legalName (legal) o firstNames y lastNames (natural). Los nombres del otro tipo de
+ *         persona se ignoran (RN-03): una natural no guarda legalName; una jurídica, ni firstNames ni
+ *         lastNames.
  *       oneOf:
  *         - $ref: '#/components/schemas/CreateLegalCustomerBody'
  *         - $ref: '#/components/schemas/CreateNaturalCustomerBody'
@@ -177,7 +179,10 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *       required: [code, message, details]
  *     CustomerUnauthorizedError:
  *       type: object
- *       description: '401 de /api/customers: sin token o con uno inválido o caducado; details siempre viaja (vacío)'
+ *       description: >
+ *         401 de /api/customers: sin token o con uno inválido o caducado; details siempre viaja (vacío).
+ *         La autenticación va antes que la validación (RN-AUTH): sin un token válido responde 401
+ *         aunque el cuerpo no sea un JSON válido.
  *       properties:
  *         code: { type: string, enum: [UNAUTHORIZED] }
  *         message: { type: string }

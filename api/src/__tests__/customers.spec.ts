@@ -1,6 +1,5 @@
 /**
  * Tests de contrato e integración — /api/customers (WI-H2-API-CLIENTES-001)
- * Ronda 3, contra la spec v6 (pack v7).
  * AC-01..AC-07 · RN-01, RN-02, RN-03, RN-05, RN-06, RN-07, RN-08, RN-09, RN-10, RN-11, RN-12, RN-13, RN-AUTH
  */
 import request from 'supertest';
@@ -10,12 +9,13 @@ import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { createApp } from '../app';
-import { CustomerModel } from '../models/customer';
+import { CITIES, CustomerModel, SOURCE_CHANNELS } from '../models/customer';
 import { CounterModel } from '../models/counter';
 import { OrderModel } from '../models/order';
 import { CustomerService, listCustomersPipeline } from '../services/CustomerService';
 import { CustomerController } from '../controllers/CustomerController';
 import { swaggerSpec } from '../config/swagger';
+import { describeErrorSafely } from '../lib/safeErrorLog';
 
 let app: Application;
 let replSet: MongoMemoryReplSet;
@@ -59,9 +59,9 @@ function naturalBody(overrides: Record<string, unknown> = {}): Record<string, un
     lastNames: 'Pérez Gómez',
     email: 'ana.perez@example.com',
     mobilePhone: '0991234567',
-    city: 'Quito',
+    city: 'quito',
     address: 'Av. Amazonas N24-03',
-    sourceChannel: 'referido',
+    sourceChannel: 'referido_de_cliente',
     notes: 'Cliente de prueba',
     ...overrides,
   };
@@ -74,7 +74,7 @@ function legalBody(overrides: Record<string, unknown> = {}): Record<string, unkn
     idNumber: '1790012345001',
     legalName: 'Comercial Andina S.A.',
     email: 'contacto@andina.example.com',
-    sourceChannel: 'web',
+    sourceChannel: 'cartera_propia',
     contactName: 'Luis Torres',
     contactTitle: 'Gerente de compras',
     contactEmail: 'luis.torres@andina.example.com',
@@ -148,6 +148,27 @@ describe('AC-07 · RN-AUTH — sin token válido responde 401 UNAUTHORIZED', () 
     expect(res.body.code).toBe('UNAUTHORIZED');
   });
 
+  it.each([
+    ['GET /api/customers', () => request(app).get('/api/customers')],
+    ['POST /api/customers', () => request(app).post('/api/customers')],
+    ['GET /api/customers/:id', () => request(app).get(`/api/customers/${someId}`)],
+    ['PUT /api/customers/:id', () => request(app).put(`/api/customers/${someId}`)],
+  ])('%s sin Authorization y con un cuerpo que no es un JSON válido → 401, no 400', async (_name, build) => {
+    const res = await build().set('Content-Type', 'application/json').send('{"email":"ana@x.com",');
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({ code: 'UNAUTHORIZED', message: expect.any(String), details: [] });
+  });
+
+  it('con un token inválido y un JSON roto también responde 401: la autenticación va antes', async () => {
+    const res = await request(app)
+      .post('/api/customers')
+      .set('Authorization', 'Bearer no-es-un-token')
+      .set('Content-Type', 'application/json')
+      .send('{"email":');
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('UNAUTHORIZED');
+  });
+
   it('POST /api/customers con un token caducado → 401 y no crea nada', async () => {
     const expired = makeToken(jwtSecret, { exp: Math.floor(Date.now() / 1000) - 3600 });
     const res = await request(app).post('/api/customers').set('Authorization', `Bearer ${expired}`).send(naturalBody());
@@ -205,9 +226,9 @@ describe('POST /api/customers — AC-01: alta de un cliente válido', () => {
       lastNames: 'Pérez Gómez',
       email: 'ana.perez@example.com',
       mobilePhone: '0991234567',
-      city: 'Quito',
+      city: 'quito',
       address: 'Av. Amazonas N24-03',
-      sourceChannel: 'referido',
+      sourceChannel: 'referido_de_cliente',
       notes: 'Cliente de prueba',
     });
     expect(new Date(res.body.createdAt).toString()).not.toBe('Invalid Date');
@@ -464,12 +485,11 @@ describe('POST /api/customers — AC-03 · RN-03: nombre, correo y canal', () =>
 
   it('un campo con un tipo que no es el suyo → 400 «El valor de <etiqueta> no es válido.»', async () => {
     const res = await auth(request(app).post('/api/customers')).send(
-      naturalBody({ city: 42, legalName: 7, mobilePhone: true, accountExecutiveId: 12, contactEmail: 5 })
+      naturalBody({ city: 42, mobilePhone: true, accountExecutiveId: 12, contactEmail: 5 })
     );
     expect(res.status).toBe(400);
     expect(messagesOf(res)).toEqual({
       city: 'El valor de Ciudad no es válido.',
-      legalName: 'El valor de Razón social no es válido.',
       mobilePhone: 'El valor de Teléfono celular no es válido.',
       accountExecutiveId: 'El valor de Ejecutivo asignado no es válido.',
       contactEmail: 'El valor de Correo no es válido.',
@@ -487,6 +507,87 @@ describe('POST /api/customers — AC-03 · RN-03: nombre, correo y canal', () =>
       sourceChannel: 'El valor de Canal de origen no es válido.',
       firstNames: 'El valor de Nombres no es válido.',
     });
+  });
+});
+
+describe('POST /api/customers — RN-03: el alta ignora los nombres que no son de su tipo', () => {
+  it('una natural no guarda legalName, aunque venga con un tipo que no es el suyo', async () => {
+    for (const [idNumber, legalName] of [['0102030411', 'No aplica S.A.'], ['0102030412', 7]] as const) {
+      const res = await auth(request(app).post('/api/customers')).send(naturalBody({ idNumber, legalName }));
+      expect(res.status).toBe(201);
+      expect(res.body).not.toHaveProperty('legalName');
+      const stored = await CustomerModel.findById(res.body.id).lean();
+      expect(stored).not.toHaveProperty('legalName');
+    }
+  });
+
+  it('una jurídica no guarda firstNames ni lastNames', async () => {
+    const res = await auth(request(app).post('/api/customers')).send(
+      legalBody({ firstNames: 'Luis', lastNames: ['Torres'] })
+    );
+    expect(res.status).toBe(201);
+    expect(res.body.legalName).toBe('Comercial Andina S.A.');
+    expect(res.body).not.toHaveProperty('firstNames');
+    expect(res.body).not.toHaveProperty('lastNames');
+    const stored = await CustomerModel.findById(res.body.id).lean();
+    expect(stored).not.toHaveProperty('firstNames');
+    expect(stored).not.toHaveProperty('lastNames');
+  });
+
+  it('sin un tipo de persona válido no se exigen nombres: solo el error de personType', async () => {
+    const res = await auth(request(app).post('/api/customers')).send(
+      naturalBody({ personType: 'otra', firstNames: undefined, lastNames: undefined })
+    );
+    expect(res.status).toBe(400);
+    expect(messagesOf(res)).toEqual({ personType: 'El valor de Tipo de persona no es válido.' });
+  });
+});
+
+describe('POST /api/customers — RN-12: city y sourceChannel solo admiten los valores de su campo', () => {
+  it.each(['guayaquil', 'quito', 'manta', 'cuenca', 'duran', 'ambato', 'machala', 'riobamba'])(
+    'city=%s → 201',
+    async (city) => {
+      const res = await auth(request(app).post('/api/customers')).send(naturalBody({ city }));
+      expect(res.status).toBe(201);
+      expect(res.body.city).toBe(city);
+    }
+  );
+
+  it.each(['referido_de_cliente', 'cartera_propia', 'campana_digital', 'alianza_bancaria', 'cuenta_estrategica'])(
+    'sourceChannel=%s → 201',
+    async (sourceChannel) => {
+      const res = await auth(request(app).post('/api/customers')).send(naturalBody({ sourceChannel }));
+      expect(res.status).toBe(201);
+      expect(res.body.sourceChannel).toBe(sourceChannel);
+    }
+  );
+
+  it.each(['loja', 'Quito', 'QUITO', ' quito'])('city=«%s» → 400 «El valor de Ciudad no es válido.»', async (city) => {
+    const res = await auth(request(app).post('/api/customers')).send(naturalBody({ city }));
+    expect(res.status).toBe(400);
+    expect(messagesOf(res)).toEqual({ city: 'El valor de Ciudad no es válido.' });
+    expect(await CustomerModel.countDocuments()).toBe(0);
+  });
+
+  it.each(['web', 'referido', 'Cartera_Propia'])(
+    'sourceChannel=«%s» → 400 «El valor de Canal de origen no es válido.»',
+    async (sourceChannel) => {
+      const res = await auth(request(app).post('/api/customers')).send(naturalBody({ sourceChannel }));
+      expect(res.status).toBe(400);
+      expect(messagesOf(res)).toEqual({ sourceChannel: 'El valor de Canal de origen no es válido.' });
+    }
+  );
+
+  it('una ciudad vacía no es un valor: el cliente queda sin ciudad', async () => {
+    const res = await auth(request(app).post('/api/customers')).send(naturalBody({ city: '' }));
+    expect(res.status).toBe(201);
+    expect(res.body).not.toHaveProperty('city');
+  });
+
+  it('idType fuera de su lista → «El valor de Tipo de identificación no es válido.»', async () => {
+    const res = await auth(request(app).post('/api/customers')).send(naturalBody({ idType: 'Cedula' }));
+    expect(res.status).toBe(400);
+    expect(messagesOf(res)).toEqual({ idType: 'El valor de Tipo de identificación no es válido.' });
   });
 });
 
@@ -613,7 +714,7 @@ describe('GET /api/customers — AC-05 · RN-07: listado paginado', () => {
       firstNames: 'X',
       lastNames: 'Y',
       email: 'x@example.com',
-      sourceChannel: 'web',
+      sourceChannel: 'cartera_propia',
       createdAt: sameInstant,
       updatedAt: sameInstant,
     };
@@ -673,7 +774,7 @@ describe('GET /api/customers — AC-05 · RN-07: listado paginado', () => {
 
   it('200 · cada fila trae solo los campos del contrato: id, name, idNumber, city, primaryContact, accountExecutive, openOpportunities, openValue', async () => {
     const executiveId = await seedExecutive('Marta Ruiz');
-    const legal = await auth(request(app).post('/api/customers')).send(legalBody({ city: 'Cuenca', accountExecutiveId: executiveId }));
+    const legal = await auth(request(app).post('/api/customers')).send(legalBody({ city: 'cuenca', accountExecutiveId: executiveId }));
     await new Promise((r) => setTimeout(r, 5));
     const natural = await auth(request(app).post('/api/customers')).send(naturalBody());
 
@@ -684,7 +785,7 @@ describe('GET /api/customers — AC-05 · RN-07: listado paginado', () => {
         id: natural.body.id,
         name: 'Ana María Pérez Gómez',
         idNumber: '0102030405',
-        city: 'Quito',
+        city: 'quito',
         accountExecutive: '',
         openOpportunities: 0,
         openValue: 0,
@@ -693,7 +794,7 @@ describe('GET /api/customers — AC-05 · RN-07: listado paginado', () => {
         id: legal.body.id,
         name: 'Comercial Andina S.A.',
         idNumber: '1790012345001',
-        city: 'Cuenca',
+        city: 'cuenca',
         primaryContact: 'Luis Torres',
         accountExecutive: 'Marta Ruiz',
         openOpportunities: 0,
@@ -818,7 +919,7 @@ describe('GET /api/customers/:id — AC-06: ficha del cliente', () => {
       idNumber: '1790012345001',
       legalName: 'Comercial Andina S.A.',
       email: 'contacto@andina.example.com',
-      sourceChannel: 'web',
+      sourceChannel: 'cartera_propia',
       contactEmail: 'luis.torres@andina.example.com',
       accountExecutive: '',
       createdAt: created.body.createdAt,
@@ -833,6 +934,23 @@ describe('GET /api/customers/:id — AC-06: ficha del cliente', () => {
     const res = await auth(request(app).get(`/api/customers/${created.body.id}`));
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ accountExecutiveId: executiveId, accountExecutive: 'Marta Ruiz' });
+  });
+
+  it('RN-10 · 200 · la ficha sigue enseñando el nombre de su ejecutivo aunque se desactive', async () => {
+    const executiveId = await seedExecutive('Marta Ruiz');
+    const created = await auth(request(app).post('/api/customers')).send(legalBody({ accountExecutiveId: executiveId }));
+    await executives().updateOne({ _id: new mongoose.Types.ObjectId(executiveId) }, { $set: { active: false } });
+    const res = await auth(request(app).get(`/api/customers/${created.body.id}`));
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ accountExecutiveId: executiveId, accountExecutive: 'Marta Ruiz' });
+  });
+
+  it('200 · sin ejecutivo, accountExecutive vacío y sin accountExecutiveId', async () => {
+    const created = await auth(request(app).post('/api/customers')).send(naturalBody());
+    const res = await auth(request(app).get(`/api/customers/${created.body.id}`));
+    expect(res.status).toBe(200);
+    expect(res.body.accountExecutive).toBe('');
+    expect(res.body).not.toHaveProperty('accountExecutiveId');
   });
 
   it('404 · un id que no existe → CUSTOMER_NOT_FOUND', async () => {
@@ -862,9 +980,9 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
     const res = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
       email: 'ana.nueva@example.com',
       mobilePhone: '0987654321',
-      city: 'Guayaquil',
+      city: 'guayaquil',
       address: 'Malecón 2000',
-      sourceChannel: 'feria',
+      sourceChannel: 'campana_digital',
       accountExecutiveId: executiveId,
       notes: 'Cambió de ciudad',
       firstNames: 'Ana',
@@ -881,9 +999,9 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
       createdAt: created.body.createdAt,
       email: 'ana.nueva@example.com',
       mobilePhone: '0987654321',
-      city: 'Guayaquil',
+      city: 'guayaquil',
       address: 'Malecón 2000',
-      sourceChannel: 'feria',
+      sourceChannel: 'campana_digital',
       accountExecutiveId: executiveId,
       notes: 'Cambió de ciudad',
       firstNames: 'Ana',
@@ -896,17 +1014,17 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
     expect(typeof res.body.updatedAt).toBe('string');
 
     const stored = await CustomerModel.findById(created.body.id).lean();
-    expect(stored?.city).toBe('Guayaquil');
+    expect(stored?.city).toBe('guayaquil');
   });
 
   it('RN-03 · PUT sin canal: 200 y conserva el canal guardado', async () => {
     const created = await auth(request(app).post('/api/customers')).send(naturalBody());
     const res = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
       email: 'ana.perez@example.com',
-      city: 'Loja',
+      city: 'manta',
     });
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ sourceChannel: 'referido', city: 'Loja' });
+    expect(res.body).toMatchObject({ sourceChannel: 'referido_de_cliente', city: 'manta' });
   });
 
   it('RN-03 · PUT de una natural con firstNames vacío: 400 «Completa el nombre.»', async () => {
@@ -960,6 +1078,43 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
     expect(resLegal.body).not.toHaveProperty('firstNames');
   });
 
+  it('RN-05 · los nombres del otro tipo se ignoran sin validar su tipo: 200', async () => {
+    const natural = await auth(request(app).post('/api/customers')).send(naturalBody());
+    const resNatural = await auth(request(app).put(`/api/customers/${natural.body.id}`)).send({
+      email: 'ana.perez@example.com',
+      legalName: 7,
+    });
+    expect(resNatural.status).toBe(200);
+    expect(resNatural.body).not.toHaveProperty('legalName');
+
+    const legal = await auth(request(app).post('/api/customers')).send(legalBody());
+    const resLegal = await auth(request(app).put(`/api/customers/${legal.body.id}`)).send({
+      email: 'contacto@andina.example.com',
+      firstNames: 3,
+      lastNames: { nombre: 'x' },
+    });
+    expect(resLegal.status).toBe(200);
+    expect(resLegal.body).not.toHaveProperty('firstNames');
+    expect(resLegal.body).not.toHaveProperty('lastNames');
+    expect(resLegal.body.legalName).toBe('Comercial Andina S.A.');
+  });
+
+  it('RN-12 · city y sourceChannel de la edición solo admiten los valores de su campo', async () => {
+    const created = await auth(request(app).post('/api/customers')).send(naturalBody());
+    const res = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
+      email: 'ana.perez@example.com',
+      city: 'loja',
+      sourceChannel: 'web',
+    });
+    expect(res.status).toBe(400);
+    expect(messagesOf(res)).toEqual({
+      city: 'El valor de Ciudad no es válido.',
+      sourceChannel: 'El valor de Canal de origen no es válido.',
+    });
+    const stored = await CustomerModel.findById(created.body.id).lean();
+    expect(stored).toMatchObject({ city: 'quito', sourceChannel: 'referido_de_cliente' });
+  });
+
   it('404 · un cliente que no existe → CUSTOMER_NOT_FOUND', async () => {
     const res = await auth(request(app).put(`/api/customers/${new mongoose.Types.ObjectId().toString()}`)).send({
       email: 'a@example.com',
@@ -974,7 +1129,7 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
     expect(res.body.code).toBe('CUSTOMER_NOT_FOUND');
   });
 
-  it('400 · sin correo → «Correo electrónico es obligatorio.»; inválido → «Ingresa un correo válido.»', async () => {
+  it('RN-12 · 400 · sin correo → «Correo electrónico es obligatorio.»; inválido → «Ingresa un correo válido.»', async () => {
     const created = await auth(request(app).post('/api/customers')).send(naturalBody());
     const cases: Array<[Record<string, unknown>, string]> = [
       [{}, 'Correo electrónico es obligatorio.'],
@@ -1043,7 +1198,10 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
       firstNames: 3,
     });
     expect(res.status).toBe(400);
-    expect(messagesOf(res)).toEqual({ firstNames: 'El valor de Nombres no es válido.' });
+    expect(messagesOf(res)).toEqual({
+      firstNames: 'El valor de Nombres no es válido.',
+      lastNames: 'Completa el nombre.',
+    });
 
     const res2 = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
       email: 'ana.perez@example.com',
@@ -1062,10 +1220,10 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
     const res = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
       email: 'ana.perez@example.com',
       accountExecutiveId: executiveId.toUpperCase(),
-      city: 'Ambato',
+      city: 'ambato',
     });
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ accountExecutiveId: executiveId, city: 'Ambato' });
+    expect(res.body).toMatchObject({ accountExecutiveId: executiveId, city: 'ambato' });
 
     const detail = await auth(request(app).get(`/api/customers/${created.body.id}`));
     expect(detail.body.accountExecutive).toBe('Marta Ruiz');
@@ -1095,7 +1253,7 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-// Ronda 3 (spec v6): RN-02, RN-06, RN-12, RN-13, R4-ARQ-4, R4-OBS-3 y la forma de los errores
+// RN-02, RN-06, RN-12, RN-13, R4-ARQ-4, R4-OBS-3 y la forma de los errores
 // ────────────────────────────────────────────────────────────────────────────
 
 /** Todo lo que se escribió en la consola, en una sola cadena. */
@@ -1172,10 +1330,10 @@ describe('PUT /api/customers/:id — RN-13: campos vacíos en la edición', () =
     });
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
-      city: 'Quito',
+      city: 'quito',
       mobilePhone: '0991234567',
       address: 'Av. Amazonas N24-03',
-      sourceChannel: 'referido',
+      sourceChannel: 'referido_de_cliente',
       firstNames: 'Ana María',
       lastNames: 'Pérez Gómez',
       notes: 'Nueva nota',
@@ -1286,6 +1444,45 @@ describe('RN-12 · R4-OBS-3 — un cuerpo que no es un JSON válido', () => {
   });
 });
 
+describe('R4-OBS-3 — ninguna línea del log lleva el cuerpo, tampoco las de la pila', () => {
+  // JSON.parse cita el cuerpo en su mensaje; con un salto de línea, el trozo citado empieza por «at »
+  const leaking = '[t\n    at 0991234567';
+
+  it('/api/orders: un JSON roto cuyo mensaje cita el cuerpo con una línea «at …» no lo deja en el log', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const res = await auth(request(app).post('/api/orders')).set('Content-Type', 'application/json').send(leaking);
+
+    expect(res.status).toBe(500);
+    const [entry] = jsonLines(errorSpy);
+    const stack = (entry['error'] as { stack: string[] }).stack;
+    expect(stack.length).toBeGreaterThan(0);
+    expect(stack[0]).toBe('at JSON.parse (<anonymous>)');
+    expect(consoleText(errorSpy, logSpy)).not.toContain('0991234567');
+  });
+
+  it('describeErrorSafely quita la cabecera entera aunque el mensaje tenga líneas «at …»', () => {
+    const err = new Error('fallo\n    at ana.perez@example.com (0991234567:1:2)');
+    const { stack } = describeErrorSafely(err);
+    expect(stack.length).toBeGreaterThan(0);
+    expect(stack.join('\n')).not.toContain('ana.perez@example.com');
+    expect(stack.every((line) => line.startsWith('at '))).toBe(true);
+  });
+
+  it('si el mensaje no está en la pila, no se registra ningún marco', () => {
+    const err = new Error('original');
+    err.message = 'cambiado con ana.perez@example.com';
+    err.stack = 'Error: otra cosa\n    at ana.perez@example.com (x:1:2)';
+    expect(describeErrorSafely(err).stack).toEqual([]);
+  });
+
+  it('solo pasan las líneas con la forma de un marco', () => {
+    const err = { name: 'Error', stack: 'Error\n    at f (/a/b.js:1:2)\n    at 0991234567\n    at /a/c.js:3:4' };
+    expect(describeErrorSafely(err).stack).toEqual(['at f (/a/b.js:1:2)', 'at /a/c.js:3:4']);
+  });
+});
+
 describe('R4-ARQ-4 · R4-OBS-3 — un error no previsto: 500 con details y sin el cuerpo en el log', () => {
   const INTERNAL = { code: 'INTERNAL_ERROR', message: 'Error interno del servidor', details: [] };
 
@@ -1347,9 +1544,15 @@ describe('R4-SEG-3 · R4-SEG-4 — un método no declarado bajo /api/customers',
     expect(deleted.status).toBe(404);
     expect(deleted.body).toEqual({ code: 'NOT_FOUND', message: expect.any(String), details: [] });
 
-    const patched = await request(app).patch('/api/customers');
+    const patched = await auth(request(app).patch('/api/customers'));
     expect(patched.status).toBe(404);
     expect(patched.body.details).toEqual([]);
+  });
+
+  it('sin token, también un método no declarado bajo /api/customers responde 401: toda ruta de /api exige un usuario autenticado', async () => {
+    const res = await request(app).patch('/api/customers');
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({ code: 'UNAUTHORIZED', message: expect.any(String), details: [] });
   });
 
   it('fuera de /api/customers el 404 conserva su forma {code, message}', async () => {
@@ -1360,7 +1563,7 @@ describe('R4-SEG-3 · R4-SEG-4 — un método no declarado bajo /api/customers',
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-// Swagger veraz (observación del revisor de la ronda 1)
+// Swagger veraz: documenta lo que hace el código
 // ────────────────────────────────────────────────────────────────────────────
 
 describe('Swagger — /api/customers documentado como lo implementa el código', () => {
@@ -1396,10 +1599,27 @@ describe('Swagger — /api/customers documentado como lo implementa el código',
     expect(spec.paths['/api/customers/{id}'].put.description).toContain('Los nombres del otro tipo de persona se ignoran');
   });
 
-  it('el 400 documenta los mensajes de RN-12 de la v6', () => {
+  it('el 400 documenta los mensajes de RN-12', () => {
     const validation = schemas['CustomerValidationError'].description ?? '';
     expect(validation).toContain('«El valor de <etiqueta> no es válido.»');
     expect(validation).toContain('«El cuerpo de la petición no es un JSON válido.» y details vacío');
+  });
+
+  it('city y sourceChannel documentan su lista de valores, la misma que valida el código', () => {
+    const write = schemas['CustomerWriteFields'].properties ?? {};
+    const enumOf = (field: string) => (write[field] as { enum?: string[] }).enum;
+    expect(enumOf('city')).toEqual([...CITIES]);
+    expect(enumOf('sourceChannel')).toEqual([...SOURCE_CHANNELS]);
+    for (const name of ['PublicCustomer', 'CreatedCustomer']) {
+      const properties = schemas[name].properties ?? {};
+      expect((properties['city'] as { enum?: string[] }).enum).toEqual([...CITIES]);
+      expect((properties['sourceChannel'] as { enum?: string[] }).enum).toEqual([...SOURCE_CHANNELS]);
+    }
+  });
+
+  it('el alta documenta que ignora los nombres del otro tipo y el 401 que va antes que la validación', () => {
+    expect(schemas['CreateCustomerBody'].description).toContain('Los nombres del otro tipo de');
+    expect(schemas['CustomerUnauthorizedError'].description).toContain('aunque el cuerpo no sea un JSON válido');
   });
 
   it('el alta exige sourceChannel y el nombre según el tipo de persona', () => {

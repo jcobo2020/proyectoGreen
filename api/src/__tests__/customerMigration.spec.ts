@@ -55,7 +55,7 @@ describe('Migración de esquema — Customer y Counter', () => {
       firstNames: 'M',
       lastNames: 'G',
       email: 'm@example.com',
-      sourceChannel: 'web',
+      sourceChannel: 'cartera_propia',
     };
     await CustomerModel.create({ ...base, code: 'PRO-2026-990' });
     await expect(CustomerModel.create({ ...base, code: 'PRO-2026-991' })).rejects.toThrow(/duplicate key/);
@@ -87,7 +87,7 @@ describe('Migración de esquema — Customer y Counter', () => {
       'Resultado: OK — colecciones customers y counters creadas con sus índices',
     ].join('\n');
 
-    // Solo con un comando aparte (npm run evidence): ninguna prueba reescribe un fichero versionado
+    // Solo con un comando aparte (npm run evidence): esta prueba no reescribe ningún fichero versionado
     const target = process.env['MIGRATION_LOG_FILE'];
     if (target) {
       fs.mkdirSync(path.dirname(target), { recursive: true });

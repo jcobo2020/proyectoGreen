@@ -6,6 +6,7 @@ import { createApiRouter } from './routes/api.routes';
 import { requestLogger } from './middlewares/requestLogger.middleware';
 import { notFound, errorHandler } from './middlewares/errorHandler.middleware';
 import { withErrorDetails } from './middlewares/withErrorDetails.middleware';
+import { authenticate } from './middlewares/authenticate.middleware';
 import { ProductService } from './services/ProductService';
 import { OrderService } from './services/OrderService';
 import { MongoUnitOfWork } from './lib/MongoUnitOfWork';
@@ -25,10 +26,12 @@ export function createApp(_connection?: typeof mongoose, deps?: AppDeps): Applic
   const app = express();
 
   // Middlewares globales. El log por petición va primero: también registra las peticiones cuyo
-  // cuerpo no se puede parsear. /api/customers se marca ANTES de express.json(): un JSON mal
-  // formado también responde con details (RN-12, R4-SEG-3) sin cambiar los errores de /api/orders.
+  // cuerpo no se puede parsear. /api/customers se marca y se autentica ANTES de express.json():
+  // sin un token válido responde 401 aunque el cuerpo no sea un JSON válido (RN-AUTH: la
+  // autenticación va antes que la validación), y un JSON mal formado con token responde 400 con
+  // details (RN-12, R4-SEG-3), sin cambiar los errores de /api/orders (R4-SEG-4).
   app.use(requestLogger);
-  app.use('/api/customers', withErrorDetails);
+  app.use('/api/customers', withErrorDetails, authenticate);
   app.use(express.json());
 
   // Composition root: construir servicios y controladores una sola vez

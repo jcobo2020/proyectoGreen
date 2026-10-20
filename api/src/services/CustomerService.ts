@@ -1,8 +1,8 @@
 import mongoose, { Types } from 'mongoose';
-import { CustomerModel, IdType, PersonType } from '../models/customer';
+import { CustomerModel, IdType, NAME_FIELDS_BY_PERSON_TYPE, PersonType } from '../models/customer';
 import { CounterModel } from '../models/counter';
 import { CustomerDuplicateError, CustomerNotFoundError, ValidationError } from '../lib/errors';
-import { CUSTOMER_MESSAGES } from '../validators/customer.validator';
+import { CUSTOMER_MESSAGES, nameErrors } from '../validators/customer.validator';
 import { isEmptyText, normalizeEmail, normalizeIdNumber } from '../lib/customerNormalization';
 
 // ─── Tipos públicos ───────────────────────────────────────────────────────────
@@ -76,12 +76,15 @@ export type CreateCustomerInput = {
   accountExecutiveId?: string;
 } & Partial<Record<EditableTextField, string>>;
 
-/** Lo que PUT puede cambiar (RN-05): nunca la identificación, su tipo ni el tipo de persona. */
+/**
+ * Lo que PUT puede cambiar (RN-05): nunca la identificación, su tipo ni el tipo de persona. Los
+ * nombres llegan sin validar: solo cuentan los del tipo de persona guardado, y los valida aquí.
+ */
 export type UpdateCustomerInput = {
   email: string;
-  legalName?: string | null;
-  firstNames?: string | null;
-  lastNames?: string | null;
+  legalName?: unknown;
+  firstNames?: unknown;
+  lastNames?: unknown;
   accountExecutiveId?: string | null;
 } & Partial<Record<EditableTextField, string | null>>;
 
@@ -266,8 +269,9 @@ export class CustomerService {
       createdAt,
       updatedAt: createdAt,
     };
-    // Un texto opcional vacío no se guarda: el cliente no lo tiene
-    for (const key of ['legalName', 'firstNames', 'lastNames', ...EDITABLE_TEXT_FIELDS] as const) {
+    // Un texto opcional vacío no se guarda: el cliente no lo tiene. RN-03: solo los nombres de su
+    // tipo de persona; los del otro tipo se ignoran (una natural no guarda legalName)
+    for (const key of [...NAME_FIELDS_BY_PERSON_TYPE[input.personType], ...EDITABLE_TEXT_FIELDS]) {
       const value = input[key];
       if (key !== 'email' && key !== 'sourceChannel' && value !== undefined && !isEmptyText(value)) {
         data[key] = value;
@@ -340,20 +344,19 @@ export class CustomerService {
       set['contactEmail'] = normalizeEmail(set['contactEmail']);
     }
 
-    // RN-05: solo la razón social (jurídica) o el nombre (natural), según el tipo guardado
-    const nameFields = current.personType === 'legal' ? (['legalName'] as const) : (['firstNames', 'lastNames'] as const);
-    for (const key of nameFields) {
-      apply(key, input[key]);
+    // RN-05: solo la razón social (jurídica) o el nombre (natural), según el tipo GUARDADO; los
+    // nombres del otro tipo se ignoran sin mirarlos. RN-03 sobre el cliente resultante: cada nombre
+    // de su tipo es texto y no queda vacío.
+    const nameFields = NAME_FIELDS_BY_PERSON_TYPE[current.personType];
+    const resultingNames = Object.fromEntries(
+      nameFields.map((key) => [key, input[key] !== undefined ? input[key] : current[key]])
+    );
+    const invalidNames = nameErrors(resultingNames, current.personType);
+    if (invalidNames.length > 0) {
+      throw new ValidationError('Entrada inválida', invalidNames);
     }
-    // RN-03 sobre el cliente resultante: el nombre sigue completo
-    const nameErrors = nameFields
-      .filter((key) => {
-        const next = key in set ? set[key] : key in unset ? undefined : current[key];
-        return typeof next !== 'string' || next.trim() === '';
-      })
-      .map((field) => ({ field, message: CUSTOMER_MESSAGES.nameRequired }));
-    if (nameErrors.length > 0) {
-      throw new ValidationError('Entrada inválida', nameErrors);
+    for (const key of nameFields) {
+      apply(key, input[key] as string | undefined);
     }
 
     // RN-13: accountExecutiveId ausente, «» o null conserva el ejecutivo (la edición no lo quita:

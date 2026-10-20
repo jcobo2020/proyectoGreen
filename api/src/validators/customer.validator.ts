@@ -1,12 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 import { ValidationError } from '../lib/errors';
-import { ID_TYPES, PERSON_TYPES } from '../models/customer';
+import {
+  CITIES,
+  ID_TYPES,
+  NAME_FIELDS_BY_PERSON_TYPE,
+  PERSON_TYPES,
+  PersonType,
+  SOURCE_CHANNELS,
+} from '../models/customer';
 import { normalizeIdNumber } from '../lib/customerNormalization';
 
-type FieldError = { field: string; message: string };
+export type FieldError = { field: string; message: string };
 type Body = Record<string, unknown>;
 
-// ─── Mensajes literales de la spec (GREEN-H2-API-CLIENTES-001 v6) ─────────────
+// ─── Mensajes literales de la spec GREEN-H2-API-CLIENTES-001 ───────────────────
 
 export const CUSTOMER_MESSAGES = {
   rucInvalid: 'El RUC debe tener 13 dígitos y terminar en 001.', // RN-02
@@ -55,8 +62,7 @@ export function notValidMessage(field: CustomerField): string {
 }
 
 /** Campos de texto opcionales que no tienen otra regla que ser texto. */
-const PLAIN_OPTIONAL_TEXT_FIELDS: CustomerField[] = ['mobilePhone', 'city', 'address', 'notes', 'contactName', 'contactTitle'];
-const NAME_FIELDS: CustomerField[] = ['legalName', 'firstNames', 'lastNames'];
+const PLAIN_OPTIONAL_TEXT_FIELDS: CustomerField[] = ['mobilePhone', 'address', 'notes', 'contactName', 'contactTitle'];
 
 const OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -92,17 +98,43 @@ export function idNumberError(idType: string, idNumber: string): string | null {
   }
 }
 
-/** Un campo de lista cerrada (personType, idType): obligatorio, texto y de su lista (RN-12). */
-function enumFieldError(
+/** Un valor que no es texto o que no está en la lista de su campo (RN-12). */
+function isOutsideList(value: unknown, allowed: readonly string[]): boolean {
+  return typeof value !== 'string' || !allowed.includes(value);
+}
+
+/** Un campo de lista cerrada obligatorio (personType, idType, sourceChannel en el alta). */
+function requiredListFieldError(
   body: Body,
-  field: 'personType' | 'idType',
+  field: 'personType' | 'idType' | 'sourceChannel',
   allowed: readonly string[],
   requiredMessage: string
 ): FieldError | null {
   const value = body[field];
   if (isMissing(value)) return { field, message: requiredMessage };
-  if (typeof value !== 'string' || !allowed.includes(value)) return { field, message: notValidMessage(field) };
+  if (isOutsideList(value, allowed)) return { field, message: notValidMessage(field) };
   return null;
+}
+
+/** city: opcional; si trae un valor, de su lista. «» o null no es un valor (en la edición, la vacía: RN-13). */
+function cityError(body: Body): FieldError | null {
+  const city = body['city'];
+  if (isMissing(city)) return null;
+  return isOutsideList(city, CITIES) ? { field: 'city', message: notValidMessage('city') } : null;
+}
+
+/**
+ * RN-03: los nombres del tipo de persona, sobre los valores que va a tener el cliente: cada uno
+ * es texto («El valor de <etiqueta> no es válido.») y no está vacío («Completa el nombre.»). Los
+ * nombres del otro tipo no se miran: se ignoran. La usan el alta (con el cuerpo) y la edición
+ * (con el cuerpo sobre lo guardado, en el servicio).
+ */
+export function nameErrors(values: Record<string, unknown>, personType: PersonType): FieldError[] {
+  return NAME_FIELDS_BY_PERSON_TYPE[personType].flatMap((field): FieldError[] => {
+    if (isWrongType(values[field])) return [{ field, message: notValidMessage(field) }];
+    if (isMissing(values[field])) return [{ field, message: CUSTOMER_MESSAGES.nameRequired }];
+    return [];
+  });
 }
 
 /** El correo principal: obligatorio (mensaje del alta o de la edición), texto y con formato (RN-03, RN-12). */
@@ -114,9 +146,12 @@ function emailError(body: Body, requiredMessage: string): FieldError | null {
   return null;
 }
 
-/** Reglas comunes al alta y a la edición: contacto, ejecutivo, textos opcionales y tipo de los nombres. */
+/** Reglas comunes al alta y a la edición: ciudad, contacto, ejecutivo y textos opcionales. */
 function optionalFieldErrors(body: Body): FieldError[] {
   const details: FieldError[] = [];
+
+  const city = cityError(body);
+  if (city) details.push(city);
 
   const contactEmail = body['contactEmail'];
   if (isWrongType(contactEmail)) {
@@ -133,7 +168,7 @@ function optionalFieldErrors(body: Body): FieldError[] {
     details.push({ field: 'accountExecutiveId', message: CUSTOMER_MESSAGES.executiveInvalid });
   }
 
-  for (const field of [...NAME_FIELDS, ...PLAIN_OPTIONAL_TEXT_FIELDS]) {
+  for (const field of PLAIN_OPTIONAL_TEXT_FIELDS) {
     if (isWrongType(body[field])) {
       details.push({ field, message: notValidMessage(field) });
     }
@@ -153,8 +188,9 @@ export function createCustomerErrors(rawBody: unknown): FieldError[] {
     if (error) details.push(error);
   };
 
-  push(enumFieldError(body, 'personType', PERSON_TYPES, CUSTOMER_MESSAGES.personTypeRequired));
-  const idTypeError = enumFieldError(body, 'idType', ID_TYPES, CUSTOMER_MESSAGES.idTypeRequired);
+  const personTypeError = requiredListFieldError(body, 'personType', PERSON_TYPES, CUSTOMER_MESSAGES.personTypeRequired);
+  push(personTypeError);
+  const idTypeError = requiredListFieldError(body, 'idType', ID_TYPES, CUSTOMER_MESSAGES.idTypeRequired);
   push(idTypeError);
 
   // RN-12 obligatorio y tipo; RN-02 formato, solo cuando se sabe el tipo de identificación
@@ -170,30 +206,22 @@ export function createCustomerErrors(rawBody: unknown): FieldError[] {
 
   push(emailError(body, CUSTOMER_MESSAGES.emailRequired));
 
-  // RN-03: el canal de origen es obligatorio en el alta
-  const sourceChannel = body['sourceChannel'];
-  if (isMissing(sourceChannel)) {
-    push({ field: 'sourceChannel', message: CUSTOMER_MESSAGES.sourceChannelRequired });
-  } else if (typeof sourceChannel !== 'string') {
-    push({ field: 'sourceChannel', message: notValidMessage('sourceChannel') });
-  }
+  // RN-03: el canal de origen es obligatorio en el alta; RN-12: de su lista
+  push(requiredListFieldError(body, 'sourceChannel', SOURCE_CHANNELS, CUSTOMER_MESSAGES.sourceChannelRequired));
 
-  // RN-03: el nombre según el tipo de persona (el tipo erróneo lo da optionalFieldErrors)
-  const requiredNames: CustomerField[] =
-    body['personType'] === 'legal' ? ['legalName'] : body['personType'] === 'natural' ? ['firstNames', 'lastNames'] : [];
-  for (const field of requiredNames) {
-    if (isMissing(body[field])) push({ field, message: CUSTOMER_MESSAGES.nameRequired });
-  }
+  // RN-03: el nombre según el tipo de persona; sin un tipo de persona válido no se sabe cuál
+  if (!personTypeError) details.push(...nameErrors(body, body['personType'] as PersonType));
 
   return [...details, ...optionalFieldErrors(body)];
 }
 
 /**
  * Errores de forma de PUT /api/customers/:id. idType, idNumber y personType no se validan:
- * no cambian tras el alta y se ignoran (RN-05). Que el nombre quede completo según el tipo
- * de persona GUARDADO lo comprueba el servicio (RN-03). El canal es opcional, pero si viene
- * no puede ir vacío (RN-03). Un texto opcional «» o null vale: lo vacía (RN-13); un
- * accountExecutiveId «» o null también vale: conserva el ejecutivo (RN-13).
+ * no cambian tras el alta y se ignoran (RN-05). Los nombres tampoco: solo cuentan los del tipo
+ * de persona GUARDADO, que conoce el servicio (nameErrors, RN-03), y los del otro tipo se
+ * ignoran sin mirarlos. El canal es opcional, pero si viene no puede ir vacío (RN-03) y es de
+ * su lista (RN-12). Un texto opcional «» o null vale: lo vacía (RN-13); un accountExecutiveId
+ * «» o null también vale: conserva el ejecutivo (RN-13).
  */
 export function updateCustomerErrors(rawBody: unknown): FieldError[] {
   const body = asBody(rawBody);
@@ -202,13 +230,9 @@ export function updateCustomerErrors(rawBody: unknown): FieldError[] {
   const email = emailError(body, CUSTOMER_MESSAGES.emailRequired);
   if (email) details.push(email);
 
-  const sourceChannel = body['sourceChannel'];
-  if (sourceChannel !== undefined) {
-    if (isMissing(sourceChannel)) {
-      details.push({ field: 'sourceChannel', message: CUSTOMER_MESSAGES.sourceChannelRequired });
-    } else if (typeof sourceChannel !== 'string') {
-      details.push({ field: 'sourceChannel', message: notValidMessage('sourceChannel') });
-    }
+  if (body['sourceChannel'] !== undefined) {
+    const sourceChannel = requiredListFieldError(body, 'sourceChannel', SOURCE_CHANNELS, CUSTOMER_MESSAGES.sourceChannelRequired);
+    if (sourceChannel) details.push(sourceChannel);
   }
 
   return [...details, ...optionalFieldErrors(body)];

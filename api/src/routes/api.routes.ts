@@ -73,19 +73,22 @@ export function createApiRouter(deps: ApiRouterDeps): Router {
     orderController.confirmOrder
   );
 
-  // /api/customers: todo error lleva details (R4-SEG-3); la marca la pone app.ts antes de express.json()
+  // /api/customers: app.ts monta withErrorDetails y authenticate para todo /api/customers ANTES
+  // de express.json(). La cadena de cada ruta es la de la plantilla —authenticate → validación →
+  // controller—, con la autenticación delante del parseo del cuerpo (RN-AUTH): sin un token
+  // válido, 401 aunque el cuerpo no sea un JSON válido. Aquí van la validación y el controller.
 
   // GET /api/customers — listado paginado de clientes
-  router.get('/customers', authenticate, validateListCustomersQuery, customerController.list);
+  router.get('/customers', validateListCustomersQuery, customerController.list);
 
   // POST /api/customers — alta de un cliente
-  router.post('/customers', authenticate, validateCreateCustomerBody, customerController.create);
+  router.post('/customers', validateCreateCustomerBody, customerController.create);
 
   // GET /api/customers/:id — ficha de un cliente
-  router.get('/customers/:id', authenticate, customerController.getById);
+  router.get('/customers/:id', customerController.getById);
 
   // PUT /api/customers/:id — edición de un cliente
-  router.put('/customers/:id', authenticate, validateUpdateCustomerBody, customerController.update);
+  router.put('/customers/:id', validateUpdateCustomerBody, customerController.update);
 
   return router;
 }

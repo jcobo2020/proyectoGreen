@@ -2,7 +2,10 @@
 /**
  * Genera la evidencia del completion report de WI-H2-API-CLIENTES-001 en
  * .sdd/evidence/WI-H2-API-CLIENTES-001/ (raíz del repositorio). Es un comando aparte
- * (`npm run evidence`): `npm test` no escribe nada versionado.
+ * (`npm run evidence`): las pruebas de este work item no escriben ningún fichero versionado en
+ * `npm test`. Otras del repositorio sí: la de migración de WI-ORD-API-005 (migration.spec.ts)
+ * reescribe .sdd/evidence/migration-WI-ORD-API-005.log en cada corrida, y este comando, que
+ * corre `npm test`, también lo reescribe; ese fichero no es de este work item.
  *
  *  - test-results.txt      salida de `npm test -- --coverage ...`, el mismo comando que la plataforma
  *  - coverage-summary.json coverage/coverage-summary.json de esa corrida

@@ -6,6 +6,29 @@ export type PersonType = (typeof PERSON_TYPES)[number];
 export const ID_TYPES = ['cedula', 'ruc', 'passport'] as const;
 export type IdType = (typeof ID_TYPES)[number];
 
+/** Ciudades que admite el cliente: la lista de la pantalla (RN-12). */
+export const CITIES = ['guayaquil', 'quito', 'manta', 'cuenca', 'duran', 'ambato', 'machala', 'riobamba'] as const;
+
+/** Canales de origen que admite el cliente: la lista de la pantalla (RN-12). */
+export const SOURCE_CHANNELS = [
+  'referido_de_cliente',
+  'cartera_propia',
+  'campana_digital',
+  'alianza_bancaria',
+  'cuenta_estrategica',
+] as const;
+
+export type NameField = 'legalName' | 'firstNames' | 'lastNames';
+
+/**
+ * Los nombres de cada tipo de persona (RN-03): la razón social de una jurídica; nombres y
+ * apellidos de una natural. Los del otro tipo se ignoran en el alta y en la edición.
+ */
+export const NAME_FIELDS_BY_PERSON_TYPE: Record<PersonType, readonly NameField[]> = {
+  legal: ['legalName'],
+  natural: ['firstNames', 'lastNames'],
+};
+
 /** Interfaz interna del cliente del CRM (nunca sale al exterior: ver toPublicCustomer). */
 export interface ICustomer extends Document {
   code: string;
@@ -40,9 +63,9 @@ const customerSchema = new Schema<ICustomer>(
     lastNames: { type: String, trim: true },
     email: { type: String, required: true, trim: true },
     mobilePhone: { type: String, trim: true },
-    city: { type: String, trim: true },
+    city: { type: String, enum: CITIES, trim: true },
     address: { type: String, trim: true },
-    sourceChannel: { type: String, required: true, trim: true },
+    sourceChannel: { type: String, enum: SOURCE_CHANNELS, required: true, trim: true },
     accountExecutiveId: { type: Schema.Types.ObjectId },
     notes: { type: String },
     contactName: { type: String, trim: true },

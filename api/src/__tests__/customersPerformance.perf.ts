@@ -49,7 +49,7 @@ it(`${CONCURRENT_REQUESTS} GET /api/customers concurrentes con p95 < ${P95_LIMIT
       firstNames: 'N',
       lastNames: 'A',
       email: `n${i}@example.com`,
-      sourceChannel: 'web',
+      sourceChannel: 'cartera_propia',
       accountExecutiveId: executive.insertedId,
     }))
   );
