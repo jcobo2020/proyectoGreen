@@ -1,7 +1,7 @@
 {
   "schemaVersion": 5,
   "workItemCode": "WI-H2-UX-CLIENTES-003",
-  "summary": "Pantalla /nuevo-prospecto («Nuevo cliente») en frontend/src/app/feature/customers, por capas. Es un asistente de 4 pasos con «Anterior», «Siguiente», «Cancelar» y «Agregar contacto», y los 16 campos con sus validaciones y mensajes literales. Incluye las reglas de «Tipo de persona», la carga de «Ejecutivo asignado» (GET /api/executives) con los estados cargando, vacío, error, 200 y 401, y «Guardar cliente» (POST /api/customers) con 201, 400, 401 y 409. Ronda 2: asistente y controles del pack v10, AC-15..17, listas cerradas fijadas, 401 visible y avisos que se van al corregir. 234 pruebas en verde; 96,55 % de sentencias sobre los ficheros tocados.",
+  "summary": "Pantalla /nuevo-prospecto («Nuevo cliente») en frontend/src/app/feature/customers, por capas. Es un asistente de 4 pasos con «Anterior», «Siguiente», «Cancelar» y «Agregar contacto», y los 16 campos con sus validaciones y mensajes literales. Incluye las reglas de «Tipo de persona», la carga de «Ejecutivo asignado» (GET /api/executives) con los estados cargando, vacío, error, 200 y 401, y «Guardar cliente» (POST /api/customers) con 201, 400, 401 y 409. Ronda 2: asistente y controles del pack v10, AC-15..17, listas cerradas fijadas, 401 visible y avisos que se van al corregir. Ronda 3: la prueba del interceptor espía la navegación, «Cancelar» se prueba tras un 409, un 400 y un intento fallido, y la recarga tras un 409 no vuelve a decir «Datos al día.». 237 pruebas en verde; 96,54 % de sentencias sobre los ficheros tocados.",
   "criteria": [
     {
       "id": "AC-15",
@@ -26,22 +26,22 @@
     {
       "id": "AC-19",
       "status": "covered",
-      "note": "201 de POST /api/customers: «Se guardó correctamente.» y navega a /prospectos/:id con el aviso en el state de la navegación (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:643)."
+      "note": "201 de POST /api/customers: «Se guardó correctamente.» y navega a /prospectos/:id con el aviso en el state de la navegación (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:693)."
     },
     {
       "id": "AC-20",
       "status": "covered",
-      "note": "400: «Revisa los datos marcados.», lleva al paso del primer campo marcado, pinta cada details con su mensaje literal y conserva lo escrito. El aviso se va al corregir el último campo marcado (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:656), o con la primera edición si el 400 no marcó ninguno (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:687)."
+      "note": "400: «Revisa los datos marcados.», lleva al paso del primer campo marcado, pinta cada details con su mensaje literal y conserva lo escrito. El aviso se va al corregir el último campo marcado (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:706), o con la primera edición si el 400 no marcó ninguno (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:737)."
     },
     {
       "id": "AC-21",
       "status": "covered",
-      "note": "401 en la carga (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:249) y al guardar (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:699): «Tu sesión terminó: vuelve a entrar.», con «vuelve a entrar» como enlace al inicio de sesión. El interceptor limpia la sesión sin redirigir al instante (frontend/src/app/feature/customers/infrastructure/session.interceptor.spec.ts:35): ver deviations."
+      "note": "401 en la carga (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:249) y al guardar (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:749): «Tu sesión terminó: vuelve a entrar.», con «vuelve a entrar» como enlace al inicio de sesión. El interceptor limpia la sesión y no navega: la prueba espía cada intento de navegar (href, assign, replace) (frontend/src/app/feature/customers/infrastructure/session.interceptor.spec.ts:50): ver deviations."
     },
     {
       "id": "AC-22",
       "status": "covered",
-      "note": "409: «Ya existe un cliente con esta identificación.» en «Número de identificación» y como aviso. Vuelve al paso 1, conserva lo escrito y vuelve a cargar las opciones de «Ejecutivo asignado». Mensaje y aviso se van al cambiar el número (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:713)."
+      "note": "409: «Ya existe un cliente con esta identificación.» en «Número de identificación» y como aviso. Vuelve al paso 1, conserva lo escrito y vuelve a cargar las opciones de «Ejecutivo asignado». Esa recarga no vuelve a decir «Datos al día.» junto al aviso del duplicado. Mensaje y aviso se van al cambiar el número (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:763)."
     }
   ],
   "requirements": [
@@ -58,17 +58,17 @@
     {
       "id": "R4-ARQ-3",
       "status": "cumple",
-      "evidencia": "Cuerpo y respuestas de POST /api/customers según GREEN-H2-API-CLIENTES-001 v8 (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:585); GET /api/executives según GREEN-H2-API-EJECUTIVOS-001 v4, que está in_review (ver clarificationRequests)."
+      "evidencia": "Cuerpo y respuestas de POST /api/customers según GREEN-H2-API-CLIENTES-001 v8 (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:635); GET /api/executives según GREEN-H2-API-EJECUTIVOS-001 v4, que está in_review (ver clarificationRequests)."
     },
     {
       "id": "R4-ARQ-4",
       "status": "cumple",
-      "evidencia": "La identificación repetida la decide el servidor: el 409 se pinta en el campo (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:713); el frontend no la comprueba."
+      "evidencia": "La identificación repetida la decide el servidor: el 409 se pinta en el campo (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:763); el frontend no la comprueba."
     },
     {
       "id": "R4-ARQ-5",
       "status": "cumple",
-      "evidencia": "El frontend no presupone la unicidad ni la validez del ejecutivo (el 400 «Selecciona un ejecutivo válido.» lo pinta del servidor, frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:656). Sí replica los validadores de formato que la ux_flow declara en el campo (custom-1..3), que el servidor vuelve a validar."
+      "evidencia": "El frontend no presupone la unicidad ni la validez del ejecutivo (el 400 «Selecciona un ejecutivo válido.» lo pinta del servidor, frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:706). Sí replica los validadores de formato que la ux_flow declara en el campo (custom-1..3), que el servidor vuelve a validar."
     },
     {
       "id": "R4-ARQ-6",
@@ -78,7 +78,7 @@
     {
       "id": "R4-ARQ-7",
       "status": "cumple",
-      "evidencia": "Sin caché: ListExecutivesUseCase pide en cada ejecución (frontend/src/app/feature/customers/application/executive.use-cases.spec.ts) y el 409 vuelve a pedir (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:713)."
+      "evidencia": "Sin caché: ListExecutivesUseCase pide en cada ejecución (frontend/src/app/feature/customers/application/executive.use-cases.spec.ts) y el 409 vuelve a pedir (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:763)."
     },
     {
       "id": "R4-PRUEBAS-1",
@@ -123,12 +123,12 @@
     {
       "id": "R4-PRUEBAS-9",
       "status": "cumple",
-      "evidencia": "Estados cargando frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:196, vacío :207, error :215; obligatorios con su literal :420; navegación «Al guardar» :643 y «Clientes» :775."
+      "evidencia": "Estados cargando frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:196, vacío :207, error :215; obligatorios con su literal :470; navegación «Al guardar» :693 y «Clientes» :828."
     },
     {
       "id": "R4-PRUEBAS-10",
       "status": "cumple",
-      "evidencia": "201 frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:643, 400 :656, 401 :699, 409 :713 (conserva lo escrito y recarga los ejecutivos); traducción de cada código en frontend/src/app/feature/customers/infrastructure/http-customer.repository.spec.ts:61-103."
+      "evidencia": "201 frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:693, 400 :706, 401 :749, 409 :763 (conserva lo escrito y recarga los ejecutivos); traducción de cada código en frontend/src/app/feature/customers/infrastructure/http-customer.repository.spec.ts:61-103."
     },
     {
       "id": "R4-PRUEBAS-11",
@@ -148,17 +148,17 @@
     {
       "id": "R4-PRUEBAS-14",
       "status": "cumple",
-      "evidencia": "Cargando :196, vacío :207, error :215 y sin permiso :249 (y :699) en frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts."
+      "evidencia": "Cargando :196, vacío :207, error :215 y sin permiso :249 (y :749) en frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts."
     },
     {
       "id": "R4-PRUEBAS-15",
       "status": "cumple",
-      "evidencia": "node comprobar.js sale con 0: npm ci, npm test con cobertura (234 pruebas), npm run build y arranque sin 5xx en /, /orders, /orders/new y /nuevo-prospecto."
+      "evidencia": "node comprobar.js sale con 0: npm ci, npm test con cobertura (237 pruebas), npm run build y arranque sin 5xx en /, /orders, /orders/new y /nuevo-prospecto."
     },
     {
       "id": "R4-SEG-1",
       "status": "cumple",
-      "evidencia": "Ningún secreto en el código; los tokens de las pruebas se generan con crypto.randomUUID() (frontend/src/app/feature/customers/infrastructure/http-customer.repository.spec.ts:111, frontend/src/app/feature/customers/infrastructure/session.interceptor.spec.ts:25)."
+      "evidencia": "Ningún secreto en el código; los tokens de las pruebas se generan con crypto.randomUUID() (frontend/src/app/feature/customers/infrastructure/http-customer.repository.spec.ts:111, frontend/src/app/feature/customers/infrastructure/session.interceptor.spec.ts:39)."
     },
     {
       "id": "R4-SEG-2",
@@ -173,7 +173,7 @@
     {
       "id": "R4-SEG-4",
       "status": "no_aplica",
-      "evidencia": "Lo cumple el servidor; el frontend valida además y pinta los details del 400 (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:656)."
+      "evidencia": "Lo cumple el servidor; el frontend valida además y pinta los details del 400 (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:706)."
     },
     {
       "id": "R4-SEG-5",
@@ -183,7 +183,7 @@
     {
       "id": "R4-SEG-6",
       "status": "cumple",
-      "evidencia": "/nuevo-prospecto dice «Tu sesión terminó: vuelve a entrar.» con 401 en la carga (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:249) y al guardar (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:699)."
+      "evidencia": "/nuevo-prospecto dice «Tu sesión terminó: vuelve a entrar.» con 401 en la carga (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:249) y al guardar (frontend/src/app/feature/customers/ui/customer-new/customer-new.component.spec.ts:749)."
     },
     {
       "id": "R4-REND-1",
@@ -251,7 +251,7 @@
     {
       "type": "coverage_report",
       "ref": ".sdd/evidence/WI-H2-UX-CLIENTES-003/coverage-summary.json",
-      "note": "Salida de npm test -- --coverage --coverage-reporters=json-summary en la corrida de comprobar.js de la ronda 2 (frontend/coverage/greenfield-frontend/coverage-summary.json), con las claves pasadas a rutas relativas a la raíz del repositorio. Sentencias: 96,55 % (532/551) sobre los 15 ficheros que toca este work item; 94,15 % del frontend entero."
+      "note": "Salida de npm test -- --coverage --coverage-reporters=json-summary en la corrida de comprobar.js de la ronda 3 (frontend/coverage/greenfield-frontend/coverage-summary.json), con las claves pasadas a rutas relativas a la raíz del repositorio. Sentencias: 96,54 % (530/549) sobre los 15 ficheros que toca este work item; 94,14 % del frontend entero."
     }
   ],
   "deviations": [
@@ -296,6 +296,10 @@
       "reason": "La spec no da mensaje para ese caso. El de error de la pantalla («No se pudo cargar…») habla de cargar (hallazgo m2 del auditor), y no se inventa texto. Ver clarificationRequests."
     },
     {
+      "description": "La recarga de «Ejecutivo asignado» tras un 409 no vuelve a enseñar «Datos al día.»; la carga inicial y «Reintentar», sí.",
+      "reason": "Es una recarga, no la carga de la pantalla. Enseñarlo junto a «Ya existe un cliente con esta identificación.» contradice el aviso (hallazgo d3 del auditor). Ver clarificationRequests."
+    },
+    {
       "description": "Las reglas de «Tipo de persona» se aplican al cambiarlo (trigger on change). Sin tipo, al empezar o tras «Cancelar», Razón social, Nombres y Apellidos siguen ocultos.",
       "reason": "Con el campo vacío, la regla «≠ legal» se cumpliría y contradiría «oculto al empezar»."
     }
@@ -323,6 +327,16 @@
       "question": "¿Qué aviso debe dar «Guardar cliente» ante un error no previsto (500 INTERNAL_ERROR)? view_states de /nuevo-prospecto no tiene mensaje para el 500. El de error («No se pudo cargar. Vuelve a intentarlo.») habla de cargar, así que no se muestra ninguno.",
       "blocking": false,
       "context": "view_states.by_status de /nuevo-prospecto (200, 201, 400, 401, 409) y la regla «Si falla: el aviso es el de la pantalla para ese código»."
+    },
+    {
+      "question": "Tras un 409, la spec manda volver a cargar las opciones de «Ejecutivo asignado». ¿Esa recarga debe volver a decir «Datos al día.» (el 200 de la pantalla)? Se decidió que no, para no mostrarlo junto al aviso del duplicado.",
+      "blocking": false,
+      "context": "on_error.409.reload de «Guardar cliente» y view_states.by_status.200 de /nuevo-prospecto."
+    },
+    {
+      "question": "¿Se acepta el botón «Reintentar» en el estado de error de la carga? La spec no lo declara, pero sin él el estado de error (AC-17) no tiene salida.",
+      "blocking": false,
+      "context": "Controles de §2 del pack v10: solo «Anterior», «Siguiente», «Cancelar» y «Agregar contacto»."
     },
     {
       "question": "¿Debe «Siguiente» bloquear el paso mientras haya obligatorios vacíos en él?",

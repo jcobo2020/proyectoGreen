@@ -249,15 +249,19 @@ export class CustomerNewComponent implements OnInit {
     this.cargarEjecutivos();
   }
 
-  /** «Cargar las opciones de «Ejecutivo asignado»» (GET /api/executives), sin caché. */
-  cargarEjecutivos(): void {
+  /**
+   * «Cargar las opciones de «Ejecutivo asignado»» (GET /api/executives), sin caché.
+   * `anunciar` = false en la recarga tras un 409: «Datos al día.» no se vuelve a enseñar junto
+   * al aviso del duplicado (pregunta abierta en el informe).
+   */
+  cargarEjecutivos(anunciar = true): void {
     this.estadoCarga.set('loading');
     this.alDiaVisible.set(false);
     this.listExecutivesUseCase.execute().subscribe({
       next: opciones => {
         this.ejecutivos.set(opciones);
         this.estadoCarga.set(opciones.length === 0 ? 'empty' : 'data');
-        this.alDiaVisible.set(opciones.length > 0);
+        this.alDiaVisible.set(anunciar && opciones.length > 0);
       },
       error: (err: Error) => {
         if (err instanceof ExecutiveUnauthorizedError) {
@@ -284,9 +288,9 @@ export class CustomerNewComponent implements OnInit {
    * el formulario vuelve a su estado de partida y el asistente, al primer paso.
    */
   cancelar(): void {
+    // reset() emite el cambio de cada campo: alEditar() quita sus mensajes del servidor, y con el
+    // último se va el aviso del 400/409, y «Datos al día.».
     this.form.reset();
-    this.erroresServidor.set({});
-    this.aviso.set(null);
     this.intentado.set(false);
     this.paso.set(0);
   }
@@ -323,7 +327,7 @@ export class CustomerNewComponent implements OnInit {
           this.erroresServidor.set({ idNumber: MENSAJES.idNumberDuplicate });
           this.aviso.set({ tipo: 'error', texto: ESTADOS_DE_VISTA[409] });
           this.irAlPasoDe(['idNumber']);
-          this.cargarEjecutivos();
+          this.cargarEjecutivos(false);
         } else if (err instanceof CustomerUnauthorizedError) {
           this.sesionTerminada.set(true);
         }

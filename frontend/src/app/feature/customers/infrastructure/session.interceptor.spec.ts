@@ -11,9 +11,23 @@ describe('customersSessionInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
   let tokenDePrueba: string;
-  const hrefAntes = window.location.href;
+  const locationOriginal = window.location;
+  /** Cada navegación que intente el código (asignar href, assign, replace) queda aquí. */
+  let navegaciones: string[];
 
   beforeEach(() => {
+    navegaciones = [];
+    Object.defineProperty(window, 'location', {
+      value: {
+        get href() { return 'http://localhost/nuevo-prospecto'; },
+        set href(v: string) { navegaciones.push(v); },
+        get pathname() { return '/nuevo-prospecto'; },
+        assign: (v: string) => navegaciones.push(v),
+        replace: (v: string) => navegaciones.push(v)
+      },
+      writable: true,
+      configurable: true
+    });
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([customersSessionInterceptor])),
@@ -29,6 +43,7 @@ describe('customersSessionInterceptor', () => {
   afterEach(() => {
     httpMock.verify();
     sessionStorage.clear();
+    Object.defineProperty(window, 'location', { value: locationOriginal, writable: true, configurable: true });
     TestBed.resetTestingModule();
   });
 
@@ -39,7 +54,7 @@ describe('customersSessionInterceptor', () => {
 
     expect(sessionStorage.getItem('token')).toBeNull();
     expect(recibido?.status).toBe(401);
-    expect(window.location.href).toBe(hrefAntes);
+    expect(navegaciones).toEqual([]);
   });
 
   it('deja pasar sin transformar un 409, sin tocar la sesión', () => {
@@ -51,5 +66,6 @@ describe('customersSessionInterceptor', () => {
     expect(recibido?.status).toBe(409);
     expect(recibido?.error).toEqual({ code: 'CUSTOMER_DUPLICATE' });
     expect(sessionStorage.getItem('token')).toBe(tokenDePrueba);
+    expect(navegaciones).toEqual([]);
   });
 });

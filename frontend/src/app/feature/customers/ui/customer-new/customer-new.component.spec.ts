@@ -345,6 +345,56 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
       expect(customerRepo.createCustomer).not.toHaveBeenCalled();
     });
 
+    it('ctl_ac849da96b:control — «Cancelar» tras un 409 quita el mensaje del número y el aviso del duplicado', () => {
+      const { fixture, customerRepo } = crear();
+      customerRepo.createCustomer.mockReturnValue(throwError(() => new DuplicateCustomerError()));
+      llenarValido(fixture);
+      guardar(fixture);
+      expect(raiz(fixture).querySelector('#err-idNumber')?.textContent?.trim()).toBe(
+        'Ya existe un cliente con esta identificación.'
+      );
+      expect(raiz(fixture).querySelector('.aviso-error')).not.toBeNull();
+
+      boton(fixture, 'btn-cancelar')?.click();
+      fixture.detectChanges();
+
+      expect(pasoActual(fixture)).toBe('1 Identificación');
+      expect(raiz(fixture).querySelector('#err-idNumber')).toBeNull();
+      expect(raiz(fixture).querySelector('.aviso')).toBeNull();
+      expect(texto(fixture)).not.toContain('Ya existe un cliente con esta identificación.');
+    });
+
+    it('ctl_ac849da96b:control — «Cancelar» tras un 400 sin details quita el aviso «Revisa los datos marcados.»', () => {
+      const { fixture, customerRepo } = crear();
+      customerRepo.createCustomer.mockReturnValue(throwError(() => new InvalidCustomerInputError([])));
+      llenarValido(fixture);
+      guardar(fixture);
+      expect(raiz(fixture).querySelector('.aviso-error')?.textContent?.trim()).toBe('Revisa los datos marcados.');
+
+      boton(fixture, 'btn-cancelar')?.click();
+      fixture.detectChanges();
+
+      expect(raiz(fixture).querySelector('.aviso')).toBeNull();
+    });
+
+    it('ctl_ac849da96b:control — «Cancelar» tras un intento de guardar fallido no deja los mensajes de obligatorio a la vista', () => {
+      const { fixture, customerRepo } = crear();
+      guardar(fixture);
+      expect(errorDe(fixture, 'idNumber')).toBe('Número de identificación es obligatorio.');
+
+      boton(fixture, 'btn-cancelar')?.click();
+      fixture.detectChanges();
+
+      for (const paso of [0, 1, 2, 3]) {
+        irAlPaso(fixture, paso);
+        expect(raiz(fixture).querySelectorAll('.mensaje-error').length).toBe(0);
+      }
+      // Y vuelve a juzgar al guardar otra vez.
+      guardar(fixture);
+      expect(errorDe(fixture, 'idNumber')).toBe('Número de identificación es obligatorio.');
+      expect(customerRepo.createCustomer).not.toHaveBeenCalled();
+    });
+
     it('al guardar con datos que faltan, lleva al primer paso que tiene un error', () => {
       const { fixture, customerRepo } = crear();
       tipoDePersona(fixture, 'natural');
@@ -727,6 +777,9 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
         'Ya existe un cliente con esta identificación.'
       );
       expect(executiveRepo.listExecutives).toHaveBeenCalledTimes(2);
+      // La recarga por el 409 no vuelve a decir «Datos al día.» junto al aviso del duplicado.
+      expect(raiz(fixture).querySelector('.estado-al-dia')).toBeNull();
+      expect(texto(fixture)).not.toContain('Datos al día.');
       expect(valorDe(fixture, 'idNumber')).toBe('0912345678');
       expect(valorDe(fixture, 'email')).toBe('ana@example.com');
       expect(valorDe(fixture, 'accountExecutiveId')).toBe('665f1c2a9b1e8a0000000001');
