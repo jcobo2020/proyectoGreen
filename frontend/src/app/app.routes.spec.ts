@@ -29,4 +29,11 @@ describe('routes (app.routes.ts)', () => {
     const modulo = await (rutaOrders?.loadChildren as () => Promise<unknown>)();
     expect(modulo).toBeDefined();
   });
+
+  it('incluye la ruta /nuevo-prospecto con loadChildren que resuelve a customersRoutes', async () => {
+    const ruta = routes.find(r => r.path === 'nuevo-prospecto');
+    expect(ruta).toBeDefined();
+    const hijas = await (ruta?.loadChildren as () => Promise<unknown>)();
+    expect(Array.isArray(hijas)).toBe(true);
+  });
 });

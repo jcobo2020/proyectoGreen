@@ -1,0 +1,265 @@
+<div class="cliente-nuevo">
+  <nav class="migas">
+    <a routerLink="/prospectos" class="enlace-clientes">Clientes</a>
+  </nav>
+
+  <h1>Nuevo cliente</h1>
+
+  @if (sesionTerminada()) {
+    <!-- 401: sin sesión -->
+    <!-- «vuelve a entrar» lleva al inicio de sesión; el texto completo es el literal de la spec -->
+    <div class="estado-sin-sesion" role="alert">
+      <p>Tu sesión terminó: <a class="enlace-entrar" [href]="urlDeEntrada">vuelve a entrar</a>.</p>
+    </div>
+  } @else {
+    <!-- Estado de la carga de la pantalla (las opciones de «Ejecutivo asignado») -->
+    @switch (estadoCarga()) {
+      @case ('loading') {
+        <p class="estado-cargando" role="status">{{ estados.loading }}</p>
+      }
+      @case ('empty') {
+        <p class="estado-vacio" role="status">{{ estados.empty }}</p>
+      }
+      @case ('error') {
+        <div class="estado-error" role="alert">
+          <p>{{ estados.error }}</p>
+          <button type="button" class="btn-reintentar" (click)="cargarEjecutivos()">Reintentar</button>
+        </div>
+      }
+      @case ('data') {
+        @if (alDiaVisible()) {
+          <p class="estado-al-dia" role="status">{{ estados[200] }}</p>
+        }
+      }
+    }
+
+    <!-- Los cuatro pasos del asistente -->
+    <ol class="pasos">
+      @for (p of pasos; track p.titulo; let i = $index) {
+        <li [class.paso-actual]="i === paso()" [attr.aria-current]="i === paso() ? 'step' : null">
+          <span class="numero-paso">{{ i + 1 }}</span> {{ p.titulo }}
+        </li>
+      }
+    </ol>
+
+    <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+      <!-- 1 · Identificación -->
+      @if (paso() === 0) {
+        <fieldset class="paso">
+          <legend><span class="numero-paso">1</span> Identificación</legend>
+
+          <div class="campo" role="radiogroup" aria-labelledby="lbl-personType">
+            <span id="lbl-personType" class="etiqueta">Tipo de persona</span>
+            @for (opcion of opciones.personType; track opcion.value) {
+              <label class="opcion-radio">
+                <input type="radio" formControlName="personType" [value]="opcion.value" [attr.value]="opcion.value" />
+                {{ opcion.label }}
+              </label>
+            }
+            @if (mensajeDe('personType'); as mensaje) {
+              <p class="mensaje-error" id="err-personType">{{ mensaje }}</p>
+            }
+          </div>
+
+          <div class="campo">
+            <label for="idType">Tipo de identificación</label>
+            <select id="idType" formControlName="idType" [attr.aria-invalid]="!!mensajeDe('idType')">
+              <option value=""></option>
+              @for (opcion of opciones.idType; track opcion.value) {
+                <option [value]="opcion.value">{{ opcion.label }}</option>
+              }
+            </select>
+            @if (mensajeDe('idType'); as mensaje) {
+              <p class="mensaje-error" id="err-idType">{{ mensaje }}</p>
+            }
+          </div>
+
+          <div class="campo">
+            <label for="idNumber">Número de identificación</label>
+            <input id="idNumber" type="text" formControlName="idNumber" aria-describedby="ayuda-idNumber"
+              [attr.aria-invalid]="!!mensajeDe('idNumber')" />
+            <p class="ayuda" id="ayuda-idNumber">Validamos el formato y que no esté registrado.</p>
+            @if (mensajeDe('idNumber'); as mensaje) {
+              <p class="mensaje-error" id="err-idNumber">{{ mensaje }}</p>
+            }
+          </div>
+
+          @if (visibles().legalName) {
+            <div class="campo">
+              <label for="legalName">Razón social</label>
+              <input id="legalName" type="text" formControlName="legalName" [attr.aria-invalid]="!!mensajeDe('legalName')" />
+              @if (mensajeDe('legalName'); as mensaje) {
+                <p class="mensaje-error" id="err-legalName">{{ mensaje }}</p>
+              }
+            </div>
+          }
+
+          @if (visibles().firstNames) {
+            <div class="campo">
+              <label for="firstNames">Nombres</label>
+              <input id="firstNames" type="text" formControlName="firstNames" [attr.aria-invalid]="!!mensajeDe('firstNames')" />
+              @if (mensajeDe('firstNames'); as mensaje) {
+                <p class="mensaje-error" id="err-firstNames">{{ mensaje }}</p>
+              }
+            </div>
+          }
+
+          @if (visibles().lastNames) {
+            <div class="campo">
+              <label for="lastNames">Apellidos</label>
+              <input id="lastNames" type="text" formControlName="lastNames" [attr.aria-invalid]="!!mensajeDe('lastNames')" />
+              @if (mensajeDe('lastNames'); as mensaje) {
+                <p class="mensaje-error" id="err-lastNames">{{ mensaje }}</p>
+              }
+            </div>
+          }
+        </fieldset>
+      }
+
+      <!-- 2 · Contacto y ubicación -->
+      @if (paso() === 1) {
+        <fieldset class="paso">
+          <legend><span class="numero-paso">2</span> Contacto y ubicación</legend>
+
+          <div class="campo">
+            <label for="email">Correo electrónico</label>
+            <input id="email" type="text" formControlName="email" [attr.aria-invalid]="!!mensajeDe('email')" />
+            @if (mensajeDe('email'); as mensaje) {
+              <p class="mensaje-error" id="err-email">{{ mensaje }}</p>
+            }
+          </div>
+
+          <div class="campo">
+            <label for="mobilePhone">Teléfono celular</label>
+            <input id="mobilePhone" type="text" formControlName="mobilePhone" placeholder="+593 9…" />
+            @if (mensajeDe('mobilePhone'); as mensaje) {
+              <p class="mensaje-error" id="err-mobilePhone">{{ mensaje }}</p>
+            }
+          </div>
+
+          <div class="campo">
+            <label for="city">Ciudad</label>
+            <select id="city" formControlName="city">
+              <option value="">Selecciona…</option>
+              @for (opcion of opciones.city; track opcion.value) {
+                <option [value]="opcion.value">{{ opcion.label }}</option>
+              }
+            </select>
+            @if (mensajeDe('city'); as mensaje) {
+              <p class="mensaje-error" id="err-city">{{ mensaje }}</p>
+            }
+          </div>
+
+          <div class="campo">
+            <label for="address">Dirección</label>
+            <input id="address" type="text" formControlName="address" />
+            @if (mensajeDe('address'); as mensaje) {
+              <p class="mensaje-error" id="err-address">{{ mensaje }}</p>
+            }
+          </div>
+        </fieldset>
+      }
+
+      <!-- 3 · Información comercial -->
+      @if (paso() === 2) {
+        <fieldset class="paso">
+          <legend><span class="numero-paso">3</span> Información comercial</legend>
+
+          <div class="campo">
+            <label for="sourceChannel">Canal de origen</label>
+            <select id="sourceChannel" formControlName="sourceChannel" [attr.aria-invalid]="!!mensajeDe('sourceChannel')">
+              <option value="">Selecciona…</option>
+              @for (opcion of opciones.sourceChannel; track opcion.value) {
+                <option [value]="opcion.value">{{ opcion.label }}</option>
+              }
+            </select>
+            @if (mensajeDe('sourceChannel'); as mensaje) {
+              <p class="mensaje-error" id="err-sourceChannel">{{ mensaje }}</p>
+            }
+          </div>
+
+          <div class="campo">
+            <label for="accountExecutiveId">Ejecutivo asignado</label>
+            <select id="accountExecutiveId" formControlName="accountExecutiveId">
+              <option value=""></option>
+              @for (opcion of ejecutivos(); track opcion.value) {
+                <option [value]="opcion.value">{{ opcion.label }}</option>
+              }
+            </select>
+            @if (mensajeDe('accountExecutiveId'); as mensaje) {
+              <p class="mensaje-error" id="err-accountExecutiveId">{{ mensaje }}</p>
+            }
+          </div>
+
+          <div class="campo">
+            <label for="notes">Observaciones</label>
+            <textarea id="notes" formControlName="notes" rows="3"></textarea>
+            @if (mensajeDe('notes'); as mensaje) {
+              <p class="mensaje-error" id="err-notes">{{ mensaje }}</p>
+            }
+          </div>
+        </fieldset>
+      }
+
+      <!-- 4 · Contactos -->
+      @if (paso() === 3) {
+        <fieldset class="paso">
+          <legend><span class="numero-paso">4</span> Contactos</legend>
+
+          <div class="campo">
+            <label for="contactName">Nombre</label>
+            <input id="contactName" type="text" formControlName="contactName" />
+            @if (mensajeDe('contactName'); as mensaje) {
+              <p class="mensaje-error" id="err-contactName">{{ mensaje }}</p>
+            }
+          </div>
+
+          <div class="campo">
+            <label for="contactTitle">Cargo</label>
+            <input id="contactTitle" type="text" formControlName="contactTitle" />
+            @if (mensajeDe('contactTitle'); as mensaje) {
+              <p class="mensaje-error" id="err-contactTitle">{{ mensaje }}</p>
+            }
+          </div>
+
+          <div class="campo">
+            <label for="contactEmail">Correo</label>
+            <input id="contactEmail" type="text" formControlName="contactEmail" />
+            @if (mensajeDe('contactEmail'); as mensaje) {
+              <p class="mensaje-error" id="err-contactEmail">{{ mensaje }}</p>
+            }
+          </div>
+
+          <!-- ctl_6374a15df9: el contrato admite un solo contacto, que ya está en pantalla -->
+          <button type="button" class="btn btn-secundario btn-agregar-contacto" disabled>
+            <span class="icono" data-icon="user-add" aria-hidden="true">+</span> Agregar contacto
+          </button>
+        </fieldset>
+      }
+
+      @if (aviso(); as aviso) {
+        <p class="aviso" [class.aviso-exito]="aviso.tipo === 'exito'" [class.aviso-error]="aviso.tipo === 'error'"
+          [attr.role]="aviso.tipo === 'exito' ? 'status' : 'alert'">{{ aviso.texto }}</p>
+      }
+
+      <!-- ctl_09c796ca67 «Anterior» y ctl_9f3ce694c5 «Siguiente»; en el último paso, «Guardar cliente» -->
+      <div class="navegacion-pasos">
+        <button type="button" class="btn btn-secundario btn-anterior" [disabled]="esPrimerPaso()" (click)="anterior()">
+          <span class="icono" data-icon="arrow-left" aria-hidden="true">←</span> Anterior
+        </button>
+        @if (esUltimoPaso()) {
+          <button type="submit" class="btn btn-principal btn-guardar" [disabled]="enviando()">Guardar cliente</button>
+        } @else {
+          <button type="button" class="btn btn-principal btn-siguiente" (click)="siguiente()">
+            Siguiente <span class="icono" data-icon="arrow-right" aria-hidden="true">→</span>
+          </button>
+        }
+      </div>
+
+      <!-- ctl_ac849da96b «Cancelar», al pie -->
+      <footer class="pie">
+        <button type="button" class="btn btn-discreto btn-cancelar" (click)="cancelar()">Cancelar</button>
+      </footer>
+    </form>
+  }
+</div>

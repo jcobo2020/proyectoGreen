@@ -1,0 +1,146 @@
+.cliente-nuevo {
+  max-width: 720px;
+  padding: 1rem;
+}
+
+.migas a {
+  color: #2a6e2a;
+}
+
+.paso {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin: 0 0 1rem;
+  padding: 1rem;
+}
+
+.paso legend {
+  font-weight: 600;
+  padding: 0 0.25rem;
+}
+
+.numero-paso {
+  display: inline-block;
+  min-width: 1.5rem;
+  border-radius: 50%;
+  background-color: #2a6e2a;
+  color: white;
+  text-align: center;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.etiqueta,
+.campo label {
+  font-weight: 500;
+}
+
+.opcion-radio {
+  font-weight: normal;
+}
+
+.campo input[type='text'],
+.campo select,
+.campo textarea {
+  padding: 0.4rem;
+  border: 1px solid #999;
+  border-radius: 4px;
+  font: inherit;
+}
+
+.campo [aria-invalid='true'] {
+  border-color: #c00;
+}
+
+.ayuda {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.mensaje-error {
+  color: #c00;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.estado-cargando,
+.estado-vacio,
+.estado-al-dia {
+  color: #555;
+}
+
+.estado-error,
+.estado-sin-sesion,
+.aviso-error {
+  color: #c00;
+}
+
+.aviso-exito {
+  color: #2a6e2a;
+}
+
+.pasos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  color: #666;
+}
+
+.paso-actual {
+  color: #222;
+  font-weight: 600;
+}
+
+.navegacion-pasos {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.pie {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #ddd;
+}
+
+/* Énfasis de los controles: principal, secundario y discreto */
+.btn {
+  padding: 0.6rem 1.25rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-principal {
+  background-color: #2a6e2a;
+  color: white;
+  border: 1px solid #2a6e2a;
+}
+
+.btn-secundario {
+  background-color: white;
+  color: #2a6e2a;
+  border: 1px solid #2a6e2a;
+}
+
+.btn-discreto {
+  background: none;
+  color: #555;
+  border: none;
+  text-decoration: underline;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
