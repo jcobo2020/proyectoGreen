@@ -8,7 +8,8 @@
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
     "test": "jest --runInBand --forceExit --coverage",
-    "test:ci": "jest --runInBand --forceExit --coverage --coverageReporters=lcov --coverageReporters=json-summary --coverageReporters=text"
+    "test:ci": "jest --runInBand --forceExit --coverage --coverageReporters=lcov --coverageReporters=json-summary --coverageReporters=text",
+    "evidence": "node scripts/evidence.js"
   },
   "dependencies": {
     "express": "^4.18.2",

@@ -1,5 +1,5 @@
 === Migration Log — WI-H2-API-CLIENTES-001 (Customer, Counter) ===
-Fecha: 2026-10-19T22:17:27.087Z
+Fecha: 2026-10-20T00:23:37.955Z
 MongoDB: 6.0.14
 
 Colecciones: counters, customers

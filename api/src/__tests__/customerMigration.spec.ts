@@ -1,7 +1,8 @@
 /**
  * Migración de esquema — Customer y Counter (WI-H2-API-CLIENTES-001).
- * Crea las colecciones customers y counters con sus índices, lista lo que la base tiene
- * y deja esa salida como migration_log del work item.
+ * Crea las colecciones customers y counters con sus índices y lista lo que la base tiene.
+ * En `npm test` solo lo comprueba: no escribe ningún fichero. El migration_log del work item
+ * lo genera `npm run evidence`, que pasa la ruta destino en MIGRATION_LOG_FILE.
  */
 import mongoose from 'mongoose';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
@@ -61,7 +62,7 @@ describe('Migración de esquema — Customer y Counter', () => {
     await CustomerModel.deleteMany({});
   });
 
-  it('genera el log de migración con lo que la base tiene', async () => {
+  it('lista lo que la base tiene tras aplicar el esquema (migration_log)', async () => {
     const collections = await mongoose.connection.db!.listCollections().toArray();
     const names = collections.map((c) => c.name as string).sort();
     const customerIndexes = await CustomerModel.collection.listIndexes().toArray();
@@ -86,11 +87,15 @@ describe('Migración de esquema — Customer y Counter', () => {
       'Resultado: OK — colecciones customers y counters creadas con sus índices',
     ].join('\n');
 
-    console.log(log);
-    const evidenceDir = path.resolve(__dirname, '../../../.sdd/evidence/WI-H2-API-CLIENTES-001');
-    fs.mkdirSync(evidenceDir, { recursive: true });
-    fs.writeFileSync(path.join(evidenceDir, 'migration.log'), log + '\n', 'utf8');
+    // Solo con un comando aparte (npm run evidence): ninguna prueba reescribe un fichero versionado
+    const target = process.env['MIGRATION_LOG_FILE'];
+    if (target) {
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, log + '\n', 'utf8');
+    }
 
     expect(names).toEqual(expect.arrayContaining(['customers', 'counters']));
+    expect(log).toContain('idNumber_1: {"idNumber":1} [UNIQUE]');
+    expect(log).toContain('createdAt_-1__id_-1: {"createdAt":-1,"_id":-1}');
   });
 });

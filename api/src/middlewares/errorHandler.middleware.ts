@@ -47,11 +47,12 @@ export function errorHandler(
       return;
     }
 
-    // Resto de errores de dominio: todo error viaja como {code, message, details}
+    // Resto de errores de dominio: {code, message}, y details si el error lo trae o si el
+    // contrato de la ruta lo exige siempre (withErrorDetails; /api/orders conserva su forma)
     res.status(err.statusCode).json({
       code: err.code,
       message: err.message,
-      details: err.details ?? [],
+      ...detailsFor(err.details, res),
     });
     return;
   }
@@ -61,6 +62,12 @@ export function errorHandler(
   res.status(500).json({
     code: 'INTERNAL_ERROR',
     message: 'Error interno del servidor',
-    details: [],
+    ...detailsFor(undefined, res),
   });
+}
+
+/** details viaja si el error lo trae o si la ruta lo pide siempre (res.locals.alwaysErrorDetails). */
+function detailsFor(details: unknown, res: Response): { details?: unknown } {
+  if (details !== undefined) return { details };
+  return res.locals['alwaysErrorDetails'] === true ? { details: [] } : {};
 }

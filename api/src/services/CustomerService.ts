@@ -29,13 +29,22 @@ export interface PublicCustomer {
   updatedAt: string;
 }
 
-/** Ficha y fila del listado: el cliente más el nombre de su ejecutivo (RN-10). */
+/** Respuesta 201 del alta: {id, code, ...los datos enviados, createdAt} (sin updatedAt). */
+export type PublicCreatedCustomer = Omit<PublicCustomer, 'updatedAt'>;
+
+/** Ficha: el cliente más el nombre de su ejecutivo, aunque esté inactivo (RN-10). */
 export interface PublicCustomerWithExecutive extends PublicCustomer {
   accountExecutive: string;
 }
 
-/** Fila del listado: además, sus oportunidades abiertas (RN-07). */
-export interface PublicCustomerListItem extends PublicCustomerWithExecutive {
+/** Fila del listado «Clientes»: solo los campos que da el contrato de GET /api/customers. */
+export interface PublicCustomerListItem {
+  id: string;
+  name: string;
+  idNumber: string;
+  city?: string;
+  primaryContact?: string;
+  accountExecutive: string;
   openOpportunities: number;
   openValue: number;
 }
@@ -150,8 +159,20 @@ export function toPublicCustomer(obj: CustomerRecord): PublicCustomer {
 
 // ─── Normalización y reglas puras ─────────────────────────────────────────────
 
+/** RN-11: el correo (email y contactEmail) se guarda y se devuelve en minúsculas y sin espacios alrededor. */
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+/** Nombre de la fila del listado: legalName, o firstNames + lastNames si es persona natural. */
+export function customerDisplayName(obj: Pick<CustomerRecord, 'personType' | 'legalName' | 'firstNames' | 'lastNames'>): string {
+  if (obj.personType === 'legal') return obj.legalName ?? '';
+  return [obj.firstNames, obj.lastNames].filter((part) => part && part.trim() !== '').join(' ');
+}
+
+/** Suma de valores redondeada a 2 decimales (RN-07). */
+export function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
 }
 
 export function normalizeIdNumber(idNumber: string): string {
@@ -227,7 +248,7 @@ export class CustomerService {
   /** `now` se inyecta para poder fijar el año del código en las pruebas. */
   constructor(private readonly now: () => Date = () => new Date()) {}
 
-  async create(input: CreateCustomerInput): Promise<PublicCustomer> {
+  async create(input: CreateCustomerInput): Promise<PublicCreatedCustomer> {
     const idNumber = normalizeIdNumber(input.idNumber);
 
     // RN-01: unicidad comprobada en el servicio antes de persistir (el índice único cubre la carrera)
@@ -253,8 +274,10 @@ export class CustomerService {
         data[key] = input[key];
       }
     }
-    if (input.contactEmail) {
+    if (typeof input.contactEmail === 'string' && input.contactEmail.trim() !== '') {
       data['contactEmail'] = normalizeEmail(input.contactEmail);
+    } else {
+      delete data['contactEmail'];
     }
     if (input.accountExecutiveId) {
       data['accountExecutiveId'] = new Types.ObjectId(input.accountExecutiveId);
@@ -270,10 +293,14 @@ export class CustomerService {
       throw err;
     }
 
-    // R4-OBS-2: evento de negocio con su código; nunca correo ni teléfono
-    console.log(JSON.stringify({ event: 'cliente_creado', codigo: code }));
+    // R4-OBS-2: evento de negocio customer_created con su code; nunca correo ni teléfono
+    console.log(JSON.stringify({ event: 'customer_created', code }));
 
-    return toPublicCustomer(created.toObject() as unknown as CustomerRecord);
+    // El 201 no lleva updatedAt: {id, code, ...los datos enviados, createdAt}
+    const { updatedAt: _updatedAt, ...createdCustomer } = toPublicCustomer(
+      created.toObject() as unknown as CustomerRecord
+    );
+    return createdCustomer;
   }
 
   async findById(id: string): Promise<PublicCustomerWithExecutive> {
@@ -311,8 +338,14 @@ export class CustomerService {
       apply(key, input[key]);
     }
     set['email'] = normalizeEmail(input.email);
-    if (typeof input.contactEmail === 'string' && input.contactEmail.trim() !== '') {
-      set['contactEmail'] = normalizeEmail(input.contactEmail);
+    if (typeof input.contactEmail === 'string') {
+      if (input.contactEmail.trim() !== '') {
+        set['contactEmail'] = normalizeEmail(input.contactEmail);
+      } else {
+        // Un correo de contacto vacío lo quita
+        delete set['contactEmail'];
+        unset['contactEmail'] = '';
+      }
     }
 
     // RN-05: solo la razón social (jurídica) o el nombre (natural), según el tipo guardado
@@ -331,11 +364,15 @@ export class CustomerService {
       throw new ValidationError('Entrada inválida', nameErrors);
     }
 
-    // RN-09: el ejecutivo, si se envía, existe y está activo; vacío o null lo quita
+    // RN-09: cambiar de ejecutivo exige uno activo; reenviar el que ya tiene vale aunque se
+    // haya desactivado (RN-10). Vacío o null lo quita.
     if (input.accountExecutiveId === null || input.accountExecutiveId === '') {
       unset['accountExecutiveId'] = '';
     } else if (input.accountExecutiveId !== undefined) {
-      await this.assertActiveExecutive(input.accountExecutiveId);
+      const sameExecutive = current.accountExecutiveId?.toString() === input.accountExecutiveId.toLowerCase();
+      if (!sameExecutive) {
+        await this.assertActiveExecutive(input.accountExecutiveId);
+      }
       set['accountExecutiveId'] = new Types.ObjectId(input.accountExecutiveId);
     }
 
@@ -362,14 +399,19 @@ export class CustomerService {
       CustomerModel.aggregate<WithSummary>(listCustomersPipeline(page, pageSize)),
     ]);
 
-    const items = rows.map((row) => {
+    const items = rows.map((row): PublicCustomerListItem => {
       const summary = row.openOpportunitiesSummary?.[0];
-      return {
-        ...toPublicCustomer(row),
+      const item: PublicCustomerListItem = {
+        id: row._id.toString(),
+        name: customerDisplayName(row),
+        idNumber: row.idNumber,
         accountExecutive: executiveName(row),
         openOpportunities: summary?.count ?? 0,
-        openValue: summary ? Math.round(summary.value * 100) / 100 : 0,
+        openValue: summary ? roundMoney(summary.value) : 0,
       };
+      if (row.city !== undefined && row.city !== null) item.city = row.city;
+      if (row.contactName !== undefined && row.contactName !== null) item.primaryContact = row.contactName;
+      return item;
     });
 
     return { items, total, page, pageSize };
