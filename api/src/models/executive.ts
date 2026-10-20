@@ -41,6 +41,11 @@ const executiveSchema = new Schema<IExecutive>(
     collection: 'executives',
     timestamps: false,
     versionKey: false,
+    // Los índices de executives solo los crea la siembra (R4-ARQ-2), después de comprobar que no hay
+    // nombres repetidos (RN-03). Con autoIndex, arrancar la API sobre una base con repetidos intentaría
+    // crear name_1 en cada arranque y MongoDB dejaría en su log la clave del nombre repetido
+    // (constitución: ningún dato personal en los logs).
+    autoIndex: false,
   }
 );
 

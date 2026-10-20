@@ -65,18 +65,17 @@ function hasIndex(indexes: Array<Record<string, unknown>>, required: RequiredInd
 }
 
 /**
- * Crea la colección y sus índices, y comprueba que quedaron (RN-03, v6).
+ * Crea la colección y sus índices, y comprueba que quedaron (RN-03, v6). Es lo único que crea los
+ * índices de executives: el esquema no tiene autoIndex, ni en la siembra ni al arrancar la API.
  * 1. Antes de tocar ningún índice cuenta en la base los nombres repetidos con la equivalencia del
  *    índice único: si hay alguno, sale sin sembrar y sin intentar crear el índice (su fallo
  *    citaría el nombre repetido en el log de la propia base). Solo se dice cuántos, nunca cuáles.
  * 2. Sincroniza los índices: una base de la v4 (name_1 con la intercalación es) cambia de índice.
- * 3. Los lista y comprueba: Mongoose puede crear índices por su cuenta (autoIndex) y, con datos que
- *    los incumplen, esa creación y syncIndexes() pueden fallar sin avisar; no se fía de que no lancen.
+ * 3. Los lista y comprueba, con su intercalación: no se fía de que syncIndexes() lance si no pudo
+ *    (un repetido que entró después de comprobar, o un índice de la v4 que no se sustituyó).
  */
 async function ensureExecutiveSchema(service: ExecutiveService): Promise<void> {
   await ExecutiveModel.createCollection();
-  // Si la conexión trae autoIndex, se espera a que acabe; si falló, lo dice la comprobación del final
-  await ExecutiveModel.init().catch(() => undefined);
 
   const repeated = await service.countDuplicateNames();
   if (repeated > 0) {
@@ -161,16 +160,13 @@ export interface SeedExecutivesCliDeps {
   logError: SeedLogger;
 }
 
-/**
- * Conecta con MONGODB_URI; sin ella falla con un mensaje que dice qué falta. Sin autoIndex: los
- * índices los crea la siembra, y solo después de comprobar que no hay nombres repetidos (RN-03).
- */
+/** Conecta con MONGODB_URI; sin ella falla con un mensaje que dice qué falta. */
 export async function connectForSeed(): Promise<unknown> {
   const uri = process.env['MONGODB_URI'];
   if (!uri) {
     throw new SeedExecutivesError('MONGODB_URI no está definida: indica la base de datos en la que sembrar.');
   }
-  return connectDB(uri, { autoIndex: false });
+  return connectDB(uri);
 }
 
 const defaultCliDeps: SeedExecutivesCliDeps = {

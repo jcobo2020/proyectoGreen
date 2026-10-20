@@ -133,3 +133,18 @@ Ejecutivos en la colección: 2 · activos: 2
 $ node -e <contar en el log de la propia MongoDB (getLog global) las líneas que citan el nombre repetido y los intentos de crear name_1, con el escenario 1 de control>
 Líneas del log de la base (getLog global): 294 · que citan el apellido repetido: 0 · intentos de crear name_1 en executives: 0 · control, las mismas líneas de name_1 en la base del escenario 1: 4
 (código de salida: 0)
+
+# Escenario 4 · M1: arrancar la API compilada (node dist/server.js, autoIndex por defecto) sobre la misma base del escenario 3, dos veces
+
+$ node dist/server.js   (MONGODB_URI de la base del escenario 3, PORT=0, JWT_SECRET aleatorio; se detiene a los 5 s)
+{"event":"server_started","port":0}
+(detenido con SIGTERM; código de salida: null)
+
+$ node dist/server.js   (MONGODB_URI de la base del escenario 3, PORT=0, JWT_SECRET aleatorio; se detiene a los 5 s)
+{"event":"server_started","port":0}
+(detenido con SIGTERM; código de salida: null)
+
+$ node -e <contar en el log de MongoDB las líneas con el nombre, con E11000 o dup key, y los intentos de crear name_1; listar los índices>
+Líneas del log de la base (getLog global): 374 · que citan el apellido repetido: 0 · con E11000 o dup key: 0 · intentos de crear name_1 en executives: 0
+Índices: _id_ · ejecutivos: 2
+(código de salida: 0)

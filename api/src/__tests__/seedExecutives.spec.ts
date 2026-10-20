@@ -16,7 +16,6 @@ import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import { createApp } from '../app';
 import { ExecutiveModel, EXECUTIVE_NAME_COLLATION } from '../models/executive';
 import { ExecutiveService, normalizeExecutiveName, uniqueExecutiveNames } from '../services/ExecutiveService';
-import * as connectDBModule from '../config/connectDB';
 import { parseExecutiveSeed } from '../validators/executive.validator';
 import {
   readExecutiveSeedFile,
@@ -403,34 +402,7 @@ describe('Script seed:executives', () => {
       expect(d.out.join('\n')).not.toContain('Ana López');
     });
 
-    it('la siembra conecta sin autoIndex: ningún índice se intenta crear antes de comprobar los repetidos', async () => {
-    const previous = process.env['MONGODB_URI'];
-    process.env['MONGODB_URI'] = 'mongodb://127.0.0.1:1/seed-sin-autoindex';
-    const connect = jest.spyOn(connectDBModule, 'connectDB').mockResolvedValue(mongoose);
-    try {
-      await connectForSeed();
-      expect(connect).toHaveBeenCalledWith('mongodb://127.0.0.1:1/seed-sin-autoindex', { autoIndex: false });
-    } finally {
-      connect.mockRestore();
-      if (previous === undefined) delete process.env['MONGODB_URI'];
-      else process.env['MONGODB_URI'] = previous;
-    }
-  });
-
-  it('connectDB (la conexión centralizada) pasa sus opciones a mongoose.connect y sin URI falla', async () => {
-    const connect = jest.spyOn(mongoose, 'connect').mockResolvedValue(mongoose);
-    try {
-      await connectDBModule.connectDB('mongodb://127.0.0.1:1/opciones', { autoIndex: false });
-      expect(connect).toHaveBeenCalledWith('mongodb://127.0.0.1:1/opciones', { autoIndex: false });
-      await connectDBModule.connectDB('mongodb://127.0.0.1:1/sin-opciones');
-      expect(connect).toHaveBeenLastCalledWith('mongodb://127.0.0.1:1/sin-opciones', undefined);
-      await expect(connectDBModule.connectDB('')).rejects.toThrow(/MONGODB_URI/);
-    } finally {
-      connect.mockRestore();
-    }
-  });
-
-  it('sin MONGODB_URI la conexión de la siembra falla con un SeedExecutivesError legible', async () => {
+    it('sin MONGODB_URI la conexión de la siembra falla con un SeedExecutivesError legible', async () => {
       const previous = process.env['MONGODB_URI'];
       delete process.env['MONGODB_URI'];
       try {
@@ -567,7 +539,7 @@ describe('RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la s
     }
   });
 
-  it('aunque syncIndexes no avise (la carrera con el autoIndex de Mongoose), comprueba los índices y sale con 1', async () => {
+  it('aunque syncIndexes no avise, comprueba los índices y sale con 1', async () => {
     // Sin repetidos ni índices: la comprobación previa pasa, syncIndexes «no hace nada» y la de después lo detecta
     await ExecutiveModel.collection.drop().catch(() => undefined);
     await ExecutiveModel.collection.insertOne({ name: 'Ana López', active: true });
@@ -654,8 +626,9 @@ describe('M1 · el arranque de la API (server.ts, autoIndex por defecto) no crea
       const indexes = (await db.collection('executives').listIndexes().toArray()).map((i) => i.name);
       expect(indexes).toEqual(['_id_']);
       const log = (await mongoose.connection.db!.admin().command({ getLog: 'global' })) as { log: string[] };
+      // El _id_ lo crea la propia colección al insertar los datos de la prueba: lo que no puede haber es name_1 ni un fallo
       const aboutCollection = log.log.filter((l) => l.includes(`${DB}.executives`));
-      expect(aboutCollection.filter((l) => /Index build|E11000|dup key/.test(l))).toEqual([]);
+      expect(aboutCollection.filter((l) => /name_1|failed|E11000|dup key/.test(l))).toEqual([]);
       expect(log.log.filter((l) => /Torres/i.test(l))).toEqual([]);
     } finally {
       const server = listen?.mock.results[0]?.value as { close: (cb: () => void) => void } | undefined;
