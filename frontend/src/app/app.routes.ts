@@ -7,6 +7,11 @@ export const routes: Routes = [
       import('./feature/orders/orders.routes').then(m => m.ordersRoutes)
   },
   {
+    path: 'nuevo-prospecto',
+    loadChildren: () =>
+      import('./feature/customers/customers.routes').then(m => m.customersRoutes)
+  },
+  {
     path: '',
     redirectTo: 'orders',
     pathMatch: 'full'

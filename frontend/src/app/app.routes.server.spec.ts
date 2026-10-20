@@ -23,4 +23,9 @@ describe('serverRoutes (app.routes.server.ts)', () => {
     expect(rutaComodin).toBeDefined();
     expect(rutaComodin?.renderMode).toBeDefined();
   });
+
+  it('/nuevo-prospecto usa RenderMode.Client (el token solo existe en el navegador)', () => {
+    const ruta = serverRoutes.find(r => r.path === 'nuevo-prospecto');
+    expect(ruta?.renderMode).toBe(RenderMode.Client);
+  });
 });

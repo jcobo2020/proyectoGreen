@@ -16,7 +16,9 @@ module.exports = {
     'src/lib/**/*.ts',
     'src/routes/**/*.ts',
     'src/scripts/**/*.ts',
-    'src/app.ts'
+    'src/app.ts',
+    // El generador de evidencia de WI-H2-API-CLIENTES-001 también es código del work item
+    'scripts/**/*.js'
   ],
   coverageThreshold: {
     global: {
