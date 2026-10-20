@@ -85,17 +85,62 @@
   color: #2a6e2a;
 }
 
-.btn-guardar {
-  padding: 0.75rem 1.5rem;
-  background-color: #2a6e2a;
-  color: white;
-  border: none;
+.pasos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  color: #666;
+}
+
+.paso-actual {
+  color: #222;
+  font-weight: 600;
+}
+
+.navegacion-pasos {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.pie {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #ddd;
+}
+
+/* Énfasis de los controles: principal, secundario y discreto */
+.btn {
+  padding: 0.6rem 1.25rem;
   border-radius: 4px;
   font-size: 1rem;
   cursor: pointer;
 }
 
-.btn-guardar:disabled {
-  background-color: #999;
+.btn-principal {
+  background-color: #2a6e2a;
+  color: white;
+  border: 1px solid #2a6e2a;
+}
+
+.btn-secundario {
+  background-color: white;
+  color: #2a6e2a;
+  border: 1px solid #2a6e2a;
+}
+
+.btn-discreto {
+  background: none;
+  color: #555;
+  border: none;
+  text-decoration: underline;
+}
+
+.btn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }

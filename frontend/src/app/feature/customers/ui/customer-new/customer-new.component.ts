@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -21,6 +21,7 @@ import {
   InvalidCustomerInputError
 } from '../../domain/errors/customer.errors';
 import { ExecutiveUnauthorizedError } from '../../domain/errors/executive.errors';
+import { environment } from '../../../../../environments/environment';
 
 /** Los estados de vista de /nuevo-prospecto, con sus textos literales (GREEN-H2-UX-CLIENTES-001 v4). */
 export const ESTADOS_DE_VISTA = {
@@ -149,8 +150,16 @@ const formatoDeIdentificacion: ValidatorFn = (control: AbstractControl): Validat
   }
 };
 
+/** Los cuatro pasos del asistente (secciones kind: step), con los campos de cada uno. */
+export const PASOS: ReadonlyArray<{ titulo: string; campos: readonly CampoDelFormulario[] }> = [
+  { titulo: 'Identificación', campos: ['personType', 'idType', 'idNumber', 'legalName', 'firstNames', 'lastNames'] },
+  { titulo: 'Contacto y ubicación', campos: ['email', 'mobilePhone', 'city', 'address'] },
+  { titulo: 'Información comercial', campos: ['sourceChannel', 'accountExecutiveId', 'notes'] },
+  { titulo: 'Contactos', campos: ['contactName', 'contactTitle', 'contactEmail'] }
+];
+
 /**
- * Pantalla /nuevo-prospecto («Nuevo cliente»): el alta de un cliente.
+ * Pantalla /nuevo-prospecto («Nuevo cliente»): el alta de un cliente en un asistente de 4 pasos.
  * Carga las opciones de «Ejecutivo asignado» (GET /api/executives) y guarda con
  * «Guardar cliente» (POST /api/customers). Sin lógica de negocio: lo decide el backend.
  */
@@ -170,6 +179,9 @@ export class CustomerNewComponent implements OnInit {
 
   readonly estados = ESTADOS_DE_VISTA;
   readonly opciones = OPCIONES;
+  readonly pasos = PASOS;
+  /** «vuelve a entrar» lleva al inicio de sesión y, al volver, a esta pantalla. */
+  readonly urlDeEntrada = `${environment.identityProviderUrl}?returnUrl=${encodeURIComponent('/nuevo-prospecto')}`;
 
   readonly form = new FormGroup({
     personType: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -196,8 +208,14 @@ export class CustomerNewComponent implements OnInit {
     contactEmail: new FormControl('', { nonNullable: true })
   });
 
+  /** El paso que se ve, de 0 a 3. */
+  readonly paso = signal(0);
+  readonly esPrimerPaso = computed(() => this.paso() === 0);
+  readonly esUltimoPaso = computed(() => this.paso() === PASOS.length - 1);
   /** Estado de la carga de la pantalla (las opciones de «Ejecutivo asignado»). */
   readonly estadoCarga = signal<EstadoDeCarga>('loading');
+  /** «Datos al día.» se ve tras cargar, hasta que la persona empieza a escribir. */
+  readonly alDiaVisible = signal(false);
   readonly ejecutivos = signal<ExecutiveOption[]>([]);
   /** Qué nombres se muestran: lo dicen las reglas de «Tipo de persona». */
   readonly visibles = signal<Record<(typeof CAMPOS_DE_NOMBRE)[number], boolean>>({
@@ -208,7 +226,7 @@ export class CustomerNewComponent implements OnInit {
   /** Se intentó guardar: los mensajes de validación se ven aunque el campo no se haya tocado. */
   readonly intentado = signal(false);
   readonly enviando = signal(false);
-  /** El resultado de «Guardar cliente» (201, 400, 409 u otro). */
+  /** El resultado de «Guardar cliente» (201, 400 o 409). */
   readonly aviso = signal<Aviso | null>(null);
   /** Los mensajes que devolvió el servidor por campo (400 details, 409 en idNumber). */
   readonly erroresServidor = signal<Partial<Record<CampoDelFormulario, string>>>({});
@@ -226,7 +244,7 @@ export class CustomerNewComponent implements OnInit {
     for (const campo of CAMPOS) {
       c[campo].valueChanges
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => this.olvidarErrorDelServidor(campo));
+        .subscribe(() => this.alEditar(campo));
     }
     this.cargarEjecutivos();
   }
@@ -234,10 +252,12 @@ export class CustomerNewComponent implements OnInit {
   /** «Cargar las opciones de «Ejecutivo asignado»» (GET /api/executives), sin caché. */
   cargarEjecutivos(): void {
     this.estadoCarga.set('loading');
+    this.alDiaVisible.set(false);
     this.listExecutivesUseCase.execute().subscribe({
       next: opciones => {
         this.ejecutivos.set(opciones);
         this.estadoCarga.set(opciones.length === 0 ? 'empty' : 'data');
+        this.alDiaVisible.set(opciones.length > 0);
       },
       error: (err: Error) => {
         if (err instanceof ExecutiveUnauthorizedError) {
@@ -249,11 +269,37 @@ export class CustomerNewComponent implements OnInit {
     });
   }
 
+  /** «Anterior» (ctl_09c796ca67): solo cambia la pantalla. */
+  anterior(): void {
+    if (!this.esPrimerPaso()) this.paso.update(p => p - 1);
+  }
+
+  /** «Siguiente» (ctl_9f3ce694c5): solo cambia la pantalla; lo obligatorio se juzga al guardar. */
+  siguiente(): void {
+    if (!this.esUltimoPaso()) this.paso.update(p => p + 1);
+  }
+
+  /**
+   * «Cancelar» (ctl_ac849da96b): solo cambia la pantalla. Lo mínimo sin inventar una ruta:
+   * el formulario vuelve a su estado de partida y el asistente, al primer paso.
+   */
+  cancelar(): void {
+    this.form.reset();
+    this.erroresServidor.set({});
+    this.aviso.set(null);
+    this.intentado.set(false);
+    this.paso.set(0);
+  }
+
   /** «Guardar cliente» (POST /api/customers). */
   guardar(): void {
     this.intentado.set(true);
     this.form.markAllAsTouched();
-    if (this.form.invalid || this.enviando()) return;
+    if (this.form.invalid) {
+      this.irAlPasoDe(CAMPOS.filter(campo => this.form.controls[campo].invalid));
+      return;
+    }
+    if (this.enviando()) return;
 
     this.enviando.set(true);
     this.aviso.set(null);
@@ -268,18 +314,21 @@ export class CustomerNewComponent implements OnInit {
       error: (err: Error) => {
         this.enviando.set(false);
         if (err instanceof InvalidCustomerInputError) {
-          this.erroresServidor.set(this.porCampo(err.details));
+          const errores = this.porCampo(err.details);
+          this.erroresServidor.set(errores);
           this.aviso.set({ tipo: 'error', texto: ESTADOS_DE_VISTA[400] });
+          this.irAlPasoDe(Object.keys(errores) as CampoDelFormulario[]);
         } else if (err instanceof DuplicateCustomerError) {
           // Con 409: conserva lo escrito y vuelve a cargar las opciones de «Ejecutivo asignado».
           this.erroresServidor.set({ idNumber: MENSAJES.idNumberDuplicate });
           this.aviso.set({ tipo: 'error', texto: ESTADOS_DE_VISTA[409] });
+          this.irAlPasoDe(['idNumber']);
           this.cargarEjecutivos();
         } else if (err instanceof CustomerUnauthorizedError) {
           this.sesionTerminada.set(true);
-        } else {
-          this.aviso.set({ tipo: 'error', texto: ESTADOS_DE_VISTA.error });
         }
+        // Cualquier otro error (500…): la spec no le da mensaje en esta pantalla. Lo escrito se
+        // conserva y «Guardar cliente» se puede volver a pulsar (pregunta abierta en el informe).
       }
     });
   }
@@ -302,12 +351,13 @@ export class CustomerNewComponent implements OnInit {
   /**
    * Reglas de «Tipo de persona» (int_40b0c02a2a, int_b9ba60fca4): legal muestra y exige
    * «Razón social»; otro valor, «Nombres» y «Apellidos». Al dejar de cumplirse, el campo vuelve
-   * a su estado de partida: oculto, vacío y sin exigirse.
+   * a su estado de partida: oculto, vacío y sin exigirse. Sin tipo (al empezar o tras «Cancelar»),
+   * los tres siguen ocultos: las reglas se disparan al cambiarlo (trigger on change).
    */
   private aplicarReglas(tipo: string): void {
-    // Solo corre al cambiar «Tipo de persona» (trigger on change): antes, los tres siguen ocultos.
     const legal = tipo === 'legal';
-    const visibles = { legalName: legal, firstNames: !legal, lastNames: !legal };
+    const hayTipo = tipo !== '';
+    const visibles = { legalName: legal, firstNames: hayTipo && !legal, lastNames: hayTipo && !legal };
     for (const campo of CAMPOS_DE_NOMBRE) {
       const control = this.form.controls[campo];
       if (visibles[campo]) {
@@ -319,6 +369,18 @@ export class CustomerNewComponent implements OnInit {
       }
     }
     this.visibles.set(visibles);
+  }
+
+  /** Lleva el asistente al primer paso que tiene alguno de estos campos. */
+  private irAlPasoDe(campos: readonly CampoDelFormulario[]): void {
+    const indice = PASOS.findIndex(p => p.campos.some(campo => campos.includes(campo)));
+    if (indice >= 0) this.paso.set(indice);
+  }
+
+  /** Al escribir: «Datos al día.» deja de verse y el mensaje del servidor de ese campo se va. */
+  private alEditar(campo: CampoDelFormulario): void {
+    this.alDiaVisible.set(false);
+    this.olvidarErrorDelServidor(campo);
   }
 
   /** El cuerpo de POST /api/customers: los campos visibles con valor (un campo oculto cuenta como vacío). */
@@ -341,12 +403,16 @@ export class CustomerNewComponent implements OnInit {
     return errores;
   }
 
+  /**
+   * Quita el mensaje del servidor de un campo. El aviso del 400 o del 409 se va con el último
+   * campo corregido (o con la primera edición, si el 400 no marcó ninguno).
+   */
   private olvidarErrorDelServidor(campo: CampoDelFormulario): void {
-    if (!this.erroresServidor()[campo]) return;
-    this.erroresServidor.update(errores => {
-      const copia = { ...errores };
-      delete copia[campo];
-      return copia;
-    });
+    const errores = { ...this.erroresServidor() };
+    delete errores[campo];
+    this.erroresServidor.set(errores);
+    if (this.aviso()?.tipo === 'error' && Object.keys(errores).length === 0) {
+      this.aviso.set(null);
+    }
   }
 }

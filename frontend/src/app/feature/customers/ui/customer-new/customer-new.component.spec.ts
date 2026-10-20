@@ -20,6 +20,7 @@ import {
   ExecutiveInfrastructureError,
   ExecutiveUnauthorizedError
 } from '../../domain/errors/executive.errors';
+import { environment } from '../../../../../environments/environment';
 
 /**
  * /nuevo-prospecto («Nuevo cliente»). Se doblan los REPOSITORIOS por su puerto; el componente
@@ -60,6 +61,14 @@ function crear(ejecutivos: Observable<ExecutiveOption[]> = of(EJECUTIVOS)) {
 
 // ─── Utilidades de interacción ───────────────────────────────────────────────
 
+/** El paso del asistente (0 a 3) donde vive cada campo. */
+const PASO_DE: Record<string, number> = {
+  personType: 0, idType: 0, idNumber: 0, legalName: 0, firstNames: 0, lastNames: 0,
+  email: 1, mobilePhone: 1, city: 1, address: 1,
+  sourceChannel: 2, accountExecutiveId: 2, notes: 2,
+  contactName: 3, contactTitle: 3, contactEmail: 3
+};
+
 function raiz(fixture: ComponentFixture<CustomerNewComponent>): HTMLElement {
   return fixture.nativeElement as HTMLElement;
 }
@@ -68,9 +77,32 @@ function texto(fixture: ComponentFixture<CustomerNewComponent>): string {
   return raiz(fixture).textContent ?? '';
 }
 
-function escribir(fixture: ComponentFixture<CustomerNewComponent>, id: string, valor: string): void {
-  const el = raiz(fixture).querySelector<HTMLInputElement | HTMLTextAreaElement>(`#${id}`);
+function boton(fixture: ComponentFixture<CustomerNewComponent>, clase: string): HTMLButtonElement | null {
+  return raiz(fixture).querySelector<HTMLButtonElement>(`.${clase}`);
+}
+
+function pasoActual(fixture: ComponentFixture<CustomerNewComponent>): string {
+  return raiz(fixture).querySelector('[aria-current="step"]')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+}
+
+/** Va al paso pedido pulsando «Siguiente» o «Anterior», como la persona. */
+function irAlPaso(fixture: ComponentFixture<CustomerNewComponent>, destino: number): void {
+  for (let vueltas = 0; vueltas < 4 && fixture.componentInstance.paso() !== destino; vueltas++) {
+    const clase = fixture.componentInstance.paso() < destino ? 'btn-siguiente' : 'btn-anterior';
+    boton(fixture, clase)?.click();
+    fixture.detectChanges();
+  }
+}
+
+function campo<T extends HTMLElement>(fixture: ComponentFixture<CustomerNewComponent>, id: string): T {
+  irAlPaso(fixture, PASO_DE[id]);
+  const el = raiz(fixture).querySelector<T>(`#${id}`);
   if (!el) throw new Error(`No existe el campo #${id}`);
+  return el;
+}
+
+function escribir(fixture: ComponentFixture<CustomerNewComponent>, id: string, valor: string): void {
+  const el = campo<HTMLInputElement | HTMLTextAreaElement>(fixture, id);
   el.value = valor;
   el.dispatchEvent(new Event('input'));
   el.dispatchEvent(new Event('blur'));
@@ -78,15 +110,19 @@ function escribir(fixture: ComponentFixture<CustomerNewComponent>, id: string, v
 }
 
 function elegir(fixture: ComponentFixture<CustomerNewComponent>, id: string, valor: string): void {
-  const el = raiz(fixture).querySelector<HTMLSelectElement>(`#${id}`);
-  if (!el) throw new Error(`No existe el select #${id}`);
+  const el = campo<HTMLSelectElement>(fixture, id);
   el.value = valor;
   el.dispatchEvent(new Event('change'));
   el.dispatchEvent(new Event('blur'));
   fixture.detectChanges();
 }
 
+function valorDe(fixture: ComponentFixture<CustomerNewComponent>, id: string): string {
+  return campo<HTMLInputElement>(fixture, id).value;
+}
+
 function tipoDePersona(fixture: ComponentFixture<CustomerNewComponent>, valor: 'legal' | 'natural'): void {
+  irAlPaso(fixture, 0);
   const radio = Array.from(raiz(fixture).querySelectorAll<HTMLInputElement>('input[type="radio"]')).find(
     r => r.value === valor
   );
@@ -95,17 +131,29 @@ function tipoDePersona(fixture: ComponentFixture<CustomerNewComponent>, valor: '
   fixture.detectChanges();
 }
 
+/** «Guardar cliente» está en el último paso. */
 function guardar(fixture: ComponentFixture<CustomerNewComponent>): void {
-  raiz(fixture).querySelector<HTMLButtonElement>('.btn-guardar')?.click();
+  irAlPaso(fixture, 3);
+  boton(fixture, 'btn-guardar')?.click();
   fixture.detectChanges();
 }
 
-function errorDe(fixture: ComponentFixture<CustomerNewComponent>, campo: string): string | null {
-  return raiz(fixture).querySelector(`#err-${campo}`)?.textContent?.trim() ?? null;
+/** El mensaje bajo un campo, yendo a su paso. */
+function errorDe(fixture: ComponentFixture<CustomerNewComponent>, id: string): string | null {
+  irAlPaso(fixture, PASO_DE[id]);
+  return raiz(fixture).querySelector(`#err-${id}`)?.textContent?.trim() ?? null;
 }
 
 function existe(fixture: ComponentFixture<CustomerNewComponent>, id: string): boolean {
+  irAlPaso(fixture, PASO_DE[id]);
   return raiz(fixture).querySelector(`#${id}`) !== null;
+}
+
+function opcionesDe(fixture: ComponentFixture<CustomerNewComponent>, id: string): string[][] {
+  return Array.from(campo<HTMLSelectElement>(fixture, id).querySelectorAll('option')).map(o => [
+    o.value,
+    o.textContent?.trim() ?? ''
+  ]);
 }
 
 /** Un alta válida de persona natural con cédula. */
@@ -145,37 +193,26 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
   // ─── Estados de vista de la carga (GET /api/executives) ────────────────────
 
   describe('estados de la pantalla', () => {
-    it('cargando: muestra «Cargando…» mientras GET /api/executives está en vuelo', () => {
+    it('AC-15 — mientras GET /api/executives está en vuelo muestra «Cargando…»', () => {
       const enVuelo = new Subject<ExecutiveOption[]>();
       const { fixture } = crear(enVuelo.asObservable());
 
       expect(raiz(fixture).querySelector('.estado-cargando')?.textContent?.trim()).toBe('Cargando…');
-      enVuelo.complete();
+
+      enVuelo.next(EJECUTIVOS);
+      fixture.detectChanges();
+      expect(raiz(fixture).querySelector('.estado-cargando')).toBeNull();
     });
 
-    it('AC-18 · act_opc_e5075456ce:llama — con 200 pide GET /api/executives, muestra «Datos al día.» y ofrece los ejecutivos', () => {
-      const { fixture, executiveRepo } = crear();
-
-      expect(executiveRepo.listExecutives).toHaveBeenCalledTimes(1);
-      expect(raiz(fixture).querySelector('.estado-al-dia')?.textContent?.trim()).toBe('Datos al día.');
-      const opciones = Array.from(
-        raiz(fixture).querySelectorAll<HTMLOptionElement>('#accountExecutiveId option')
-      ).map(o => [o.value, o.textContent?.trim()]);
-      expect(opciones).toEqual([
-        ['', ''],
-        ['665f1c2a9b1e8a0000000001', 'Daniela Ríos'],
-        ['665f1c2a9b1e8a0000000002', 'Mauricio León']
-      ]);
-    });
-
-    it('vacío: con 200 y una lista vacía muestra «No hay datos que mostrar.» y el formulario sigue usable', () => {
+    it('AC-16 — con 200 y una lista vacía muestra «No hay datos que mostrar.» y el formulario sigue usable', () => {
       const { fixture } = crear(of([]));
 
       expect(raiz(fixture).querySelector('.estado-vacio')?.textContent?.trim()).toBe('No hay datos que mostrar.');
+      expect(raiz(fixture).querySelector('.estado-al-dia')).toBeNull();
       expect(raiz(fixture).querySelector('form')).not.toBeNull();
     });
 
-    it('error: si la carga falla muestra «No se pudo cargar. Vuelve a intentarlo.» y «Reintentar» vuelve a pedir', () => {
+    it('AC-17 — si la carga falla muestra «No se pudo cargar. Vuelve a intentarlo.» y «Reintentar» vuelve a pedir', () => {
       const { fixture, executiveRepo } = crear(throwError(() => new ExecutiveInfrastructureError(500, '/api/executives')));
 
       expect(raiz(fixture).querySelector('.estado-error p')?.textContent?.trim()).toBe(
@@ -183,20 +220,197 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
       );
 
       executiveRepo.listExecutives.mockReturnValue(of(EJECUTIVOS));
-      raiz(fixture).querySelector<HTMLButtonElement>('.btn-reintentar')?.click();
+      boton(fixture, 'btn-reintentar')?.click();
       fixture.detectChanges();
 
       expect(executiveRepo.listExecutives).toHaveBeenCalledTimes(2);
+      expect(raiz(fixture).querySelector('.estado-error')).toBeNull();
       expect(raiz(fixture).querySelector('.estado-al-dia')?.textContent?.trim()).toBe('Datos al día.');
     });
 
-    it('AC-21 · sin permiso: con 401 en GET /api/executives dice «Tu sesión terminó: vuelve a entrar.» y no ofrece el formulario', () => {
+    it('AC-18 · act_opc_e5075456ce:llama — con 200 pide GET /api/executives, muestra «Datos al día.» y ofrece los ejecutivos', () => {
+      const { fixture, executiveRepo } = crear();
+
+      expect(executiveRepo.listExecutives).toHaveBeenCalledTimes(1);
+      expect(raiz(fixture).querySelector('.estado-al-dia')?.textContent?.trim()).toBe('Datos al día.');
+      expect(opcionesDe(fixture, 'accountExecutiveId')).toEqual([
+        ['', ''],
+        ['665f1c2a9b1e8a0000000001', 'Daniela Ríos'],
+        ['665f1c2a9b1e8a0000000002', 'Mauricio León']
+      ]);
+    });
+
+    it('«Datos al día.» deja de verse en cuanto la persona empieza a escribir', () => {
+      const { fixture } = crear();
+      escribir(fixture, 'idNumber', '0');
+      expect(raiz(fixture).querySelector('.estado-al-dia')).toBeNull();
+    });
+
+    it('AC-21 · sin permiso: con 401 en GET /api/executives dice «Tu sesión terminó: vuelve a entrar.» y «vuelve a entrar» lleva al inicio de sesión', () => {
       const { fixture } = crear(throwError(() => new ExecutiveUnauthorizedError()));
 
-      expect(raiz(fixture).querySelector('.estado-sin-sesion')?.textContent?.trim()).toBe(
-        'Tu sesión terminó: vuelve a entrar.'
+      const aviso = raiz(fixture).querySelector('.estado-sin-sesion');
+      expect(aviso?.textContent?.trim()).toBe('Tu sesión terminó: vuelve a entrar.');
+      expect(aviso?.querySelector<HTMLAnchorElement>('a.enlace-entrar')?.getAttribute('href')).toBe(
+        `${environment.identityProviderUrl}?returnUrl=%2Fnuevo-prospecto`
       );
       expect(raiz(fixture).querySelector('form')).toBeNull();
+    });
+  });
+
+  // ─── El asistente de 4 pasos y sus controles ──────────────────────────────
+
+  describe('asistente', () => {
+    it('empieza en «Identificación» y solo enseña los campos de ese paso', () => {
+      const { fixture } = crear();
+      expect(pasoActual(fixture)).toBe('1 Identificación');
+      expect(raiz(fixture).querySelector('#idNumber')).not.toBeNull();
+      expect(raiz(fixture).querySelector('#email')).toBeNull();
+      expect(raiz(fixture).querySelector('#sourceChannel')).toBeNull();
+      expect(raiz(fixture).querySelector('#contactName')).toBeNull();
+    });
+
+    it('ctl_9f3ce694c5:control · ctl_09c796ca67:control — «Siguiente» y «Anterior» solo cambian de paso y conservan lo escrito', () => {
+      const { fixture, customerRepo } = crear();
+      expect(boton(fixture, 'btn-anterior')?.disabled).toBe(true);
+      escribir(fixture, 'idNumber', '0912345678');
+
+      boton(fixture, 'btn-siguiente')?.click();
+      fixture.detectChanges();
+      expect(pasoActual(fixture)).toBe('2 Contacto y ubicación');
+      boton(fixture, 'btn-siguiente')?.click();
+      fixture.detectChanges();
+      expect(pasoActual(fixture)).toBe('3 Información comercial');
+      boton(fixture, 'btn-siguiente')?.click();
+      fixture.detectChanges();
+      expect(pasoActual(fixture)).toBe('4 Contactos');
+      expect(boton(fixture, 'btn-siguiente')).toBeNull();
+      expect(boton(fixture, 'btn-guardar')?.textContent?.trim()).toBe('Guardar cliente');
+
+      boton(fixture, 'btn-anterior')?.click();
+      fixture.detectChanges();
+      expect(pasoActual(fixture)).toBe('3 Información comercial');
+      expect(valorDe(fixture, 'idNumber')).toBe('0912345678');
+      expect(customerRepo.createCustomer).not.toHaveBeenCalled();
+      expect(raiz(fixture).querySelectorAll('.mensaje-error').length).toBe(0);
+    });
+
+    it('«Guardar cliente» solo está en el último paso', () => {
+      const { fixture } = crear();
+      for (const paso of [0, 1, 2]) {
+        irAlPaso(fixture, paso);
+        expect(boton(fixture, 'btn-guardar')).toBeNull();
+      }
+    });
+
+    it('los controles tienen su énfasis e icono: «Siguiente» principal con arrow-right, «Anterior» secundario con arrow-left, «Cancelar» discreto al pie', () => {
+      const { fixture } = crear();
+      const siguiente = boton(fixture, 'btn-siguiente');
+      const anterior = boton(fixture, 'btn-anterior');
+      expect(siguiente?.classList).toContain('btn-principal');
+      expect(siguiente?.querySelector('[data-icon="arrow-right"]')).not.toBeNull();
+      expect(siguiente?.textContent?.replace(/\s+/g, ' ').trim()).toContain('Siguiente');
+      expect(anterior?.classList).toContain('btn-secundario');
+      expect(anterior?.querySelector('[data-icon="arrow-left"]')).not.toBeNull();
+      const cancelar = raiz(fixture).querySelector<HTMLButtonElement>('footer .btn-cancelar');
+      expect(cancelar?.classList).toContain('btn-discreto');
+      expect(cancelar?.textContent?.trim()).toBe('Cancelar');
+    });
+
+    it('ctl_6374a15df9:control — «Agregar contacto» está en «Contactos», secundario con user-add, y desactivado: el contrato admite un solo contacto', () => {
+      const { fixture } = crear();
+      irAlPaso(fixture, 3);
+      const agregar = raiz(fixture).querySelector<HTMLButtonElement>('fieldset .btn-agregar-contacto');
+      expect(agregar?.textContent?.replace(/\s+/g, ' ').trim()).toContain('Agregar contacto');
+      expect(agregar?.classList).toContain('btn-secundario');
+      expect(agregar?.querySelector('[data-icon="user-add"]')).not.toBeNull();
+      expect(agregar?.disabled).toBe(true);
+      expect(raiz(fixture).querySelectorAll('#contactName').length).toBe(1);
+    });
+
+    it('ctl_ac849da96b:control — «Cancelar» devuelve el formulario a su estado de partida y vuelve al primer paso', () => {
+      const { fixture, customerRepo } = crear();
+      llenarValido(fixture);
+      escribir(fixture, 'contactName', 'Luis Mora');
+
+      boton(fixture, 'btn-cancelar')?.click();
+      fixture.detectChanges();
+
+      expect(pasoActual(fixture)).toBe('1 Identificación');
+      expect(valorDe(fixture, 'idNumber')).toBe('');
+      expect(existe(fixture, 'firstNames')).toBe(false);
+      expect(valorDe(fixture, 'email')).toBe('');
+      expect(valorDe(fixture, 'contactName')).toBe('');
+      expect(raiz(fixture).querySelectorAll('.mensaje-error').length).toBe(0);
+      expect(customerRepo.createCustomer).not.toHaveBeenCalled();
+    });
+
+    it('al guardar con datos que faltan, lleva al primer paso que tiene un error', () => {
+      const { fixture, customerRepo } = crear();
+      tipoDePersona(fixture, 'natural');
+      elegir(fixture, 'idType', 'cedula');
+      escribir(fixture, 'idNumber', '0912345678');
+      escribir(fixture, 'firstNames', 'Ana');
+      escribir(fixture, 'lastNames', 'Pérez');
+
+      guardar(fixture);
+
+      expect(customerRepo.createCustomer).not.toHaveBeenCalled();
+      expect(pasoActual(fixture)).toBe('2 Contacto y ubicación');
+      expect(raiz(fixture).querySelector('#err-email')?.textContent?.trim()).toBe('Correo electrónico es obligatorio.');
+    });
+  });
+
+  // ─── Listas cerradas: value del contrato y etiqueta de la spec ─────────────
+
+  describe('listas cerradas', () => {
+    it('«Tipo de persona»: Persona jurídica → legal, Persona natural → natural', () => {
+      const { fixture } = crear();
+      const radios = Array.from(raiz(fixture).querySelectorAll<HTMLInputElement>('input[type="radio"]')).map(r => [
+        r.value,
+        r.parentElement?.textContent?.trim() ?? ''
+      ]);
+      expect(radios).toEqual([
+        ['legal', 'Persona jurídica'],
+        ['natural', 'Persona natural']
+      ]);
+    });
+
+    it('«Tipo de identificación»: Cédula → cedula, RUC → ruc, Pasaporte → passport', () => {
+      const { fixture } = crear();
+      expect(opcionesDe(fixture, 'idType')).toEqual([
+        ['', ''],
+        ['cedula', 'Cédula'],
+        ['ruc', 'RUC'],
+        ['passport', 'Pasaporte']
+      ]);
+    });
+
+    it('«Ciudad»: las 8 ciudades con su value del contrato', () => {
+      const { fixture } = crear();
+      expect(opcionesDe(fixture, 'city')).toEqual([
+        ['', 'Selecciona…'],
+        ['guayaquil', 'Guayaquil'],
+        ['quito', 'Quito'],
+        ['manta', 'Manta'],
+        ['cuenca', 'Cuenca'],
+        ['duran', 'Durán'],
+        ['ambato', 'Ambato'],
+        ['machala', 'Machala'],
+        ['riobamba', 'Riobamba']
+      ]);
+    });
+
+    it('«Canal de origen»: los 5 canales con su value del contrato', () => {
+      const { fixture } = crear();
+      expect(opcionesDe(fixture, 'sourceChannel')).toEqual([
+        ['', 'Selecciona…'],
+        ['referido_de_cliente', 'Referido de cliente'],
+        ['cartera_propia', 'Cartera propia'],
+        ['campana_digital', 'Campaña digital'],
+        ['alianza_bancaria', 'Alianza bancaria'],
+        ['cuenta_estrategica', 'Cuenta estratégica']
+      ]);
     });
   });
 
@@ -209,6 +423,7 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
       guardar(fixture);
 
       expect(customerRepo.createCustomer).not.toHaveBeenCalled();
+      expect(pasoActual(fixture)).toBe('1 Identificación');
       expect(errorDe(fixture, 'personType')).toBe('Tipo de persona es obligatorio.');
       expect(errorDe(fixture, 'idType')).toBe('Tipo de identificación es obligatorio.');
       expect(errorDe(fixture, 'idNumber')).toBe('Número de identificación es obligatorio.');
@@ -219,8 +434,8 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
     it('los opcionales no dicen nada al guardar vacíos', () => {
       const { fixture } = crear();
       guardar(fixture);
-      for (const campo of ['mobilePhone', 'city', 'address', 'accountExecutiveId', 'notes', 'contactName', 'contactTitle', 'contactEmail']) {
-        expect(errorDe(fixture, campo)).toBeNull();
+      for (const id of ['mobilePhone', 'city', 'address', 'accountExecutiveId', 'notes', 'contactName', 'contactTitle', 'contactEmail']) {
+        expect(errorDe(fixture, id)).toBeNull();
       }
     });
 
@@ -288,7 +503,7 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
   });
 
   describe('Correo electrónico', () => {
-    it('fld_b779dfd9c9:custom-1 — un correo no válido dice «Ingresa un correo válido.»', () => {
+    it('fld_b779dfd9c9:custom-1 — un correo no válido dice «Ingresa un correo válido.» y no se envía', () => {
       const { fixture, customerRepo } = crear();
       escribir(fixture, 'email', 'ana@');
       expect(errorDe(fixture, 'email')).toBe('Ingresa un correo válido.');
@@ -297,6 +512,7 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
       escribir(fixture, 'email', 'ana@');
       guardar(fixture);
       expect(customerRepo.createCustomer).not.toHaveBeenCalled();
+      expect(pasoActual(fixture)).toBe('2 Contacto y ubicación');
     });
   });
 
@@ -326,7 +542,7 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
       tipoDePersona(fixture, 'natural');
       expect(existe(fixture, 'legalName')).toBe(false);
       tipoDePersona(fixture, 'legal');
-      expect(raiz(fixture).querySelector<HTMLInputElement>('#legalName')?.value).toBe('');
+      expect(valorDe(fixture, 'legalName')).toBe('');
     });
 
     it('int_b9ba60fca4:regla · fld_beb1e2651d:custom-1 · fld_6c68ba896d:custom-1 — natural muestra y exige «Nombres» y «Apellidos» («Completa el nombre.»); al dejar de cumplirse vuelven a su estado de partida', () => {
@@ -345,7 +561,7 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
       expect(existe(fixture, 'firstNames')).toBe(false);
       expect(existe(fixture, 'lastNames')).toBe(false);
       tipoDePersona(fixture, 'natural');
-      expect(raiz(fixture).querySelector<HTMLInputElement>('#firstNames')?.value).toBe('');
+      expect(valorDe(fixture, 'firstNames')).toBe('');
     });
 
     it('un nombre oculto no se exige ni se envía', () => {
@@ -437,7 +653,7 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
       expect(router.lastSuccessfulNavigation()?.extras.state).toEqual({ aviso: 'Se guardó correctamente.' });
     });
 
-    it('AC-20 — con 400 avisa «Revisa los datos marcados.», marca cada campo con el mensaje del servidor y conserva lo escrito', () => {
+    it('AC-20 — con 400 avisa «Revisa los datos marcados.», lleva al paso del primer campo marcado, conserva lo escrito y el aviso se va al corregir', () => {
       const { fixture, customerRepo } = crear();
       customerRepo.createCustomer.mockReturnValue(
         throwError(() => new InvalidCustomerInputError([
@@ -450,27 +666,47 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
 
       guardar(fixture);
 
+      expect(pasoActual(fixture)).toBe('2 Contacto y ubicación');
       expect(raiz(fixture).querySelector('.aviso-error')?.textContent?.trim()).toBe('Revisa los datos marcados.');
-      expect(errorDe(fixture, 'accountExecutiveId')).toBe('Selecciona un ejecutivo válido.');
       expect(errorDe(fixture, 'city')).toBe('El valor de Ciudad no es válido.');
-      expect(raiz(fixture).querySelector<HTMLInputElement>('#idNumber')?.value).toBe('0912345678');
-      expect(raiz(fixture).querySelector<HTMLInputElement>('#firstNames')?.value).toBe('Ana María');
+      expect(errorDe(fixture, 'accountExecutiveId')).toBe('Selecciona un ejecutivo válido.');
+      expect(valorDe(fixture, 'idNumber')).toBe('0912345678');
+      expect(valorDe(fixture, 'firstNames')).toBe('Ana María');
       expect(texto(fixture)).not.toContain('no se pinta');
 
-      // Al corregir el campo, el mensaje del servidor se va.
+      // Corregir un campo quita su mensaje; el aviso sigue mientras quede otro marcado.
       elegir(fixture, 'city', 'quito');
       expect(errorDe(fixture, 'city')).toBeNull();
+      expect(raiz(fixture).querySelector('.aviso-error')).not.toBeNull();
+
+      elegir(fixture, 'accountExecutiveId', '665f1c2a9b1e8a0000000001');
+      expect(errorDe(fixture, 'accountExecutiveId')).toBeNull();
+      expect(raiz(fixture).querySelector('.aviso-error')).toBeNull();
     });
 
-    it('AC-21 — con 401 dice «Tu sesión terminó: vuelve a entrar.»', () => {
+    it('con 400 sin details por campo, el aviso se va con la primera corrección', () => {
+      const { fixture, customerRepo } = crear();
+      customerRepo.createCustomer.mockReturnValue(throwError(() => new InvalidCustomerInputError([])));
+      llenarValido(fixture);
+
+      guardar(fixture);
+      expect(raiz(fixture).querySelector('.aviso-error')?.textContent?.trim()).toBe('Revisa los datos marcados.');
+
+      escribir(fixture, 'notes', 'x');
+      expect(raiz(fixture).querySelector('.aviso-error')).toBeNull();
+    });
+
+    it('AC-21 — con 401 al guardar dice «Tu sesión terminó: vuelve a entrar.» con el enlace al inicio de sesión', () => {
       const { fixture, customerRepo } = crear();
       customerRepo.createCustomer.mockReturnValue(throwError(() => new CustomerUnauthorizedError()));
       llenarValido(fixture);
 
       guardar(fixture);
 
-      expect(raiz(fixture).querySelector('.estado-sin-sesion')?.textContent?.trim()).toBe(
-        'Tu sesión terminó: vuelve a entrar.'
+      const aviso = raiz(fixture).querySelector('.estado-sin-sesion');
+      expect(aviso?.textContent?.trim()).toBe('Tu sesión terminó: vuelve a entrar.');
+      expect(aviso?.querySelector('a.enlace-entrar')?.getAttribute('href')).toBe(
+        `${environment.identityProviderUrl}?returnUrl=%2Fnuevo-prospecto`
       );
     });
 
@@ -483,23 +719,25 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
 
       guardar(fixture);
 
-      expect(errorDe(fixture, 'idNumber')).toBe('Ya existe un cliente con esta identificación.');
+      expect(pasoActual(fixture)).toBe('1 Identificación');
+      expect(raiz(fixture).querySelector('#err-idNumber')?.textContent?.trim()).toBe(
+        'Ya existe un cliente con esta identificación.'
+      );
       expect(raiz(fixture).querySelector('.aviso-error')?.textContent?.trim()).toBe(
         'Ya existe un cliente con esta identificación.'
       );
       expect(executiveRepo.listExecutives).toHaveBeenCalledTimes(2);
-      expect(raiz(fixture).querySelector<HTMLInputElement>('#idNumber')?.value).toBe('0912345678');
-      expect(raiz(fixture).querySelector<HTMLInputElement>('#email')?.value).toBe('ana@example.com');
-      expect(raiz(fixture).querySelector<HTMLSelectElement>('#accountExecutiveId')?.value).toBe(
-        '665f1c2a9b1e8a0000000001'
-      );
+      expect(valorDe(fixture, 'idNumber')).toBe('0912345678');
+      expect(valorDe(fixture, 'email')).toBe('ana@example.com');
+      expect(valorDe(fixture, 'accountExecutiveId')).toBe('665f1c2a9b1e8a0000000001');
 
-      // Al cambiar el número, el mensaje del servidor se va (lo vuelve a decidir el servidor).
+      // Al cambiar el número se van el mensaje y el aviso (lo vuelve a decidir el servidor).
       escribir(fixture, 'idNumber', '0912345679');
       expect(errorDe(fixture, 'idNumber')).toBeNull();
+      expect(raiz(fixture).querySelector('.aviso-error')).toBeNull();
     });
 
-    it('con un error no previsto (500) avisa «No se pudo cargar. Vuelve a intentarlo.» y conserva lo escrito', () => {
+    it('con un error no previsto (500) no inventa un aviso: conserva lo escrito y deja volver a guardar', () => {
       const { fixture, customerRepo } = crear();
       customerRepo.createCustomer.mockReturnValue(
         throwError(() => new CustomerInfrastructureError(500, '/api/customers'))
@@ -508,10 +746,10 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
 
       guardar(fixture);
 
-      expect(raiz(fixture).querySelector('.aviso-error')?.textContent?.trim()).toBe(
-        'No se pudo cargar. Vuelve a intentarlo.'
-      );
-      expect(raiz(fixture).querySelector<HTMLInputElement>('#idNumber')?.value).toBe('0912345678');
+      expect(raiz(fixture).querySelector('.aviso')).toBeNull();
+      expect(texto(fixture)).not.toContain('No se pudo cargar');
+      expect(boton(fixture, 'btn-guardar')?.disabled).toBe(false);
+      expect(valorDe(fixture, 'idNumber')).toBe('0912345678');
     });
 
     it('mientras se guarda, «Guardar cliente» está desactivado y un segundo clic no envía otra vez', () => {
@@ -521,14 +759,13 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
       llenarValido(fixture);
 
       guardar(fixture);
-      const boton = raiz(fixture).querySelector<HTMLButtonElement>('.btn-guardar');
-      expect(boton?.disabled).toBe(true);
+      expect(boton(fixture, 'btn-guardar')?.disabled).toBe(true);
       fixture.componentInstance.guardar();
       expect(customerRepo.createCustomer).toHaveBeenCalledTimes(1);
 
       enVuelo.error(new CustomerInfrastructureError(500, '/api/customers'));
       fixture.detectChanges();
-      expect(boton?.disabled).toBe(false);
+      expect(boton(fixture, 'btn-guardar')?.disabled).toBe(false);
     });
   });
 
@@ -553,18 +790,25 @@ describe('CustomerNewComponent (/nuevo-prospecto)', () => {
 
   it('enseña el título, los cuatro pasos y las etiquetas de la spec', () => {
     const { fixture } = crear();
-    const t = texto(fixture);
     expect(raiz(fixture).querySelector('h1')?.textContent?.trim()).toBe('Nuevo cliente');
-    for (const paso of ['Identificación', 'Contacto y ubicación', 'Información comercial', 'Contactos']) {
-      expect(t).toContain(paso);
+    const pasos = Array.from(raiz(fixture).querySelectorAll('ol.pasos li')).map(li =>
+      li.textContent?.replace(/\s+/g, ' ').trim()
+    );
+    expect(pasos).toEqual(['1 Identificación', '2 Contacto y ubicación', '3 Información comercial', '4 Contactos']);
+
+    const etiquetas: string[] = [];
+    for (const paso of [0, 1, 2, 3]) {
+      irAlPaso(fixture, paso);
+      etiquetas.push(...Array.from(raiz(fixture).querySelectorAll('fieldset label[for], fieldset .etiqueta')).map(
+        l => l.textContent?.trim() ?? ''
+      ));
     }
-    for (const etiqueta of [
-      'Tipo de persona', 'Persona jurídica', 'Persona natural', 'Tipo de identificación',
-      'Número de identificación', 'Correo electrónico', 'Teléfono celular', 'Ciudad', 'Dirección',
-      'Canal de origen', 'Ejecutivo asignado', 'Observaciones', 'Nombre', 'Cargo', 'Correo'
-    ]) {
-      expect(t).toContain(etiqueta);
-    }
-    expect(raiz(fixture).querySelector<HTMLInputElement>('#mobilePhone')?.placeholder).toBe('+593 9…');
+    expect(etiquetas).toEqual([
+      'Tipo de persona', 'Tipo de identificación', 'Número de identificación',
+      'Correo electrónico', 'Teléfono celular', 'Ciudad', 'Dirección',
+      'Canal de origen', 'Ejecutivo asignado', 'Observaciones',
+      'Nombre', 'Cargo', 'Correo'
+    ]);
+    expect(campo<HTMLInputElement>(fixture, 'mobilePhone').placeholder).toBe('+593 9…');
   });
 });
