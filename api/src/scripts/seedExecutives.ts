@@ -3,17 +3,18 @@
  * Lee la lista del equipo versionada en api/data/executives.json (o el fichero que se le pase:
  * `npm run seed:executives -- <fichero.json>`), crea con active = true los que falten y no toca a
  * los que ya existen. Antes crea la colección y sus índices, y al final lista lo que la base tiene
- * de executives (es el migration log). Falla CERRADA: si tras sincronizar no están los índices de
- * §3 (p. ej. name_1 único, que no se puede crear si hay nombres repetidos sin distinguir
- * mayúsculas), sale con 1 sin sembrar. No escribe nombres en la salida ni en los errores
- * (constitución: ni los datos personales ni los tokens en los logs): solo cuentas e índices.
+ * de executives (es el migration log). Falla CERRADA (RN-03 de la v6): si los datos previos repiten
+ * un nombre sin distinguir mayúsculas, tildes ni la ñ, sale con 1 sin sembrar y sin intentar crear
+ * el índice único; y si tras sincronizar no están los índices de §3, también. No escribe nombres en
+ * la salida ni en los errores (constitución: ni los datos personales ni los tokens en los logs):
+ * solo cuentas e índices.
  */
 import fs from 'fs';
 import path from 'path';
 import mongoose from 'mongoose';
 import { connectDB } from '../config/connectDB';
 import { describeErrorSafely } from '../lib/safeErrorLog';
-import { ExecutiveModel, EXECUTIVE_COLLATION } from '../models/executive';
+import { ExecutiveModel, EXECUTIVE_COLLATION, EXECUTIVE_NAME_COLLATION } from '../models/executive';
 import { ExecutiveService, SeedExecutivesResult } from '../services/ExecutiveService';
 import { parseExecutiveSeed } from '../validators/executive.validator';
 import { ValidationError } from '../lib/errors';
@@ -32,16 +33,22 @@ interface RequiredIndex {
   name: string;
   key: Record<string, number>;
   unique: boolean;
+  collation: { locale: string; strength: number };
 }
 
-/** Los índices de §3 que la siembra tiene que dejar, los dos con la intercalación es (strength 2). */
+/**
+ * Los índices de §3 que la siembra tiene que dejar: {name} único con la intercalación de la
+ * unicidad (sin mayúsculas, tildes ni la ñ) y {active, name} con la intercalación es del orden.
+ */
 const REQUIRED_INDEXES: RequiredIndex[] = [
-  { name: 'name_1', key: { name: 1 }, unique: true },
-  { name: 'active_1_name_1', key: { active: 1, name: 1 }, unique: false },
+  { name: 'name_1', key: { name: 1 }, unique: true, collation: EXECUTIVE_NAME_COLLATION },
+  { name: 'active_1_name_1', key: { active: 1, name: 1 }, unique: false, collation: EXECUTIVE_COLLATION },
 ];
 
+const SAME_NAME = 'el mismo nombre sin distinguir mayúsculas, tildes ni la ñ';
+
 const DUPLICATE_NAMES_HINT =
-  'Puede haber ejecutivos con el mismo nombre sin distinguir mayúsculas: deja uno solo en la colección ' +
+  `Puede haber ejecutivos con ${SAME_NAME}: deja uno solo en la colección ` +
   'executives y vuelve a ejecutar npm run seed:executives.';
 
 function hasIndex(indexes: Array<Record<string, unknown>>, required: RequiredIndex): boolean {
@@ -51,21 +58,34 @@ function hasIndex(indexes: Array<Record<string, unknown>>, required: RequiredInd
       idx['name'] === required.name &&
       JSON.stringify(idx['key']) === JSON.stringify(required.key) &&
       Boolean(idx['unique']) === required.unique &&
-      collation?.locale === EXECUTIVE_COLLATION.locale &&
-      collation?.strength === EXECUTIVE_COLLATION.strength
+      collation?.locale === required.collation.locale &&
+      collation?.strength === required.collation.strength
     );
   });
 }
 
 /**
- * Crea la colección y sus índices, y comprueba que quedaron. Mongoose crea los índices también
- * por su cuenta (autoIndex) al compilar el modelo, y con datos que los incumplen esa creación y
- * syncIndexes() pueden fallar sin avisar: por eso no se fía de que no lancen y los lista.
+ * Crea la colección y sus índices, y comprueba que quedaron (RN-03, v6). Es lo único que crea los
+ * índices de executives: el esquema no tiene autoIndex, ni en la siembra ni al arrancar la API.
+ * 1. Antes de tocar ningún índice cuenta en la base los nombres repetidos con la equivalencia del
+ *    índice único: si hay alguno, sale sin sembrar y sin intentar crear el índice (su fallo
+ *    citaría el nombre repetido en el log de la propia base). Solo se dice cuántos, nunca cuáles.
+ * 2. Sincroniza los índices: una base de la v4 (name_1 con la intercalación es) cambia de índice.
+ * 3. Los lista y comprueba, con su intercalación: no se fía de que syncIndexes() lance si no pudo
+ *    (un repetido que entró después de comprobar, o un índice de la v4 que no se sustituyó).
  */
-async function ensureExecutiveSchema(): Promise<void> {
+async function ensureExecutiveSchema(service: ExecutiveService): Promise<void> {
   await ExecutiveModel.createCollection();
-  // El autoIndex de Mongoose puede estar creando los mismos índices: se espera a que acabe; si falló, lo dice la comprobación
-  await ExecutiveModel.init().catch(() => undefined);
+
+  const repeated = await service.countDuplicateNames();
+  if (repeated > 0) {
+    throw new SeedExecutivesError(
+      `Hay ejecutivos con ${SAME_NAME}: ${repeated} ${repeated > 1 ? 'nombres se repiten' : 'nombre se repite'} ` +
+        'en la colección executives. No se ha sembrado nada ni se ha tocado el esquema. Deja uno solo de ' +
+        'cada nombre y vuelve a ejecutar npm run seed:executives.'
+    );
+  }
+
   let syncFailedWithDuplicate = false;
   try {
     await ExecutiveModel.syncIndexes();
@@ -80,7 +100,7 @@ async function ensureExecutiveSchema(): Promise<void> {
   if (missing.length > 0) {
     throw new SeedExecutivesError(
       `No se pudo dejar el esquema de executives: falta${missing.length > 1 ? 'n' : ''} el índice ` +
-        `${missing.join(', ')} (con la intercalación es). No se ha sembrado nada. ${DUPLICATE_NAMES_HINT}`
+        `${missing.join(', ')} (con su intercalación). No se ha sembrado nada. ${DUPLICATE_NAMES_HINT}`
     );
   }
 }
@@ -105,8 +125,8 @@ export async function runSeedExecutives(
   log: SeedLogger = console.log,
   service: ExecutiveService = new ExecutiveService()
 ): Promise<SeedExecutivesResult> {
-  // Esquema: crea la colección executives y sus índices declarados en el modelo, y los comprueba
-  await ensureExecutiveSchema();
+  // Esquema: sin repetidos previos, crea la colección executives y sus índices declarados en el modelo, y los comprueba
+  await ensureExecutiveSchema(service);
 
   const result = await service.seedMissing(names);
 

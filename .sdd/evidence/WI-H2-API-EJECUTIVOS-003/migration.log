@@ -1,0 +1,150 @@
+# Escenario 1 · base vacía: AC-03 (dos siembras, baja de Paola Cedeño, tercera siembra y «daniela rios»)
+
+$ npm run seed:executives
+
+> greenfield-api@1.0.0 seed:executives
+> tsc && node dist/scripts/seedExecutives.js
+
+=== seed:executives ===
+Colección 'executives': existe
+Índices en 'executives':
+  - _id_: {"_id":1}
+  - name_1: {"name":1} [UNIQUE] [collation en strength 1]
+  - active_1_name_1: {"active":1,"name":1} [collation es strength 2]
+Nombres en la lista: 5
+Creados: 5 · Ya existían (sin tocar): 0
+Ejecutivos en la colección: 5 · Ejecutivos activos: 5
+(código de salida: 0)
+
+$ npm run seed:executives
+
+> greenfield-api@1.0.0 seed:executives
+> tsc && node dist/scripts/seedExecutives.js
+
+=== seed:executives ===
+Colección 'executives': existe
+Índices en 'executives':
+  - _id_: {"_id":1}
+  - name_1: {"name":1} [UNIQUE] [collation en strength 1]
+  - active_1_name_1: {"active":1,"name":1} [collation es strength 2]
+Nombres en la lista: 5
+Creados: 0 · Ya existían (sin tocar): 5
+Ejecutivos en la colección: 5 · Ejecutivos activos: 5
+(código de salida: 0)
+
+$ node -e <updateOne({name: «Paola Cedeño»}, {$set: {active: false}}) en la base>
+Baja de Paola Cedeño: matched 1 modified 1
+(código de salida: 0)
+
+$ npm run seed:executives
+
+> greenfield-api@1.0.0 seed:executives
+> tsc && node dist/scripts/seedExecutives.js
+
+=== seed:executives ===
+Colección 'executives': existe
+Índices en 'executives':
+  - _id_: {"_id":1}
+  - name_1: {"name":1} [UNIQUE] [collation en strength 1]
+  - active_1_name_1: {"active":1,"name":1} [collation es strength 2]
+Nombres en la lista: 5
+Creados: 0 · Ya existían (sin tocar): 5
+Ejecutivos en la colección: 5 · Ejecutivos activos: 4
+(código de salida: 0)
+
+$ npm run seed:executives -- ../.sdd-local/daniela-sin-tilde.json
+
+> greenfield-api@1.0.0 seed:executives
+> tsc && node dist/scripts/seedExecutives.js ../.sdd-local/daniela-sin-tilde.json
+
+=== seed:executives ===
+Colección 'executives': existe
+Índices en 'executives':
+  - _id_: {"_id":1}
+  - name_1: {"name":1} [UNIQUE] [collation en strength 1]
+  - active_1_name_1: {"active":1,"name":1} [collation es strength 2]
+Nombres en la lista: 1
+Creados: 0 · Ya existían (sin tocar): 1
+Ejecutivos en la colección: 5 · Ejecutivos activos: 4
+(código de salida: 0)
+
+$ node -e <listar los índices y contar los ejecutivos de executives>
+Índice: _id_ {"_id":1}  
+Índice: name_1 {"name":1} [UNIQUE] [collation en strength 1]
+Índice: active_1_name_1 {"active":1,"name":1}  [collation es strength 2]
+Ejecutivos en la colección: 5 · activos: 4
+(código de salida: 0)
+
+$ node -e <los activos de executives, en el orden de GET /api/executives (intercalación es)>
+{"name":"Andrés Villacís"}
+{"name":"Daniela Ríos"}
+{"name":"Karla Mendoza"}
+{"name":"Mauricio León"}
+(código de salida: 0)
+
+# Escenario 2 · base de la v4: el equipo ya sembrado con name_1 en la intercalación es (distinguía tildes y ñ); la siembra cambia el índice
+
+$ node -e <crear name_1 y active_1_name_1 como en la v4 (es, strength 2) e insertar data/executives.json>
+Insertados: 5
+(código de salida: 0)
+
+$ node -e <listar los índices y contar los ejecutivos de executives>
+Índice: _id_ {"_id":1}  
+Índice: name_1 {"name":1} [UNIQUE] [collation es strength 2]
+Índice: active_1_name_1 {"active":1,"name":1}  [collation es strength 2]
+Ejecutivos en la colección: 5 · activos: 5
+(código de salida: 0)
+
+$ npm run seed:executives
+
+> greenfield-api@1.0.0 seed:executives
+> tsc && node dist/scripts/seedExecutives.js
+
+=== seed:executives ===
+Colección 'executives': existe
+Índices en 'executives':
+  - _id_: {"_id":1}
+  - active_1_name_1: {"active":1,"name":1} [collation es strength 2]
+  - name_1: {"name":1} [UNIQUE] [collation en strength 1]
+Nombres en la lista: 5
+Creados: 0 · Ya existían (sin tocar): 5
+Ejecutivos en la colección: 5 · Ejecutivos activos: 5
+(código de salida: 0)
+
+# Escenario 3 · RN-03: datos previos «Nana Torres» y «Ñaña Torres», sin índices: la siembra sale con error, sin sembrar ni escribir el nombre
+
+$ node -e const m=require('mongoose');m.connect(process.env.MONGODB_URI).then(()=>m.connection.db.collection('executives').insertMany([{name:'Nana Torres',active:true},{name:'Ñaña Torres',active:true}])).then(r=>{console.log('Insertados:',r.insertedCount);return m.disconnect()})
+Insertados: 2
+(código de salida: 0)
+
+$ npm run seed:executives
+
+> greenfield-api@1.0.0 seed:executives
+> tsc && node dist/scripts/seedExecutives.js
+
+Error en seed:executives: Hay ejecutivos con el mismo nombre sin distinguir mayúsculas, tildes ni la ñ: 1 nombre se repite en la colección executives. No se ha sembrado nada ni se ha tocado el esquema. Deja uno solo de cada nombre y vuelve a ejecutar npm run seed:executives.
+(código de salida: 1)
+
+$ node -e <listar los índices y contar los ejecutivos de executives>
+Índice: _id_ {"_id":1}  
+Ejecutivos en la colección: 2 · activos: 2
+(código de salida: 0)
+
+$ node -e <contar en el log de la propia MongoDB (getLog global) las líneas que citan el nombre repetido y los intentos de crear name_1, con el escenario 1 de control>
+Líneas del log de la base (getLog global): 294 · que citan el apellido repetido: 0 · intentos de crear name_1 en executives: 0 · control, las mismas líneas de name_1 en la base del escenario 1: 4
+(código de salida: 0)
+
+# Escenario 4 · M1: arrancar la API compilada (node dist/server.js, autoIndex por defecto) sobre la misma base del escenario 3, dos veces
+
+$ node dist/server.js   (MONGODB_URI de la base del escenario 3, PORT=0, JWT_SECRET aleatorio; se detiene a los 5 s)
+{"event":"server_started","port":0}
+(detenido con SIGTERM; código de salida: null)
+
+$ node dist/server.js   (MONGODB_URI de la base del escenario 3, PORT=0, JWT_SECRET aleatorio; se detiene a los 5 s)
+{"event":"server_started","port":0}
+(detenido con SIGTERM; código de salida: null)
+
+$ node -e <contar en el log de MongoDB las líneas con el nombre, con E11000 o dup key, y los intentos de crear name_1; listar los índices>
+Líneas del log de la base (getLog global): 374 · que citan el apellido repetido: 0 · con E11000 o dup key: 0 · intentos de crear name_1 en executives: 0
+Índices: _id_ · ejecutivos: 2
+(código de salida: 0)

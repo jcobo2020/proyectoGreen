@@ -1,6 +1,7 @@
 /**
- * Tests de contrato — GET /api/executives (WI-H2-API-EJECUTIVOS-001)
- * AC-01 (RN-01, RN-02), AC-02 (RN-AUTH) y las restricciones R4-SEG-*, R4-REND-1, R4-OBS-1.
+ * Tests de contrato — GET /api/executives (WI-H2-API-EJECUTIVOS-001, evolución a la v6 en WI-H2-API-EJECUTIVOS-003)
+ * AC-01 (RN-01, RN-02), AC-02 (RN-AUTH), el 404 y el 500 que declara la v6, y las restricciones
+ * R4-SEG-*, R4-REND-1, R4-OBS-1.
  * AC-03 (RN-03, la siembra) está en seedExecutives.spec.ts.
  */
 import request from 'supertest';
@@ -13,6 +14,7 @@ import { createApp } from '../app';
 import { ExecutiveModel, EXECUTIVE_COLLATION } from '../models/executive';
 import { ExecutiveService } from '../services/ExecutiveService';
 import { ExecutiveController } from '../controllers/ExecutiveController';
+import { swaggerSpec } from '../config/swagger';
 
 let app: Application;
 let replSet: MongoMemoryReplSet;
@@ -121,6 +123,19 @@ describe('GET /api/executives — AC-01: ejecutivos activos como opciones', () =
       'Óscar Paz',
       'Zoe Vera',
     ]);
+  });
+
+  it('RN-01 · la ñ decide: «Nora Sol» va antes que «Ñandú Paz» (con la intercalación es; con la raíz de Unicode sería al revés)', async () => {
+    // Con es la ñ es una letra propia tras la n: «Nora» < «Ñandú». Con en (la de la unicidad), la ñ es
+    // una n con tilde y «Ñandú» (n-a) iría antes que «Nora» (n-o): este par distingue las dos intercalaciones
+    await ExecutiveModel.create([{ name: 'Ñandú Paz' }, { name: 'Nora Sol' }]);
+
+    const res = await request(app)
+      .get('/api/executives')
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(res.status).toBe(200);
+    expect((res.body as Array<{ label: string }>).map((o) => o.label)).toEqual(['Nora Sol', 'Ñandú Paz']);
   });
 
   it('RN-01 · el equipo del prototipo sale en orden alfabético español', async () => {
@@ -297,12 +312,13 @@ describe('GET /api/executives — R4-REND-1: consulta por el índice {active, na
     // Insertados fuera de orden; con active_1_name_1 oculto el planificador no puede devolverlos
     // en el orden del índice: sin .sort() saldrían en el de inserción, y sin la intercalación, en binario
     await ExecutiveModel.syncIndexes();
-    await ExecutiveModel.create(['Zoe Vera', 'andrés Gil', 'Óscar Paz', 'Álvaro Díaz', 'Ñusta Rey', 'Nora Sol'].map((name) => ({ name })));
+    await ExecutiveModel.create(['Zoe Vera', 'Ñandú Paz', 'andrés Gil', 'Óscar Paz', 'Álvaro Díaz', 'Nora Sol'].map((name) => ({ name })));
     const db = mongoose.connection.db!;
     await db.command({ collMod: 'executives', index: { name: 'active_1_name_1', hidden: true } });
     try {
       const options = await new ExecutiveService().listActive();
-      expect(options.map((o) => o.label)).toEqual(['Álvaro Díaz', 'andrés Gil', 'Nora Sol', 'Ñusta Rey', 'Óscar Paz', 'Zoe Vera']);
+      // «Nora Sol» antes que «Ñandú Paz»: con la intercalación en de la unicidad saldría al revés
+      expect(options.map((o) => o.label)).toEqual(['Álvaro Díaz', 'andrés Gil', 'Nora Sol', 'Ñandú Paz', 'Óscar Paz', 'Zoe Vera']);
     } finally {
       await db.command({ collMod: 'executives', index: { name: 'active_1_name_1', hidden: false } });
     }
@@ -381,5 +397,31 @@ describe('GET /api/executives — R4-SEG-3: un fallo inesperado pasa por el erro
     } finally {
       errorSpy.mockRestore();
     }
+  });
+});
+
+describe('/api/executives — Swagger veraz con la v6 del contrato', () => {
+  type Operation = { responses: Record<string, { content?: { 'application/json'?: { schema?: { $ref?: string } } } }> };
+  const spec = swaggerSpec as {
+    paths: Record<string, Record<string, Operation>>;
+    components: { schemas: Record<string, { properties?: Record<string, { enum?: string[] }>; required?: string[] }> };
+  };
+
+  it('GET documenta 200, 401, 404 y 500, los cuatro del contrato, y ningún otro método', () => {
+    expect(Object.keys(spec.paths['/api/executives']).sort()).toEqual(['get']);
+    expect(Object.keys(spec.paths['/api/executives'].get.responses).sort()).toEqual(['200', '401', '404', '500']);
+  });
+
+  it('cada error documenta su código del catálogo con {code, message, details}', () => {
+    const responses = spec.paths['/api/executives'].get.responses;
+    const codeOf = (status: string): string[] | undefined => {
+      const ref = responses[status].content?.['application/json']?.schema?.$ref ?? '';
+      const schema = spec.components.schemas[ref.replace('#/components/schemas/', '')];
+      expect(schema?.required).toEqual(['code', 'message', 'details']);
+      return schema?.properties?.['code']?.enum;
+    };
+    expect(codeOf('401')).toEqual(['UNAUTHORIZED']);
+    expect(codeOf('404')).toEqual(['NOT_FOUND']);
+    expect(codeOf('500')).toEqual(['INTERNAL_ERROR']);
   });
 });

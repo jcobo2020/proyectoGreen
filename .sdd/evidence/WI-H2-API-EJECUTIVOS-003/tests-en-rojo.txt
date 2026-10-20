@@ -1,0 +1,831 @@
+# R4-PRUEBAS-1 · las pruebas nuevas de la v6, en rojo antes del código (commit de solo pruebas)
+
+## 1. El comando de la plataforma sobre las dos suites (en api/): la de la siembra no compila (falta EXECUTIVE_NAME_COLLATION) y la de Swagger falla
+$ npx jest --runInBand --forceExit --coverage=false src/__tests__/executives.spec.ts src/__tests__/seedExecutives.spec.ts
+FAIL src/__tests__/executives.spec.ts
+  ● Console
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":16,"requestId":"e4a9023d-449f-40f4-b9e5-161475994d29"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"f76e0ec1-b6d0-4d50-a9f8-2842888f4a09"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":4,"requestId":"7c9327f2-0b7c-40ec-baac-60b4869ab25d"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"fa00943c-c342-4bff-ae0f-f91abd35532c"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"97836e66-9d39-4219-b11c-cc5db9775047"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"d88b37f2-e0ab-4e35-8434-c290ac0b0ac3"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"2ed0adf8-b527-46a0-a9a7-8ee80b27eed2"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":401,"duration":0,"requestId":"8d299e50-0e4a-4533-887e-a6881d9f6c60"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":401,"duration":0,"requestId":"bb04884e-23a9-4f5e-9abc-c436d7c2780b"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":401,"duration":0,"requestId":"0104891f-b123-4a57-9799-482484b49d86"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":401,"duration":1,"requestId":"b330a6dc-3fa9-4038-b2aa-d6b40021313a"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":401,"duration":1,"requestId":"b071e2fd-56d2-4571-8700-67a0062eefac"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":401,"duration":0,"requestId":"799fc73f-ee16-41bb-b70c-eecdc3b4e9b9"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/executives","status":401,"duration":0,"requestId":"955107d7-68c8-464c-b8ee-007bdf2ded3a"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"DELETE","path":"/api/executives","status":401,"duration":0,"requestId":"dd8140b0-9108-4355-a040-a70500a29906"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/executives","status":401,"duration":0,"requestId":"55701e04-ed8a-43b0-ba25-ccbe00fc3d87"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives/123","status":401,"duration":0,"requestId":"c5afcf9b-cc65-429c-bafa-fdccd1512e9a"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/executives","status":401,"duration":0,"requestId":"da8ab8ee-2f45-4f7f-8bd1-08b2319acd93"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/executives","status":404,"duration":11,"requestId":"bc4f10d1-f4de-43b5-b793-3c797178d86a"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives/123","status":404,"duration":0,"requestId":"08e8ab4a-854e-4fdc-b3a7-71a05ba15129"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"858a7ca2-6043-40b5-a0b7-66dc82aad7d4"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"4255d5af-3915-4473-8f01-917770121745"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"b1b52c2b-aceb-492f-8d55-1c25a6b01086"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"c6a01b07-ad0f-4cd7-add4-947d3004bba0"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"d209af03-889a-492e-9688-c9f2d0ab478e"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"c9511ce0-5806-4e29-b057-866af2994fa1"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"363006e0-f422-4bd6-ade0-aed575f2f789"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"d804bd5a-0d02-41b6-8dd9-8fcfb3525fe9"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"49a80a26-27db-4ce5-b709-7025689c1cd8"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"392b67d1-9b47-4f9e-803f-8772db2ff52d"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"a5ff96f3-83fd-459c-b01c-eac8f03fb99a"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"93321535-389c-4a32-a06c-20fa774b4be4"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"fe3707a4-d1b0-49b5-bae1-562fedf3ebc9"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"44f65726-4fc9-4693-9ddb-c2c0c17aacc2"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"a2f106f5-5f5e-4e72-b51f-7639014a312e"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"d6e4fe6e-3ca0-40b5-92fb-3200f5e0274b"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"4860d77e-ed90-4c90-b912-c7314eb7e679"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"d0297157-c3a3-4aca-a4c4-1b7773459aad"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"58735fee-9d01-40a1-a1c8-25ad910e9f14"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"59d0e5bc-3288-4fa6-bc04-78dd3db5d636"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"f5c8a112-5f80-42cd-992b-c14d6b79aead"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"6bdb7354-de33-4443-9d61-9e02e52571a1"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"69bca518-15db-4654-a6d9-ee37c4ef434e"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"af264c31-6387-4e17-aeee-e3dc1bfd7200"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"adde4640-fc42-4505-9c47-08350f16f090"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"20670068-0aeb-4652-94d1-bf94cd1dfdf0"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"6519f772-11d8-44d7-b446-ac81a8fa3de4"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"8c62b2c7-5db2-434a-8c1d-59824ac825a6"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"7fc35dd7-47a0-4199-8b9b-dab0fa000b18"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"fa3cfb88-60b9-4160-948a-5ad1f2417bfa"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"adcf1bc1-3c83-4629-93a3-701696df0480"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"f858dac9-c216-42c0-b387-770c99afad87"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"c5ffe992-4c9b-484d-b947-0ffd6670d91e"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"bcbda996-1107-4d92-8d9c-c60e92e8fe6b"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"3d31f818-446b-4880-8e82-80f01eca5523"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"59610205-7e9a-4576-a8f4-56dd258390fd"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"48d9b0fe-ac24-4318-a0f5-57a05c4e8818"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"b9c7ddf4-323c-4bee-8e7b-f132a0206c5c"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"113efb85-ccec-4363-a78c-b751142d3ae9"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"b5b215ab-9d1e-4e27-9ae9-d1d1e8adf5ce"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"metric":"GET /api/executives p95 ms","p95":3.88}
+
+      at Object.<anonymous> (src/__tests__/executives.spec.ts:333:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":500,"duration":0,"requestId":"ce7ad069-db32-4851-9567-526fe61e40b0"}
+
+      at ServerResponse.<anonymous> (src/middlewares/requestLogger.middleware.ts:17:13)
+
+  ● /api/executives — Swagger veraz con la v6 del contrato › GET documenta 200, 401, 404 y 500, los cuatro del contrato, y ningún otro método
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 0
+
+      Array [
+        "200",
+        "401",
+    -   "404",
+        "500",
+      ]
+
+      396 |   it('GET documenta 200, 401, 404 y 500, los cuatro del contrato, y ningún otro método', () => {
+      397 |     expect(Object.keys(spec.paths['/api/executives']).sort()).toEqual(['get']);
+    > 398 |     expect(Object.keys(spec.paths['/api/executives'].get.responses).sort()).toEqual(['200', '401', '404', '500']);
+          |                                                                             ^
+      399 |   });
+      400 |
+      401 |   it('cada error documenta su código del catálogo con {code, message, details}', () => {
+
+      at Object.<anonymous> (src/__tests__/executives.spec.ts:398:77)
+
+  ● /api/executives — Swagger veraz con la v6 del contrato › cada error documenta su código del catálogo con {code, message, details}
+
+    TypeError: Cannot read properties of undefined (reading 'content')
+
+      402 |     const responses = spec.paths['/api/executives'].get.responses;
+      403 |     const codeOf = (status: string): string[] | undefined => {
+    > 404 |       const ref = responses[status].content?.['application/json']?.schema?.$ref ?? '';
+          |                                     ^
+      405 |       const schema = spec.components.schemas[ref.replace('#/components/schemas/', '')];
+      406 |       expect(schema?.required).toEqual(['code', 'message', 'details']);
+      407 |       return schema?.properties?.['code']?.enum;
+
+      at codeOf (src/__tests__/executives.spec.ts:404:37)
+      at Object.<anonymous> (src/__tests__/executives.spec.ts:410:12)
+
+FAIL src/__tests__/seedExecutives.spec.ts
+  ● Test suite failed to run
+
+    src/__tests__/seedExecutives.spec.ts:17:26 - error TS2724: '"../models/executive"' has no exported member named 'EXECUTIVE_NAME_COLLATION'. Did you mean 'EXECUTIVE_COLLATION'?
+
+    17 import { ExecutiveModel, EXECUTIVE_NAME_COLLATION } from '../models/executive';
+                                ~~~~~~~~~~~~~~~~~~~~~~~~
+
+      src/models/executive.ts:16:14
+        16 export const EXECUTIVE_COLLATION = { locale: 'es', strength: 2 } as const;
+                        ~~~~~~~~~~~~~~~~~~~
+        'EXECUTIVE_COLLATION' is declared here.
+
+Test Suites: 2 failed, 2 total
+Tests:       2 failed, 24 passed, 26 total
+Snapshots:   0 total
+Time:        5.275 s, estimated 11 s
+Ran all test suites matching /src\/__tests__\/executives.spec.ts|src\/__tests__\/seedExecutives.spec.ts/i.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
+
+## 2. La suite de la siembra sin el chequeo de tipos de ts-jest (diagnostics: false), para ver qué comportamiento falla prueba a prueba
+$ npx jest -c <jest.config.js con ts-jest diagnostics: false> --runInBand --forceExit src/__tests__/seedExecutives.spec.ts
+FAIL src/__tests__/seedExecutives.spec.ts (7.452 s)
+  Esquema de Executive (§3)
+    ✕ crea la colección executives con {name} único sin distinguir mayúsculas, tildes ni la ñ y {active, name} con intercalación es (323 ms)
+    ✓ active vale true por defecto y name es obligatorio y único (26 ms)
+    ✕ RN-03 · el nombre es único sin distinguir mayúsculas ni tildes: el índice rechaza «daniela rios» y «DANIELA RÍOS» si ya está «Daniela Ríos» (21 ms)
+    ✕ RN-03 · ni la ñ: el índice rechaza «Nana Torres» y «nana torres» si ya está «Ñaña Torres» (21 ms)
+    ✓ RN-03 · la equivalencia no es la de la intercalación es: con es (aun con fuerza 1) la ñ es otra letra (62 ms)
+    ✓ RN-03 · otros nombres distintos siguen siendo distintos (la equivalencia solo quita mayúsculas, tildes y la ñ) (13 ms)
+  normalizeExecutiveName
+    ✓ recorta y colapsa espacios (7 ms)
+  uniqueExecutiveNames — la misma equivalencia que el índice único (RN-03)
+    ✕ «daniela rios», «DANIELA RÍOS» y «Daniela Ríos» son el mismo; se queda la primera forma (3 ms)
+    ✕ «Ñaña Torres», «Nana Torres» y «nana torres» son el mismo (3 ms)
+    ✓ nombres distintos siguen siendo distintos (2 ms)
+  parseExecutiveSeed (validación de la entrada del seed)
+    ✓ acepta una lista de nombres y la devuelve normalizada y sin repetidos (1 ms)
+    ✓ acepta una lista vacía (1 ms)
+    ✓ rechaza lo que no es una lista (2 ms)
+    ✓ rechaza elementos que no son texto o están vacíos, señalando su posición (1 ms)
+  La lista del equipo versionada (§1 y RN-03)
+    ✓ api/data/executives.json trae exactamente los 5 ejecutivos del equipo (2 ms)
+  ExecutiveService.seedMissing — RN-03: crea los que falten y nunca toca a los que existen
+    ✓ crea los que no existen, con active = true, y es idempotente (16 ms)
+    ✓ no reactiva a un ejecutivo dado de baja (23 ms)
+    ✕ no cambia el nombre de uno que ya existe con otras mayúsculas o tildes ni crea otro (19 ms)
+    ✕ con «Ñaña Torres» en la base, «Nana Torres» en la lista no crea otro ni la toca (21 ms)
+    ✕ un repetido con otras mayúsculas, tildes o ñ dentro de la misma lista cuenta una vez y no crea otro (15 ms)
+    ✕ las tildes y la ñ no distinguen: «Daniela Rios» y «Daniela Ríos» son uno, «Nana Torres» y «Ñaña Torres» otro (15 ms)
+    ✕ cada escritura busca el nombre con la intercalación del índice único (14 ms)
+    ✓ no toca a los ejecutivos que no están en la lista (19 ms)
+    ✓ una lista vacía no escribe nada (9 ms)
+  AC-03 · npm run seed:executives dos veces, y otra tras dar de baja a «Paola Cedeño»
+    ✕ deja los 5 del equipo, Paola inactiva y fuera de GET /api/executives, y «daniela rios» no crea otro (76 ms)
+  Script seed:executives
+    ✓ lee y valida el fichero JSON (6 ms)
+    ✓ falla con un mensaje claro si el fichero no es JSON (3 ms)
+    ✕ crea el esquema, siembra y lista lo que la base tiene (74 ms)
+    seedExecutivesCli (npm run seed:executives [-- <fichero.json>])
+      ✓ sin fichero siembra la lista versionada del equipo y sale con 0 sin escribir nombres (18 ms)
+      ✓ con un fichero que no existe sale con 1 y VALIDATION_ERROR, sin conectar (7 ms)
+      ✓ con un fichero inválido sale con 1 sin conectar (2 ms)
+      ✓ con un fichero válido conecta, siembra, desconecta y sale con 0 sin escribir nombres (10 ms)
+      ✕ la siembra conecta sin autoIndex: ningún índice se intenta crear antes de comprobar los repetidos (7 ms)
+      ✓ sin MONGODB_URI la conexión de la siembra falla con un SeedExecutivesError legible (1 ms)
+      ✓ si falla la conexión sale con 1 con el mensaje de la configuración (no es un dato personal) (2 ms)
+  RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la siembra sale con error sin sembrar
+    ✕ con «Nana Torres» y «Ñaña Torres» previos sale con 1, dice qué hacer, no siembra y no escribe ningún nombre (301 ms)
+    ✕ con «Daniela Rios» y «Daniela Ríos» previos (solo difieren en una tilde) también (294 ms)
+    ✕ con «Karla Mendoza» y «karla mendoza» previos (solo difieren en mayúsculas) también (286 ms)
+    ✕ dice cuántos nombres se repiten, sin decir cuáles (286 ms)
+    ✕ una base de la v4 (name_1 con la intercalación es, que distinguía tildes y ñ) y sin repetidos: la siembra sustituye el índice (190 ms)
+    ✓ aunque syncIndexes no avise (la carrera con el autoIndex de Mongoose), comprueba los índices y sale con 1 (39 ms)
+    ✓ si la creación del índice falla por un repetido que entró después de comprobar, no propaga el nombre y sale con 1 (41 ms)
+    ✓ un error inesperado se registra sin su mensaje (puede llevar un nombre) (6 ms)
+
+  ● Esquema de Executive (§3) › crea la colección executives con {name} único sin distinguir mayúsculas, tildes ni la ñ y {active, name} con intercalación es
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 2
+    + Received  + 2
+
+      Object {
+    -   "locale": "en",
+    -   "strength": 1,
+    +   "locale": "es",
+    +   "strength": 2,
+      }
+
+      73 |     const nameIndex = indexes.find((i) => JSON.stringify(i.key) === JSON.stringify({ name: 1 }));
+      74 |     expect(nameIndex?.unique).toBe(true);
+    > 75 |     expect(nameIndex?.collation).toMatchObject({ locale: 'en', strength: 1 });
+         |                                  ^
+      76 |     expect(EXECUTIVE_NAME_COLLATION).toEqual({ locale: 'en', strength: 1 });
+      77 |     const listIndex = indexes.find((i) => JSON.stringify(i.key) === JSON.stringify({ active: 1, name: 1 }));
+      78 |     expect(listIndex).toBeDefined();
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:75:34)
+
+  ● Esquema de Executive (§3) › RN-03 · el nombre es único sin distinguir mayúsculas ni tildes: el índice rechaza «daniela rios» y «DANIELA RÍOS» si ya está «Daniela Ríos»
+
+    expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"_id": "6ad77d99b3d4a5080faa2441", "active": true, "name": "daniela rios"}
+
+      93 |     await ExecutiveModel.create({ name: 'Daniela Ríos' });
+      94 |
+    > 95 |     await expect(ExecutiveModel.create({ name: 'daniela rios' })).rejects.toThrow(/duplicate key/);
+         |           ^
+      96 |     await expect(ExecutiveModel.create({ name: 'DANIELA RÍOS' })).rejects.toThrow(/duplicate key/);
+      97 |     await expect(ExecutiveModel.create({ name: 'Daniela Rios' })).rejects.toThrow(/duplicate key/);
+      98 |     expect(await ExecutiveModel.countDocuments()).toBe(1);
+
+      at expect (node_modules/expect/build/index.js:113:15)
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:95:11)
+
+  ● Esquema de Executive (§3) › RN-03 · ni la ñ: el índice rechaza «Nana Torres» y «nana torres» si ya está «Ñaña Torres»
+
+    expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"_id": "6ad77d99b3d4a5080faa2447", "active": true, "name": "Nana Torres"}
+
+      103 |     await ExecutiveModel.create({ name: 'Ñaña Torres' });
+      104 |
+    > 105 |     await expect(ExecutiveModel.create({ name: 'Nana Torres' })).rejects.toThrow(/duplicate key/);
+          |           ^
+      106 |     await expect(ExecutiveModel.create({ name: 'nana torres' })).rejects.toThrow(/duplicate key/);
+      107 |     await expect(ExecutiveModel.create({ name: 'ÑAÑA TORRES' })).rejects.toThrow(/duplicate key/);
+      108 |     expect(await ExecutiveModel.countDocuments()).toBe(1);
+
+      at expect (node_modules/expect/build/index.js:113:15)
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:105:11)
+
+  ● uniqueExecutiveNames — la misma equivalencia que el índice único (RN-03) › «daniela rios», «DANIELA RÍOS» y «Daniela Ríos» son el mismo; se queda la primera forma
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "Daniela Ríos",
+    +   "daniela rios",
+      ]
+
+      137 | describe('uniqueExecutiveNames — la misma equivalencia que el índice único (RN-03)', () => {
+      138 |   it('«daniela rios», «DANIELA RÍOS» y «Daniela Ríos» son el mismo; se queda la primera forma', () => {
+    > 139 |     expect(uniqueExecutiveNames(['Daniela Ríos', 'daniela rios', 'DANIELA RÍOS'])).toEqual(['Daniela Ríos']);
+          |                                                                                    ^
+      140 |   });
+      141 |
+      142 |   it('«Ñaña Torres», «Nana Torres» y «nana torres» son el mismo', () => {
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:139:84)
+
+  ● uniqueExecutiveNames — la misma equivalencia que el índice único (RN-03) › «Ñaña Torres», «Nana Torres» y «nana torres» son el mismo
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "Ñaña Torres",
+    +   "Nana Torres",
+      ]
+
+      141 |
+      142 |   it('«Ñaña Torres», «Nana Torres» y «nana torres» son el mismo', () => {
+    > 143 |     expect(uniqueExecutiveNames(['Ñaña Torres', 'Nana Torres', 'nana torres'])).toEqual(['Ñaña Torres']);
+          |                                                                                 ^
+      144 |   });
+      145 |
+      146 |   it('nombres distintos siguen siendo distintos', () => {
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:143:81)
+
+  ● ExecutiveService.seedMissing — RN-03: crea los que falten y nunca toca a los que existen › no cambia el nombre de uno que ya existe con otras mayúsculas o tildes ni crea otro
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 2
+
+      Object {
+    -   "created": 0,
+    -   "unchanged": 1,
+    +   "created": 1,
+    +   "unchanged": 0,
+      }
+
+      214 |
+      215 |     const result = await service.seedMissing(['Daniela Ríos']);
+    > 216 |     expect(result).toEqual({ created: 0, unchanged: 1 });
+          |                    ^
+      217 |     expect(await ExecutiveModel.countDocuments()).toBe(1);
+      218 |     expect((await ExecutiveModel.findById(existing._id))?.name).toBe('daniela rios');
+      219 |   });
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:216:20)
+
+  ● ExecutiveService.seedMissing — RN-03: crea los que falten y nunca toca a los que existen › con «Ñaña Torres» en la base, «Nana Torres» en la lista no crea otro ni la toca
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 2
+
+      Object {
+    -   "created": 0,
+    -   "unchanged": 1,
+    +   "created": 1,
+    +   "unchanged": 0,
+      }
+
+      222 |     const existing = await ExecutiveModel.create({ name: 'Ñaña Torres', active: false });
+      223 |
+    > 224 |     expect(await service.seedMissing(['Nana Torres'])).toEqual({ created: 0, unchanged: 1 });
+          |                                                        ^
+      225 |     const after = await ExecutiveModel.findById(existing._id).lean();
+      226 |     expect(after).toMatchObject({ name: 'Ñaña Torres', active: false });
+      227 |     expect(await ExecutiveModel.countDocuments()).toBe(1);
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:224:56)
+
+  ● ExecutiveService.seedMissing — RN-03: crea los que falten y nunca toca a los que existen › un repetido con otras mayúsculas, tildes o ñ dentro de la misma lista cuenta una vez y no crea otro
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+    -   "created": 1,
+    +   "created": 2,
+        "unchanged": 0,
+      }
+
+      234 |     try {
+      235 |       const result = await service.seedMissing(['Daniela Ríos', 'daniela rios', 'DANIELA RÍOS']);
+    > 236 |       expect(result).toEqual({ created: 1, unchanged: 0 });
+          |                      ^
+      237 |       expect(bulkWrite).toHaveBeenCalledTimes(1);
+      238 |       expect(bulkWrite.mock.calls[0][0]).toHaveLength(1);
+      239 |     } finally {
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:236:22)
+
+  ● ExecutiveService.seedMissing — RN-03: crea los que falten y nunca toca a los que existen › las tildes y la ñ no distinguen: «Daniela Rios» y «Daniela Ríos» son uno, «Nana Torres» y «Ñaña Torres» otro
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+    -   "created": 2,
+    +   "created": 4,
+        "unchanged": 0,
+      }
+
+      245 |
+      246 |   it('las tildes y la ñ no distinguen: «Daniela Rios» y «Daniela Ríos» son uno, «Nana Torres» y «Ñaña Torres» otro', async () => {
+    > 247 |     expect(await service.seedMissing(['Daniela Ríos', 'Daniela Rios', 'Ñaña Torres', 'Nana Torres'])).toEqual({
+          |                                                                                                       ^
+      248 |       created: 2,
+      249 |       unchanged: 0,
+      250 |     });
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:247:103)
+
+  ● ExecutiveService.seedMissing — RN-03: crea los que falten y nunca toca a los que existen › cada escritura busca el nombre con la intercalación del índice único
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: undefined
+    Received: {"locale": "es", "strength": 2}
+
+      257 |       await service.seedMissing(['Ana López']);
+      258 |       const ops = bulkWrite.mock.calls[0][0] as Array<{ updateOne: { collation: unknown } }>;
+    > 259 |       expect(ops[0].updateOne.collation).toEqual(EXECUTIVE_NAME_COLLATION);
+          |                                          ^
+      260 |     } finally {
+      261 |       bulkWrite.mockRestore();
+      262 |     }
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:259:42)
+
+  ● AC-03 · npm run seed:executives dos veces, y otra tras dar de baja a «Paola Cedeño» › deja los 5 del equipo, Paola inactiva y fuera de GET /api/executives, y «daniela rios» no crea otro
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 2
+    + Received  + 2
+
+    @@ -1,9 +1,9 @@
+      Object {
+        "collation": Object {
+    -     "locale": "en",
+    -     "strength": 1,
+    +     "locale": "es",
+    +     "strength": 2,
+        },
+        "key": Object {
+          "name": 1,
+        },
+        "unique": true,
+
+      42 |   const indexes = await ExecutiveModel.collection.listIndexes().toArray();
+      43 |   const byName = new Map(indexes.map((i) => [i.name as string, i]));
+    > 44 |   expect(byName.get('name_1')).toMatchObject({ key: { name: 1 }, unique: true, collation: { locale: 'en', strength: 1 } });
+         |                                ^
+      45 |   expect(byName.get('active_1_name_1')).toMatchObject({
+      46 |     key: { active: 1, name: 1 },
+      47 |     collation: { locale: 'es', strength: 2 },
+
+      at expectExecutiveSchema (src/__tests__/seedExecutives.spec.ts:44:32)
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:293:5)
+
+  ● Script seed:executives › crea el esquema, siembra y lista lo que la base tiene
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "name_1: {\"name\":1} [UNIQUE] [collation en strength 1]"
+    Received string:    "=== seed:executives ===
+    Colección 'executives': existe
+    Índices en 'executives':
+      - _id_: {\"_id\":1}
+      - name_1: {\"name\":1} [UNIQUE] [collation es strength 2]
+      - active_1_name_1: {\"active\":1,\"name\":1} [collation es strength 2]
+    Nombres en la lista: 2
+    Creados: 2 · Ya existían (sin tocar): 0
+    Ejecutivos en la colección: 2 · Ejecutivos activos: 2"
+
+      352 |     expect(output).toContain('name_1');
+      353 |     expect(output).toContain('[UNIQUE]');
+    > 354 |     expect(output).toContain('name_1: {"name":1} [UNIQUE] [collation en strength 1]');
+          |                    ^
+      355 |     expect(output).toContain('active_1_name_1: {"active":1,"name":1} [collation es strength 2]');
+      356 |     expect(output).toContain('Creados: 2 · Ya existían (sin tocar): 0');
+      357 |     expect(output).toContain('Ejecutivos activos: 2');
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:354:20)
+
+  ● Script seed:executives › seedExecutivesCli (npm run seed:executives [-- <fichero.json>]) › la siembra conecta sin autoIndex: ningún índice se intenta crear antes de comprobar los repetidos
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "mongodb://127.0.0.1:1/seed-sin-autoindex", {"autoIndex": false}
+    Received: "mongodb://127.0.0.1:1/seed-sin-autoindex"
+
+    Number of calls: 1
+
+      410 |     try {
+      411 |       await connectForSeed();
+    > 412 |       expect(connect).toHaveBeenCalledWith('mongodb://127.0.0.1:1/seed-sin-autoindex', { autoIndex: false });
+          |                       ^
+      413 |     } finally {
+      414 |       connect.mockRestore();
+      415 |       if (previous === undefined) delete process.env['MONGODB_URI'];
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:412:23)
+
+  ● RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la siembra sale con error sin sembrar › con «Nana Torres» y «Ñaña Torres» previos sale con 1, dice qué hacer, no siembra y no escribe ningún nombre
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+      473 |     try {
+      474 |       const c = capture();
+    > 475 |       expect(await seedExecutivesCli([], c.deps)).toBe(1);
+          |                                                   ^
+      476 |
+      477 |       const stderr = c.err.join('\n');
+      478 |       expect(stderr).toContain('npm run seed:executives');
+
+      at expectFailsWithoutSeedingNorNames (src/__tests__/seedExecutives.spec.ts:475:51)
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:508:5)
+
+  ● RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la siembra sale con error sin sembrar › con «Daniela Rios» y «Daniela Ríos» previos (solo difieren en una tilde) también
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+      473 |     try {
+      474 |       const c = capture();
+    > 475 |       expect(await seedExecutivesCli([], c.deps)).toBe(1);
+          |                                                   ^
+      476 |
+      477 |       const stderr = c.err.join('\n');
+      478 |       expect(stderr).toContain('npm run seed:executives');
+
+      at expectFailsWithoutSeedingNorNames (src/__tests__/seedExecutives.spec.ts:475:51)
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:514:5)
+
+  ● RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la siembra sale con error sin sembrar › con «Karla Mendoza» y «karla mendoza» previos (solo difieren en mayúsculas) también
+
+    expect(received).toMatch(expected)
+
+    Expected pattern: /mismo nombre sin distinguir mayúsculas, tildes ni la ñ/
+    Received string:  "Error en seed:executives: No se pudo dejar el esquema de executives: falta el índice name_1 (con la intercalación es). No se ha sembrado nada. Puede haber ejecutivos con el mismo nombre sin distinguir mayúsculas: deja uno solo en la colección executives y vuelve a ejecutar npm run seed:executives."
+
+      477 |       const stderr = c.err.join('\n');
+      478 |       expect(stderr).toContain('npm run seed:executives');
+    > 479 |       expect(stderr).toMatch(/mismo nombre sin distinguir mayúsculas, tildes ni la ñ/);
+          |                      ^
+      480 |       expect(stderr).toMatch(/No se ha sembrado nada/);
+      481 |       const everything = [
+      482 |         ...c.out,
+
+      at expectFailsWithoutSeedingNorNames (src/__tests__/seedExecutives.spec.ts:479:22)
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:520:5)
+
+  ● RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la siembra sale con error sin sembrar › dice cuántos nombres se repiten, sin decir cuáles
+
+    expect(received).toMatch(expected)
+
+    Expected pattern: /2 nombres se repiten/
+    Received string:  "Error en seed:executives: No se pudo dejar el esquema de executives: falta el índice name_1 (con la intercalación es). No se ha sembrado nada. Puede haber ejecutivos con el mismo nombre sin distinguir mayúsculas: deja uno solo en la colección executives y vuelve a ejecutar npm run seed:executives."
+
+      525 |     const c = capture();
+      526 |     expect(await seedExecutivesCli([], c.deps)).toBe(1);
+    > 527 |     expect(c.err.join('\n')).toMatch(/2 nombres se repiten/);
+          |                              ^
+      528 |   });
+      529 |
+      530 |   it('una base de la v4 (name_1 con la intercalación es, que distinguía tildes y ñ) y sin repetidos: la siembra sustituye el índice', async () => {
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:527:30)
+
+  ● RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la siembra sale con error sin sembrar › una base de la v4 (name_1 con la intercalación es, que distinguía tildes y ñ) y sin repetidos: la siembra sustituye el índice
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 2
+    + Received  + 2
+
+    @@ -1,9 +1,9 @@
+      Object {
+        "collation": Object {
+    -     "locale": "en",
+    -     "strength": 1,
+    +     "locale": "es",
+    +     "strength": 2,
+        },
+        "key": Object {
+          "name": 1,
+        },
+        "unique": true,
+
+      42 |   const indexes = await ExecutiveModel.collection.listIndexes().toArray();
+      43 |   const byName = new Map(indexes.map((i) => [i.name as string, i]));
+    > 44 |   expect(byName.get('name_1')).toMatchObject({ key: { name: 1 }, unique: true, collation: { locale: 'en', strength: 1 } });
+         |                                ^
+      45 |   expect(byName.get('active_1_name_1')).toMatchObject({
+      46 |     key: { active: 1, name: 1 },
+      47 |     collation: { locale: 'es', strength: 2 },
+
+      at expectExecutiveSchema (src/__tests__/seedExecutives.spec.ts:44:32)
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:537:5)
+
+Test Suites: 1 failed, 1 total
+Tests:       18 failed, 25 passed, 43 total
+Snapshots:   0 total
+Time:        7.672 s
+Ran all test suites matching /src\/__tests__\/seedExecutives.spec.ts/i.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

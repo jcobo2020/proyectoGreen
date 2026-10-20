@@ -1,0 +1,203 @@
+# Ronda 2 · R4-PRUEBAS-1: las pruebas nuevas, antes del código
+
+## 1. M1 · el arranque de la API (server.ts) sobre una base con «Nana Torres» y «Ñaña Torres»: en rojo con el código de 5b71ca0
+$ npx jest --runInBand --forceExit --coverage=false src/__tests__/executives.spec.ts src/__tests__/seedExecutives.spec.ts   (en api/)
+FAIL src/__tests__/seedExecutives.spec.ts (7.562 s)
+  ● Console
+
+
+
+      {"event":"server_started","port":0}
+
+      at Server.<anonymous> (src/server.ts:11:13)
+  ● M1 · el arranque de la API (server.ts, autoIndex por defecto) no crea los índices de executives › el esquema de Executive no tiene autoIndex: sus índices solo los crea la siembra (R4-ARQ-2)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: null
+
+      617 |
+      618 |   it('el esquema de Executive no tiene autoIndex: sus índices solo los crea la siembra (R4-ARQ-2)', () => {
+    > 619 |     expect(ExecutiveModel.schema.get('autoIndex')).toBe(false);
+          |                                                    ^
+      620 |   });
+      621 |
+      622 |   it('con «Nana Torres» y «Ñaña Torres» en la base y sin name_1, arrancar no intenta crear el índice ni deja el nombre en el log de MongoDB', async () => {
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:619:52)
+
+  ● M1 · el arranque de la API (server.ts, autoIndex por defecto) no crea los índices de executives › con «Nana Torres» y «Ñaña Torres» en la base y sin name_1, arrancar no intenta crear el índice ni deja el nombre en el log de MongoDB
+
+    expect(received).toBeUndefined()
+
+    Received: [MongoServerError: Index build failed: 7e796758-18a7-41ab-b837-2cc513028e1f: Collection arranque_con_repetidos.executives ( fef8d039-1441-4269-8685-43cdd40c15e2 ) :: caused by :: E11000 duplicate key error collection: arranque_con_repetidos.executives index: name_1 collation: { locale: "en", caseLevel: false, caseFirst: "off", strength: 1, numericOrdering: false, alternate: "non-ignorable", maxVariable: "punct", normalization: false, backwards: false, version: "57.1" } dup key: { name: "0x43294329044f454b4b314d" }]
+
+      650 |       // Espera a lo que el arranque haga con los índices del modelo; si intentara name_1, fallaría aquí
+      651 |       const initError = await bootMongoose!.model('Executive').init().then(() => undefined, (err: unknown) => err);
+    > 652 |       expect(initError).toBeUndefined();
+          |                         ^
+      653 |
+      654 |       const indexes = (await db.collection('executives').listIndexes().toArray()).map((i) => i.name);
+      655 |       expect(indexes).toEqual(['_id_']);
+
+      at Object.<anonymous> (src/__tests__/seedExecutives.spec.ts:652:25)
+
+PASS src/__tests__/executives.spec.ts
+  ● Console
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      {"metric":"GET /api/executives p95 ms","p95":3.83}
+
+      at Object.<anonymous> (src/__tests__/executives.spec.ts:347:13)
+
+
+
+
+Test Suites: 1 failed, 1 passed, 2 total
+Tests:       2 failed, 72 passed, 74 total
+Snapshots:   0 total
+Time:        10.346 s
+Ran all test suites matching /src\/__tests__\/executives.spec.ts|src\/__tests__\/seedExecutives.spec.ts/i.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
+
+## 2. m1 y m2 son guardias de un comportamiento que ya es correcto: pasan con el código de 5b71ca0. Su rojo, saboteando ese código (los 2 fallos de M1 siguen en la cuenta)
+
+### m1 · la lista ordenada con la intercalación de la unicidad (EXECUTIVE_COLLATION = en strength 1)
+  ● AC-03 · npm run seed:executives dos veces, y otra tras dar de baja a «Paola Cedeño» › deja los 5 del equipo, Paola inactiva y fuera de GET /api/executives, y «daniela rios» no crea otro
+  ● Esquema de Executive (§3) › crea la colección executives con {name} único sin distinguir mayúsculas, tildes ni la ñ y {active, name} con intercalación es
+  ● GET /api/executives — AC-01: ejecutivos activos como opciones › RN-01 · la ñ decide: «Nora Sol» va antes que «Ñandú Paz» (con la intercalación es; con la raíz de Unicode sería al revés)
+  ● GET /api/executives — R4-REND-1: consulta por el índice {active, name} › el orden lo pide la consulta del servicio, no lo regala el índice: con el índice oculto sigue en orden español
+  ● M1 · el arranque de la API (server.ts, autoIndex por defecto) no crea los índices de executives › con «Nana Torres» y «Ñaña Torres» en la base y sin name_1, arrancar no intenta crear el índice ni deja el nombre en el log de MongoDB
+  ● M1 · el arranque de la API (server.ts, autoIndex por defecto) no crea los índices de executives › el esquema de Executive no tiene autoIndex: sus índices solo los crea la siembra (R4-ARQ-2)
+  ● RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la siembra sale con error sin sembrar › en una base de la v4 (name_1 con es strength 2), si syncIndexes no lo sustituye, sale con 1: un name_1 con otra intercalación no vale
+  ● RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la siembra sale con error sin sembrar › una base de la v4 (name_1 con la intercalación es, que distinguía tildes y ñ) y sin repetidos: la siembra sustituye el índice
+  ● Script seed:executives › crea el esquema, siembra y lista lo que la base tiene
+Tests:       9 failed, 65 passed, 74 total
+
+### m2 · hasIndex sin comparar locale ni strength
+  ● M1 · el arranque de la API (server.ts, autoIndex por defecto) no crea los índices de executives › con «Nana Torres» y «Ñaña Torres» en la base y sin name_1, arrancar no intenta crear el índice ni deja el nombre en el log de MongoDB
+  ● M1 · el arranque de la API (server.ts, autoIndex por defecto) no crea los índices de executives › el esquema de Executive no tiene autoIndex: sus índices solo los crea la siembra (R4-ARQ-2)
+  ● RN-03 · con nombres previos repetidos (mayúsculas, tildes o ñ) la siembra sale con error sin sembrar › en una base de la v4 (name_1 con es strength 2), si syncIndexes no lo sustituye, sale con 1: un name_1 con otra intercalación no vale
+Tests:       3 failed, 71 passed, 74 total
