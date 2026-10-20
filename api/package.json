@@ -8,6 +8,7 @@
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
     "test": "jest --runInBand --forceExit --coverage",
+    "seed:executives": "tsc && node dist/scripts/seedExecutives.js",
     "test:ci": "jest --runInBand --forceExit --coverage --coverageReporters=lcov --coverageReporters=json-summary --coverageReporters=text",
     "evidence": "node scripts/evidence.js"
   },

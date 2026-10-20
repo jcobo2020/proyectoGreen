@@ -1,0 +1,220 @@
+{
+  "schemaVersion": 5,
+  "workItemCode": "WI-H2-API-EJECUTIVOS-001",
+  "summary": "Ronda 3 sobre la spec v4 (pack v8), tras el auditor de la ronda 2: la siembra falla CERRADA (sale con 1 sin sembrar) si tras sincronizar no están name_1 único y active_1_name_1 con la intercalación es, y ningún error escribe un nombre; /api/executives se autentica antes que todo, como /api/customers (un método no declarado o una subruta sin token dan 401, no 404); los repetidos por mayúsculas de la lista se quitan en el servicio antes de escribir. Se mantiene lo de la ronda 2: GET /api/executives devuelve los activos como [{value: _id, label: name}] en orden alfabético español, todo error con {code, message, details}, nombre único sin distinguir mayúsculas y siembra de la lista versionada (api/data/executives.json) sin reactivar a nadie.",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "status": "covered",
+      "note": "api/src/__tests__/executives.spec.ts:54-180: 200 [] sin ejecutivos y con solo inactivos (:55, :64); el inactivo no aparece (:78); orden alfabético español con tildes, minúsculas y ñ (:96); el equipo ordenado (:126); {value, label} con value = _id (:144); sin 403 (:169). El orden lo pide la consulta del servicio aunque el índice no lo dé hecho (:296, con active_1_name_1 oculto). Implementación: ExecutiveService.listActive (api/src/services/ExecutiveService.ts:44)."
+    },
+    {
+      "id": "AC-02",
+      "status": "covered",
+      "note": "api/src/__tests__/executives.spec.ts:182-266: 401 con cuerpo exacto {code: 'UNAUTHORIZED', message, details: []} sin Authorization, con esquema no Bearer, otra clave, caducado y alg none; y también con un método no declarado, una subruta o un cuerpo no JSON sin token (:231, :242, :248). authenticate y withErrorDetails para todo /api/executives en api/src/app.ts:41."
+    },
+    {
+      "id": "AC-03",
+      "status": "covered",
+      "note": "api/src/__tests__/seedExecutives.spec.ts:213: seedExecutivesCli sin argumento (la lista versionada) dos veces deja 5 y crea el esquema (comprueba name_1 único y active_1_name_1 con intercalación es, sin depender de otras pruebas); tras la baja de «Paola Cedeño» sigue inactiva; «daniela ríos» no crea otro; GET devuelve los 4 activos. Ejecución real en .sdd/evidence/WI-H2-API-EJECUTIVOS-001/migration.log."
+    }
+  ],
+  "gates": [
+    {
+      "businessRuleId": "RN-01",
+      "status": "cumple",
+      "note": "executives.spec.ts: «RN-01 · 200 [] cuando no hay ejecutivos» (:55), «… solo hay ejecutivos inactivos» (:64), «… un ejecutivo inactivo no aparece…» (:78), «RN-01 · orden alfabético español…» (:96) y «el orden lo pide la consulta del servicio, no lo regala el índice…» (:296). Saboteado: quitar .sort() de listActive hace fallar :296; quitar .collation(), :96 y :286."
+    },
+    {
+      "businessRuleId": "RN-02",
+      "status": "cumple",
+      "note": "executives.spec.ts:144 «RN-02 · cada opción es {value: _id (ObjectId válido), label: name} y nada más»."
+    },
+    {
+      "businessRuleId": "RN-AUTH",
+      "status": "cumple",
+      "note": "executives.spec.ts:190 «401 UNAUTHORIZED sin cabecera Authorization», el resto del describe AC-02 (:182-226) y el de la autenticación antes que todo (:228-266); :169 demuestra que no hay 403. Saboteado: devolver authenticate solo a la ruta GET hace fallar :231, :242 y :248."
+    },
+    {
+      "businessRuleId": "RN-03",
+      "status": "cumple",
+      "note": "seedExecutives.spec.ts: AC-03 (:213); idempotente, deja 5 (:142); no reactiva (:152); otra capitalización ya existente (:162); repetidos en la misma lista: una sola escritura (:171); índice único que rechaza «daniela ríos» (:85); la lista versionada (:129); falla cerrada sin name_1 (:379, :404). Saboteado: quitar el filtro de repetidos hace fallar :171; quitar syncIndexes, 4 pruebas (también con orden aleatorio, jest --randomize); quitar la comprobación de índices, :379 y :404."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R4-ARQ-1",
+      "status": "cumple",
+      "evidencia": "api/src/models/executive.ts · api/src/services/ExecutiveService.ts:32 · api/src/controllers/ExecutiveController.ts · api/src/routes/api.routes.ts:96 (router montado en /api por createApp) · executives.spec.ts:54"
+    },
+    {
+      "id": "R4-ARQ-2",
+      "status": "cumple",
+      "evidencia": "api/package.json:11 (seed:executives) · api/data/executives.json · api/src/scripts/seedExecutives.ts:65 (ensureExecutiveSchema: sincroniza y comprueba los índices; :80 falla cerrada) · ExecutiveService.seedMissing (api/src/services/ExecutiveService.ts:61) y uniqueExecutiveNames (:31) · seedExecutives.spec.ts:128-253 y :355-430 · .sdd/evidence/WI-H2-API-EJECUTIVOS-001/migration.log"
+    },
+    {
+      "id": "R4-PRUEBAS-1",
+      "status": "no_cumple",
+      "evidencia": "Las pruebas existen y cubren lo que pide (executives.spec.ts y seedExecutives.spec.ts con MongoMemoryReplSet wiredTiger; test-results.txt: 10 suites, 364 en verde), pero el orden test-first no se cumplió en todo el WI: las pruebas de la ronda 2 (orden con tildes, 401 con details, siembra sin reactivar, unicidad por mayúsculas) se escribieron junto al código y no se vieron fallar antes. En la ronda 3 sí: las 8 pruebas nuevas (M1, B2, B4) se vieron en rojo antes de implementar (3 de B2 por 404; 5 de la siembra con los nombres exportados vacíos), y las de B1 y B3 se comprobaron saboteando."
+    },
+    {
+      "id": "R4-SEG-1",
+      "status": "cumple",
+      "evidencia": "api/src/app.ts:41 (authenticate, el mismo de /api/orders: HS256 con JWT_SECRET, montado para todo /api/executives) · executives.spec.ts:182-266"
+    },
+    {
+      "id": "R4-SEG-2",
+      "status": "cumple",
+      "evidencia": "sin middleware de rol en api/src/app.ts:41 ni en api/src/routes/api.routes.ts:97 · executives.spec.ts:169"
+    },
+    {
+      "id": "R4-SEG-3",
+      "status": "cumple",
+      "evidencia": "api/src/app.ts:41 monta el withErrorDetails existente (el de /api/customers) sin duplicarlo · executives.spec.ts:184-188 (401 con details: []), :257 (404 con token, details: []) y :368 (500 con details: [])"
+    },
+    {
+      "id": "R4-REND-1",
+      "status": "cumple",
+      "evidencia": "índice {active, name} con intercalación es (api/src/models/executive.ts:40) · executives.spec.ts:269 (explain: IXSCAN active_1_name_1 sin SORT), :286, :296, :311 y :317 (p95 de 40 peticiones < 100 ms; 5.06 ms en test-results.txt)"
+    },
+    {
+      "id": "R4-OBS-1",
+      "status": "cumple",
+      "evidencia": "requestLogger de main · executives.spec.ts:337 (JSON con method, path '/api/executives', status, duration y requestId, sin el token). La siembra no escribe nombres ni en su salida ni en sus errores: seedExecutives.spec.ts:379 y :416 (constitución: ni datos personales ni tokens en los logs)"
+    }
+  ],
+  "testsRun": [
+    {
+      "name": "executives.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "seedExecutives.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "customers.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "customerMigration.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "evidence.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "orders.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "products.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "migration.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "mongoUnitOfWork.spec.ts",
+      "result": "pass"
+    },
+    {
+      "name": "orderService.unit.spec.ts",
+      "result": "pass"
+    }
+  ],
+  "deviations": [
+    {
+      "description": "La cadena de /api/executives es authenticate → controller (montado en app.ts para todo /api/executives con withErrorDetails, antes de express.json), sin attachAuthenticatedUser, paso de rol ni validador (plantilla §3).",
+      "reason": "Igual que /api/customers: así un método no declarado o una subruta sin token responden 401 y no 404 (constitución: toda ruta de /api exige un usuario autenticado). attachAuthenticatedUser no existe en el repo; R4-SEG-2: sin roles; §2 no declara parámetros ni 400."
+    },
+    {
+      "description": "Swagger documenta un 500 (ExecutiveInternalError con details) que §2 no declara (solo 200 y 401); y bajo /api/executives, con token, un método no declarado o una subruta responden 404 NOT_FOUND con details vacío, que tampoco declara (descrito en el 401 de Swagger).",
+      "reason": "Es el comportamiento real del errorHandler y del notFound compartidos con R4-SEG-3 (todo error con {code, message, details}); se documenta para no esconderlo. Pregunta abierta para que la spec los declare o diga otra cosa."
+    },
+    {
+      "description": "R4-PRUEBAS-1 (test-first) no se cumplió en la ronda 2: sus pruebas se escribieron junto al código.",
+      "reason": "Se declara no_cumple; en la ronda 3 las pruebas nuevas sí se vieron fallar antes de implementar, y todas las guardias se comprobaron saboteando."
+    },
+    {
+      "description": "La siembra falla cerrada comprobando los índices tras syncIndexes(): no se fía de que syncIndexes() lance, porque con datos repetidos por mayúsculas la creación de name_1 por el autoIndex de Mongoose y syncIndexes() pueden fallar sin avisar (el auditor lo reprodujo: salía con 0 sin name_1).",
+      "reason": "M1 del auditor de la ronda 2. Si falta un índice sale con 1 sin sembrar y dice qué hacer; el mensaje del E11000 (que cita el nombre) no se propaga: un error no previsto se registra con describeErrorSafely (nombre, código y pila, sin mensaje)."
+    },
+    {
+      "description": "Los repetidos sin distinguir mayúsculas de la lista se quitan en el servicio (Intl.Collator es, sensitivity accent, el equivalente de strength 2) antes de escribir; se quitó {ordered: true} y el comentario que lo daba por garantía.",
+      "reason": "B4 del auditor: la garantía ya no depende del orden en que la base ejecute las escrituras, y la prueba (:171) comprueba que va una sola escritura."
+    },
+    {
+      "description": "La intercalación es { locale: 'es', strength: 2 }: no distingue mayúsculas pero sí tildes («Daniela Rios» y «Daniela Ríos» son nombres distintos).",
+      "reason": "RN-03 solo pide «único sin distinguir mayúsculas»; strength 1 también igualaría tildes, que la spec no pide."
+    },
+    {
+      "description": "npm run seed:executives acepta un fichero opcional (npm run seed:executives -- <fichero.json>); sin argumento siembra api/data/executives.json.",
+      "reason": "Ya existía en la ronda 1 y es lo que permite demostrar con el comando real que «daniela ríos» no crea otro; el uso por defecto es la lista versionada."
+    },
+    {
+      "description": "test-results.txt y coverage-summary.json son la salida real del comando de la plataforma con un único cambio: el prefijo absoluto de la máquina sustituido por rutas relativas a la raíz del repo. En migration.log las líneas «# …» (los dos escenarios), «$ …» y «(código de salida: N)» las escribe el bucle que ejecutó cada comando; el resto es su salida tal cual.",
+      "reason": "No subir rutas locales; ninguna cifra ni resultado se tocó."
+    },
+    {
+      "description": "npm test (migration.spec.ts de WI-ORD-API-005) reescribe .sdd/evidence/migration-WI-ORD-API-005.log en cada corrida; se restauró con git checkout -- y no va en este commit.",
+      "reason": "Es evidencia versionada de otro work item."
+    },
+    {
+      "description": "La baja de «Paola Cedeño» en migration.log y en la prueba AC-03 se hace con un updateOne directo en la base.",
+      "reason": "La baja la gobernará «Administración», que aún no tiene spec; este contrato solo lee."
+    }
+  ],
+  "dodSelfAssessment": {
+    "met": false,
+    "blockers": [
+      "R4-PRUEBAS-1: el orden test-first no se cumplió en la ronda 2 (sus pruebas se escribieron junto al código); lo demás del pack se cumple y está probado."
+    ]
+  },
+  "clarificationRequests": [
+    {
+      "question": "¿El nombre único debe distinguir tildes? Se implementó strength 2 (sin distinguir mayúsculas, sí tildes): «daniela ríos» = «Daniela Ríos», pero «Daniela Rios» ≠ «Daniela Ríos».",
+      "blocking": false,
+      "context": "§3 (índices) y RN-03 dicen «sin distinguir mayúsculas» y no mencionan las tildes."
+    },
+    {
+      "question": "¿Debe §2 declarar el 500 (INTERNAL_ERROR con details) de GET /api/executives? Hoy existe y Swagger lo documenta, pero el contrato solo declara 200 y 401.",
+      "blocking": false,
+      "context": "§2 responses de GET /api/executives frente a R4-SEG-3 («todo error viaja como {code, message, details}») y el errorHandler compartido."
+    },
+    {
+      "question": "¿Debe §2 declarar que bajo /api/executives, con token, un método no declarado o una subruta responden 404 NOT_FOUND (con details vacío), y sin token 401?",
+      "blocking": false,
+      "context": "§2 solo define GET /api/executives; la constitución exige autenticación en toda ruta de /api, y se hizo como /api/customers."
+    },
+    {
+      "question": "El coordinador cita «R4-SEG-5: datos personales fuera de los logs», pero este pack (v8) solo trae R4-SEG-1 a R4-SEG-3; se cumplió por la regla de la constitución («Ni los datos personales ni los tokens se escriben en los logs»). ¿Falta R4-SEG-5 en la spec v4 o es de otra spec?",
+      "blocking": false,
+      "context": "§4 Restricciones · security del pack v8 y §4-bis Restricciones de seguridad."
+    }
+  ],
+  "evidence": [
+    {
+      "type": "test_results",
+      "ref": ".sdd/evidence/WI-H2-API-EJECUTIVOS-001/test-results.txt",
+      "note": "Salida de npm test -- --coverage --coverageReporters=text --coverageReporters=json-summary: 10 suites, 364 pruebas en verde"
+    },
+    {
+      "type": "api_docs",
+      "ref": "api/src/controllers/ExecutiveController.ts",
+      "note": "Bloque @swagger de GET /api/executives: 200 array de PublicExecutive en orden alfabético español; 401 ExecutiveUnauthorizedError (también para métodos y subrutas no declarados sin token) y 500 ExecutiveInternalError, con details"
+    },
+    {
+      "type": "migration_log",
+      "ref": ".sdd/evidence/WI-H2-API-EJECUTIVOS-001/migration.log",
+      "note": "npm run seed:executives real contra MongoDB en memoria. Base vacía: índices name_1 [UNIQUE] y active_1_name_1 con intercalación es strength 2; dos siembras (5 creados, luego 0), baja de Paola, tercera siembra (sigue inactiva, 4 activos), «daniela ríos» (0 creados) y listado final. Otra base con «Karla Mendoza» y «karla mendoza» previos: sale con 1, no crea name_1 ni siembra, y el error no cita ningún nombre"
+    },
+    {
+      "type": "coverage_report",
+      "ref": ".sdd/evidence/WI-H2-API-EJECUTIVOS-001/coverage-summary.json",
+      "note": "Sentencias: 96.81 % (182/188) sobre los ficheros que toca este work item (executive.ts, ExecutiveService.ts, ExecutiveController.ts, executive.validator.ts, seedExecutives.ts, app.ts, api.routes.ts); 97.85 % total"
+    }
+  ]
+}

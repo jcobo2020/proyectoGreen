@@ -15,11 +15,14 @@ import { ProductController } from './controllers/ProductController';
 import { OrderController } from './controllers/OrderController';
 import { CustomerService } from './services/CustomerService';
 import { CustomerController } from './controllers/CustomerController';
+import { ExecutiveService } from './services/ExecutiveService';
+import { ExecutiveController } from './controllers/ExecutiveController';
 
 export interface AppDeps {
   orderController?: OrderController;
   productController?: ProductController;
   customerController?: CustomerController;
+  executiveController?: ExecutiveController;
 }
 
 export function createApp(_connection?: typeof mongoose, deps?: AppDeps): Application {
@@ -32,6 +35,10 @@ export function createApp(_connection?: typeof mongoose, deps?: AppDeps): Applic
   // details (RN-12, R4-SEG-3), sin cambiar los errores de /api/orders (R4-SEG-4).
   app.use(requestLogger);
   app.use('/api/customers', withErrorDetails, authenticate);
+  // /api/executives, igual que /api/customers: todo error viaja con details (vacío si no hay,
+  // R4-SEG-3 de GREEN-H2-API-EJECUTIVOS-001) y se autentica antes que nada, también un método no
+  // declarado o una subruta: sin un token válido, 401 y no 404 (toda ruta de /api exige usuario).
+  app.use('/api/executives', withErrorDetails, authenticate);
   app.use(express.json());
 
   // Composition root: construir servicios y controladores una sola vez
@@ -42,12 +49,14 @@ export function createApp(_connection?: typeof mongoose, deps?: AppDeps): Applic
   const productController = deps?.productController ?? new ProductController(productService);
   const orderController = deps?.orderController ?? new OrderController(orderService);
   const customerController = deps?.customerController ?? new CustomerController(new CustomerService());
+  const executiveController =
+    deps?.executiveController ?? new ExecutiveController(new ExecutiveService());
 
   // Documentación Swagger
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
   // Rutas de la API
-  app.use('/api', createApiRouter({ productController, orderController, customerController }));
+  app.use('/api', createApiRouter({ productController, orderController, customerController, executiveController }));
 
   // Manejo de rutas no encontradas y errores (este orden es obligatorio)
   app.use(notFound);

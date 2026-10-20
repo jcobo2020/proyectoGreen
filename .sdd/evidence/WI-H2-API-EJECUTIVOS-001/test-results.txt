@@ -1,0 +1,3020 @@
+
+> greenfield-api@1.0.0 test
+> jest --runInBand --forceExit --coverage --coverage --coverageReporters=text --coverageReporters=json-summary
+
+PASS src/__tests__/orders.spec.ts (6.196 s)
+  ● Console
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":401,"duration":15,"requestId":"e3826dbf-3094-4404-b6ce-b958638bb414"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":401,"duration":1,"requestId":"d35e43bf-d9b7-4859-996b-a7b7d1804a64"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders/6ad77499d1960e06509121d6","status":401,"duration":1,"requestId":"0a5c3fc8-6b84-438f-8e50-a9c9a9159e94"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad77499d1960e06509121d9/confirm","status":401,"duration":1,"requestId":"05d6592d-37c8-474c-9c9f-a2db38bf0496"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":401,"duration":2,"requestId":"193fed7f-71cd-449f-8885-f12907a07cfb"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":401,"duration":0,"requestId":"46882df3-1f04-4142-9ab0-cf80adea1591"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e06509121e3","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":37,"requestId":"8f9871a1-40c8-4e6b-928f-b4d4159d99b3"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e06509121ec","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":12,"requestId":"a199090b-3f8b-4eaf-a944-7df59ca8d478"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e06509121f3","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":11,"requestId":"b93ad206-9e31-493d-82b0-5b88fc355b79"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e06509121fb","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":9,"requestId":"0c811649-b12b-434a-a268-cc899b133833"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.error
+      {"level":"error","event":"unexpected_error","method":"POST","path":"/api/orders","requestId":"f945eaa9-7f6f-4d2e-bec7-8a590e39a3fc","error":{"name":"Error","stack":["at Object.<anonymous> (api/src/__tests__/orders.spec.ts:223:43)","at Promise.then.completed (api/node_modules/jest-circus/build/utils.js:298:28)","at new Promise (<anonymous>)","at callAsyncCircusFn (api/node_modules/jest-circus/build/utils.js:231:10)","at _callCircusTest (api/node_modules/jest-circus/build/run.js:316:40)","at processTicksAndRejections (node:internal/process/task_queues:105:5)","at _runTest (api/node_modules/jest-circus/build/run.js:252:3)","at _runTestsForDescribeBlock (api/node_modules/jest-circus/build/run.js:126:9)","at _runTestsForDescribeBlock (api/node_modules/jest-circus/build/run.js:121:9)","at run (api/node_modules/jest-circus/build/run.js:71:3)","at runAndTransformResultsToJestFormat (api/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)","at jestAdapter (api/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)","at runTestInternal (api/node_modules/jest-runner/build/runTest.js:367:16)","at runTest (api/node_modules/jest-runner/build/runTest.js:444:34)"]}}
+
+      76 |   // Error no previsto: se registra sin el cuerpo de la petición ni el mensaje del error
+      77 |   // (R4-OBS-3) y nunca se exponen detalles internos
+    > 78 |   console.error(
+         |           ^
+      79 |     JSON.stringify({
+      80 |       level: 'error',
+      81 |       event: 'unexpected_error',
+
+      at error (src/middlewares/errorHandler.middleware.ts:78:11)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at next (node_modules/express/lib/router/route.js:141:14)
+      at next (src/controllers/OrderController.ts:403:7)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":500,"duration":19,"requestId":"f945eaa9-7f6f-4d2e-bec7-8a590e39a3fc"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":1,"requestId":"58f50807-ca26-4851-8232-3db9c597ee4f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":1,"requestId":"aae447b5-2416-490d-b19f-862447f78a20"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":1,"requestId":"3d9dabe6-a6ff-4db8-9203-95f81200a43a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e0650912214","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":9,"requestId":"899b4935-d967-4243-9db6-7ea87f8f92f7"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":1,"requestId":"2443a25c-70b8-4362-ae0a-d6426619bdd4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":0,"requestId":"d2f2767d-f450-436a-abc5-7bcdc41e6919"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":0,"requestId":"3a41d961-66e9-43fe-b613-cc6a1f3f716c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":1,"requestId":"95d1d8f4-df24-4464-94d8-d204ea2dfe29"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":0,"requestId":"4d4f9006-9796-4fea-86ee-d06ec3506735"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":1,"requestId":"f370f798-a53f-4776-902e-6b09a667989e"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":1,"requestId":"e6ebcae8-aa4d-4a7f-bd74-8a1cf62027df"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":1,"requestId":"4d47bc33-8480-411f-8ea5-7f94a290f102"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":1,"requestId":"dd70c785-6649-4c94-8f07-73e32724bd66"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":0,"requestId":"f46ba2a6-d4a7-4c5b-ac4c-04d089c3aa53"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":400,"duration":1,"requestId":"909c8d7d-dadb-400c-bbb3-c5d730421d13"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":409,"duration":2,"requestId":"3d10a0bd-fe05-4923-8836-5a9dabce3a66"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":404,"duration":2,"requestId":"a13f8afb-34a2-4b17-819d-eb8451cb645d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":404,"duration":2,"requestId":"e329ffce-c56d-45e0-860b-86c8e3d4bcea"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e065091227c","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":11,"requestId":"2705df22-176c-4990-9049-362bb22241d1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e065091227f","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":11,"requestId":"ab595ce4-bf83-4623-a0e5-719665312af1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e0650912282","customerId":"customer-B-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":11,"requestId":"dcd54210-318a-44c8-8a94-f69bf32e8d90"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":200,"duration":8,"requestId":"22dcf99b-d45c-4f45-960c-17cca56b4fcc"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e065091228b","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":9,"requestId":"978c2d17-80ab-4e0a-bb43-728afc48ec7f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e065091228e","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":9,"requestId":"ab54e780-1ae7-4516-b039-0f96362fa74d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":200,"duration":2,"requestId":"78ddd08d-1a04-4b81-86f0-29a979f04e61"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":200,"duration":2,"requestId":"ad0ea806-5422-46ed-98ce-190e63886f36"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e065091229b","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":14,"requestId":"43bbaad1-f1b4-4ffb-bd18-01f222338989"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e065091229e","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":11,"requestId":"713441ab-d593-4134-84a2-851d38c6af9f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e06509122a1","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":11,"requestId":"f26874ef-ab81-4057-afd8-7ecf9b8e5a94"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e06509122a4","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":12,"requestId":"7aec7de7-f497-40db-b0dd-1cefc1f0b84b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e06509122a7","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":9,"requestId":"b6b64eb3-976c-432a-9236-4c94963eac7e"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":200,"duration":3,"requestId":"4c82bb39-483d-48e8-b407-eaefd1e739e5"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":200,"duration":3,"requestId":"e4cfe707-be1f-4445-ad7b-001454d5c779"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":400,"duration":1,"requestId":"59ac85e4-7a66-4b8d-8ab1-7d1048be9bfd"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":400,"duration":1,"requestId":"484671d5-b5f3-4a42-8542-dd0638da9f23"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":400,"duration":0,"requestId":"15e7a9e8-74ad-4904-a555-8db913d48e63"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e06509122ba","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":9,"requestId":"a4d07560-5e9c-4c9d-bdaa-cb440e995ddf"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_confirmed","orderId":"6ad77499d1960e06509122ba","customerId":"customer-A-test"}
+
+      at log (src/services/OrderService.ts:327:15)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad77499d1960e06509122ba/confirm","status":200,"duration":32,"requestId":"9db8b0e4-08a8-4fdb-bc2f-41bce37b7560"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":200,"duration":3,"requestId":"063d6d5d-1383-4cbf-9bfe-e5917a9bd0f7"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.error
+      {"level":"error","event":"unexpected_error","method":"GET","path":"/api/orders","requestId":"d4ce05ad-f431-48fa-a605-5eec55a8322a","error":{"name":"Error","stack":["at Object.<anonymous> (api/src/__tests__/orders.spec.ts:623:51)","at Promise.then.completed (api/node_modules/jest-circus/build/utils.js:298:28)","at new Promise (<anonymous>)","at callAsyncCircusFn (api/node_modules/jest-circus/build/utils.js:231:10)","at _callCircusTest (api/node_modules/jest-circus/build/run.js:316:40)","at processTicksAndRejections (node:internal/process/task_queues:105:5)","at _runTest (api/node_modules/jest-circus/build/run.js:252:3)","at _runTestsForDescribeBlock (api/node_modules/jest-circus/build/run.js:126:9)","at _runTestsForDescribeBlock (api/node_modules/jest-circus/build/run.js:121:9)","at run (api/node_modules/jest-circus/build/run.js:71:3)","at runAndTransformResultsToJestFormat (api/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)","at jestAdapter (api/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)","at runTestInternal (api/node_modules/jest-runner/build/runTest.js:367:16)","at runTest (api/node_modules/jest-runner/build/runTest.js:444:34)"]}}
+
+      76 |   // Error no previsto: se registra sin el cuerpo de la petición ni el mensaje del error
+      77 |   // (R4-OBS-3) y nunca se exponen detalles internos
+    > 78 |   console.error(
+         |           ^
+      79 |     JSON.stringify({
+      80 |       level: 'error',
+      81 |       event: 'unexpected_error',
+
+      at error (src/middlewares/errorHandler.middleware.ts:78:11)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at next (node_modules/express/lib/router/route.js:141:14)
+      at next (src/controllers/OrderController.ts:419:7)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":500,"duration":1,"requestId":"d4ce05ad-f431-48fa-a605-5eec55a8322a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e06509122ca","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":13,"requestId":"3f89f7f2-bd97-4b6c-8132-1c21c456cf5b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders/6ad77499d1960e06509122ca","status":200,"duration":3,"requestId":"8aa0c34f-c7d0-45af-bd53-34d6c4674216"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders/not-valid-id","status":400,"duration":1,"requestId":"3d44a049-a435-460a-b62f-4b50531b95da"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders/6ad77499d1960e06509122d1","status":400,"duration":0,"requestId":"e2cdf363-ffed-44a7-8331-91c7aae2fa04"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders/6ad77499d1960e06509122d4","status":404,"duration":2,"requestId":"70d13c1d-9270-4059-8562-e50f8bac97c5"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e06509122db","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":10,"requestId":"22e57357-deb7-468d-9a3b-00156c09c44e"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders/6ad77499d1960e06509122db","status":403,"duration":2,"requestId":"ee88d172-8b49-4eac-b205-56bb9cbdbd5f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad77499d1960e06509122e3","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":10,"requestId":"d3d714dd-e65a-4b68-a333-ec09182be86d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_confirmed","orderId":"6ad77499d1960e06509122e3","customerId":"customer-A-test"}
+
+      at log (src/services/OrderService.ts:327:15)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad77499d1960e06509122e3/confirm","status":200,"duration":12,"requestId":"37186ec3-1cba-453d-b173-e8412bd032d1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders/6ad77499d1960e06509122e3","status":200,"duration":2,"requestId":"0f20e22b-9d38-496a-afd0-6be8c9532c0f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.error
+      {"level":"error","event":"unexpected_error","method":"GET","path":"/api/orders/6ad77499d1960e06509122ed","requestId":"a9291541-8fae-4543-a83e-e50c9797eb0e","error":{"name":"Error","stack":["at Object.<anonymous> (api/src/__tests__/orders.spec.ts:733:45)","at Promise.then.completed (api/node_modules/jest-circus/build/utils.js:298:28)","at new Promise (<anonymous>)","at callAsyncCircusFn (api/node_modules/jest-circus/build/utils.js:231:10)","at _callCircusTest (api/node_modules/jest-circus/build/run.js:316:40)","at processTicksAndRejections (node:internal/process/task_queues:105:5)","at _runTest (api/node_modules/jest-circus/build/run.js:252:3)","at _runTestsForDescribeBlock (api/node_modules/jest-circus/build/run.js:126:9)","at _runTestsForDescribeBlock (api/node_modules/jest-circus/build/run.js:121:9)","at run (api/node_modules/jest-circus/build/run.js:71:3)","at runAndTransformResultsToJestFormat (api/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)","at jestAdapter (api/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)","at runTestInternal (api/node_modules/jest-runner/build/runTest.js:367:16)","at runTest (api/node_modules/jest-runner/build/runTest.js:444:34)"]}}
+
+      76 |   // Error no previsto: se registra sin el cuerpo de la petición ni el mensaje del error
+      77 |   // (R4-OBS-3) y nunca se exponen detalles internos
+    > 78 |   console.error(
+         |           ^
+      79 |     JSON.stringify({
+      80 |       level: 'error',
+      81 |       event: 'unexpected_error',
+
+      at error (src/middlewares/errorHandler.middleware.ts:78:11)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at next (node_modules/express/lib/router/route.js:141:14)
+      at next (src/controllers/OrderController.ts:433:7)
+
+    console.log
+      {"method":"GET","path":"/api/orders/6ad77499d1960e06509122ed","status":500,"duration":1,"requestId":"a9291541-8fae-4543-a83e-e50c9797eb0e"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad7749ad1960e06509122f3","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":7,"requestId":"7cbff16e-82ba-4076-ac21-15d79607021f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_confirmed","orderId":"6ad7749ad1960e06509122f3","customerId":"customer-A-test"}
+
+      at log (src/services/OrderService.ts:327:15)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e06509122f3/confirm","status":200,"duration":14,"requestId":"ce981402-c48e-4a91-a10d-27cb1ed029dc"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders/not-valid-id/confirm","status":400,"duration":1,"requestId":"88f59e03-3916-49eb-b740-c47ab3285971"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e06509122ff/confirm","status":400,"duration":1,"requestId":"5f8d61ea-1f97-4939-82b9-4cf026657e0c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e0650912302/confirm","status":404,"duration":3,"requestId":"d8e6f708-e605-4bce-bc3d-7e3370728f85"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad7749ad1960e0650912309","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":10,"requestId":"71eb5b29-91d0-4f77-b24f-16695ebf351e"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e0650912309/confirm","status":403,"duration":2,"requestId":"82114cfc-bc50-462d-9b90-d4ac03f9593d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad7749ad1960e0650912311","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":10,"requestId":"c62fdf76-2a51-428b-95f1-1b4f42f8a250"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"stock_insufficient","orderId":"6ad7749ad1960e0650912311","customerId":"customer-A-test","insufficient":[{"productId":"6ad7749ad1960e065091230e","requested":5,"available":2}]}
+
+      at log (src/services/OrderService.ts:306:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e0650912311/confirm","status":409,"duration":8,"requestId":"f9f52334-6660-4ccf-9ade-f750d7847dbd"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad7749ad1960e065091231d","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":9,"requestId":"c39d6455-3fb7-4c24-9e0a-6e411fc65348"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_confirmed","orderId":"6ad7749ad1960e065091231d","customerId":"customer-A-test"}
+
+      at log (src/services/OrderService.ts:327:15)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e065091231d/confirm","status":200,"duration":14,"requestId":"1c7b8400-9ae3-4c8a-9f08-a4661ffc92a1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.error
+      {"level":"error","event":"unexpected_error","method":"POST","path":"/api/orders/6ad7749ad1960e0650912326/confirm","requestId":"cb0de74f-39c9-4eba-b3d1-5974464eb376","error":{"name":"Error","stack":["at Object.<anonymous> (api/src/__tests__/orders.spec.ts:865:45)","at Promise.then.completed (api/node_modules/jest-circus/build/utils.js:298:28)","at new Promise (<anonymous>)","at callAsyncCircusFn (api/node_modules/jest-circus/build/utils.js:231:10)","at _callCircusTest (api/node_modules/jest-circus/build/run.js:316:40)","at processTicksAndRejections (node:internal/process/task_queues:105:5)","at _runTest (api/node_modules/jest-circus/build/run.js:252:3)","at _runTestsForDescribeBlock (api/node_modules/jest-circus/build/run.js:126:9)","at _runTestsForDescribeBlock (api/node_modules/jest-circus/build/run.js:121:9)","at run (api/node_modules/jest-circus/build/run.js:71:3)","at runAndTransformResultsToJestFormat (api/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)","at jestAdapter (api/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)","at runTestInternal (api/node_modules/jest-runner/build/runTest.js:367:16)","at runTest (api/node_modules/jest-runner/build/runTest.js:444:34)"]}}
+
+      76 |   // Error no previsto: se registra sin el cuerpo de la petición ni el mensaje del error
+      77 |   // (R4-OBS-3) y nunca se exponen detalles internos
+    > 78 |   console.error(
+         |           ^
+      79 |     JSON.stringify({
+      80 |       level: 'error',
+      81 |       event: 'unexpected_error',
+
+      at error (src/middlewares/errorHandler.middleware.ts:78:11)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:71:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Layer.handle_error (node_modules/express/lib/router/layer.js:67:12)
+      at trim_prefix (node_modules/express/lib/router/index.js:326:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at node_modules/express/lib/router/index.js:646:15
+      at next (node_modules/express/lib/router/index.js:265:14)
+      at next (node_modules/express/lib/router/route.js:141:14)
+      at next (src/controllers/OrderController.ts:447:7)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e0650912326/confirm","status":500,"duration":1,"requestId":"cb0de74f-39c9-4eba-b3d1-5974464eb376"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad7749ad1960e0650912337","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":10,"requestId":"756df15c-97b4-4876-ad74-da7f76e0ffad"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_confirmed","orderId":"6ad7749ad1960e0650912337","customerId":"customer-A-test"}
+
+      at log (src/services/OrderService.ts:327:15)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e0650912337/confirm","status":200,"duration":11,"requestId":"32da6f79-4855-4261-a519-d446a97fbdfd"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_confirmed","orderId":"6ad7749ad1960e0650912337","customerId":"customer-A-test","idempotent":true}
+
+      at log (src/services/OrderService.ts:282:19)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e0650912337/confirm","status":200,"duration":9,"requestId":"e315b09c-3e33-4295-a051-0723e5d5d990"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad7749ad1960e0650912348","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":10,"requestId":"4b51bf9f-c730-47a2-943c-53d22a239cc3"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_confirmed","orderId":"6ad7749ad1960e0650912348","customerId":"customer-A-test"}
+
+      at log (src/services/OrderService.ts:327:15)
+
+    console.log
+      {"event":"order_confirmed","orderId":"6ad7749ad1960e0650912348","customerId":"customer-A-test","idempotent":true}
+
+      at log (src/services/OrderService.ts:282:19)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e0650912348/confirm","status":200,"duration":15,"requestId":"0757ded0-a83d-4338-9a50-5b825a223dc4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e0650912348/confirm","status":200,"duration":18,"requestId":"bcea712e-da5b-46f4-98fa-6c6fa582d250"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad7749ad1960e0650912359","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":10,"requestId":"c41cfcf7-699e-42e8-b094-bf14cba5090f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad7749ad1960e065091235c","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":11,"requestId":"4f1d9aa3-a147-40ea-ae09-6af9010e225d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_confirmed","orderId":"6ad7749ad1960e0650912359","customerId":"customer-A-test"}
+
+      at log (src/services/OrderService.ts:327:15)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e0650912359/confirm","status":200,"duration":16,"requestId":"1338cddf-d966-452f-b30a-574a3aeb9915"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"stock_insufficient","orderId":"6ad7749ad1960e065091235c","customerId":"customer-A-test","insufficient":[{"productId":"6ad7749ad1960e0650912356","requested":3,"available":0}]}
+
+      at log (src/services/OrderService.ts:306:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e065091235c/confirm","status":409,"duration":20,"requestId":"fe403bb3-44bf-4a91-8fcd-09f0f8ff1f0f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad7749ad1960e0650912370","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":10,"requestId":"309b0693-2623-49f7-af22-9f351f04a27b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad7749ad1960e0650912373","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":9,"requestId":"ac9aebe9-de1b-4e91-a88a-27081a4f260c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_confirmed","orderId":"6ad7749ad1960e0650912370","customerId":"customer-A-test"}
+
+      at log (src/services/OrderService.ts:327:15)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e0650912370/confirm","status":200,"duration":13,"requestId":"2b92e53a-4b43-4bff-b264-887eae934860"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"stock_insufficient","orderId":"6ad7749ad1960e0650912373","customerId":"customer-A-test","insufficient":[{"productId":"6ad7749ad1960e065091236d","requested":3,"available":0}]}
+
+      at log (src/services/OrderService.ts:306:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e0650912373/confirm","status":409,"duration":5,"requestId":"21cd50ec-94e7-4543-9d7f-d20bf030e750"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":500,"duration":3,"requestId":"df2cc49b-f3ca-4682-a5ef-93661b142062"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad7749ad1960e0650912388","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":10,"requestId":"9cac7d42-e6c7-46c4-bea0-628c99777e85"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"order_created","orderId":"6ad7749ad1960e065091238f","customerId":"customer-A-test"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"method":"POST","path":"/api/orders","status":201,"duration":11,"requestId":"e6a829a9-fac1-487a-a335-b7c8af04d48a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/orders/6ad7749ad1960e065091238f/confirm","status":500,"duration":6,"requestId":"a5e825b4-24a4-4bee-90c8-7287d481fa2b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":400,"duration":0,"requestId":"1fe20dab-bd3d-47c1-a7b9-3b5c5dd178c9"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":400,"duration":0,"requestId":"00c9a375-b038-40ad-8541-a59ce07e1b70"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":400,"duration":0,"requestId":"65264dba-9c42-424c-ab30-24af4e8538d4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":400,"duration":0,"requestId":"b1da0c99-a084-4882-bc34-b4e84bed3845"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+PASS src/__tests__/customers.spec.ts (5.669 s)
+  ● Console
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":401,"duration":0,"requestId":"922ade56-7fa7-40eb-bba3-0013395ef9b4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":401,"duration":0,"requestId":"36bb677e-3965-4440-8056-68a5269ff832"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad7749c38e71a6867615132","status":401,"duration":0,"requestId":"ea1b76e1-dff1-4e3a-ac36-1488f1e76fd9"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad7749c38e71a6867615132","status":401,"duration":0,"requestId":"9b7d5cb6-4816-4b41-a70a-df55476bd846"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":401,"duration":4,"requestId":"af7e5b17-ce4f-400f-96c0-6049f5cefd8c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":401,"duration":0,"requestId":"a33a07b7-f596-446d-a3b2-de1d898741fa"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad7749c38e71a6867615132","status":401,"duration":0,"requestId":"f8a281b2-aaa7-4041-9350-fdf0593bdb08"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad7749c38e71a6867615132","status":401,"duration":0,"requestId":"e1799889-e45b-426c-ab07-086938959810"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":401,"duration":0,"requestId":"87177f5a-1565-4b78-9f01-1acc5fd487d8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":401,"duration":1,"requestId":"991127b4-6daf-487b-b776-4a79accc2272"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad7749c38e71a6867615132","status":401,"duration":0,"requestId":"efbcb7b9-8e5e-466e-8c34-cb86a3a4c8bf"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad7749c38e71a6867615132","status":401,"duration":1,"requestId":"b5288093-be3b-4f84-a94f-9cabde0e5daa"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":401,"duration":1,"requestId":"2a70cea2-24b3-4691-8091-7669ce7c1ea2"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":401,"duration":1,"requestId":"9dd834cf-4d98-4638-8f29-3c4670ef2098"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":401,"duration":0,"requestId":"7b372d92-6068-4188-a60c-5b93d14c25d1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad7749d38e71a686761517c","status":404,"duration":3,"requestId":"b3ccee09-73bd-4b04-9175-80dd69a1bb5b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":401,"duration":0,"requestId":"a48cb81e-ec74-4b92-8dee-0cde19ea07bf"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders/6ad7749d38e71a6867615182","status":404,"duration":19,"requestId":"0a0d6360-11c9-4d74-8a4b-ac236439cdb3"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/orders","status":500,"duration":18,"requestId":"8b984c5e-c5c8-4d22-a4ac-a20ac18977bd"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":29,"requestId":"040206ac-0a8d-4b9a-8fec-14547d2870ac"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":20,"requestId":"be9833fa-0dcc-4991-81e6-c943dc048898"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"21db6ac7-7b29-4700-bf7b-832dd421a875"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-002"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"4eec8ebb-5892-4b1a-9de2-bed978675b80"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"ff776328-5979-4e85-84e7-87022fe90521"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-002"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"919c8d1e-93bf-4716-bd8c-17cbba6b16d9"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-003"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"b55bba3b-e9dd-4d0b-81cd-7062ec5e6944"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":17,"requestId":"38ef783f-71e8-4e4a-9743-e6055a5cfb6c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"06c33eeb-016d-493e-9b19-a2f22c70c3f8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"c7bbb6c3-35d6-4474-8c2b-e0d9f8e58bd8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad7749e38e71a68676151d8","status":200,"duration":10,"requestId":"40042930-6ee1-479a-9ffa-907a3425317a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"b01d1d22-a98f-4a8f-8662-b0305b94dd17"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-002"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":19,"requestId":"f85caf16-f98d-470f-b402-a7a40f8c0c83"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":27,"requestId":"78e7286e-70f9-4361-b65f-ae8f1654845a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-002"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":30,"requestId":"12acf7ec-8444-446d-8493-f1d18780d7d1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-003"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":31,"requestId":"61f5d858-df84-42bc-baef-fc5a4737b61a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-005"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":34,"requestId":"c8a00a6f-e425-4280-a6da-5ac078b0dd66"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-006"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":34,"requestId":"f7ddaf26-1c84-4dfb-a0f1-549fc102539b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-004"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":36,"requestId":"deab7f12-9662-4ca5-a7e3-586e8c9bb1be"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-007"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":35,"requestId":"d53bca4b-c943-43dd-bdd3-58eca17699d7"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-010"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":33,"requestId":"0819c9a9-bd96-4cb4-82e7-4452e75f4eea"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-015"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":39,"requestId":"af89190e-4733-4ee4-8bde-b92452190701"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-011"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":35,"requestId":"4e322316-e6c9-462f-b31d-dccf1610efe8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-012"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":34,"requestId":"eca8d256-ab55-4ebc-80bc-a9f8fc044c0a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-014"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":36,"requestId":"52e48a2f-cc89-4f8e-bef1-82ce296f1708"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-013"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":35,"requestId":"7aa21750-c211-4d04-8bb8-3c4f0b3605f7"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-016"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":40,"requestId":"4a945df1-3900-4588-ad3f-e63fab0fe20d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-017"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":38,"requestId":"f3c7ea9e-de31-4a5e-a7ab-6b5231380dab"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-018"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":39,"requestId":"363951f7-5f51-498d-b006-b472d221b2bf"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-020"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":39,"requestId":"99229f5e-3d1f-422d-be63-d8216655dd64"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-009"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":45,"requestId":"98251748-1c1a-4a5a-a222-5b60f12a87b7"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-019"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":41,"requestId":"c46d218b-4ce6-4624-9fc4-b170db0d7916"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-008"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":47,"requestId":"c17a0802-3452-4ca5-8745-965a7cf3e2b1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":18,"requestId":"ef412c30-380f-4119-b0ff-3a4588454546"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":409,"duration":2,"requestId":"d0c05668-b469-4424-9fa8-5d21843f78c2"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-002"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"8f24b7dc-c10b-4305-886b-e901629d9155"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":409,"duration":15,"requestId":"6a1215d3-ae50-462d-ae7f-a00459036493"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"2276b715-055c-465b-9f66-9cb8b7840aba"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":0,"requestId":"21fcb610-098b-4142-a9ae-f480f1f634d1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"50cffde2-2488-4969-bee8-c36a5fa94385"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"1a945f3d-8c4f-4809-a424-3c2d2571202f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":0,"requestId":"66f8b400-5553-4a1a-b288-f466ce234170"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"8c5856fc-d16a-4929-b520-4129028b048a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"0c2ac3b1-2dd1-4ee7-af71-31e913822039"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":0,"requestId":"d1bd51b3-badb-4819-be61-7fe19dacb57d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":0,"requestId":"133175a7-5cfc-4197-84e7-b8f743affb33"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"d11afb9f-dec5-4e6e-ba68-af127511d49f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"a352f0d6-3f16-44dc-bca4-acd367520c01"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"cef7b4d5-b288-4555-8eec-c904ac8b9786"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"cd7a1c96-7bb7-4a90-a010-ab9c1cf61e3d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"91e31347-9586-4330-837c-799c0af2bfd8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":0,"requestId":"e67b187e-6316-4b62-ac0c-7fbd854cedd0"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"ac5e4b42-000f-47c0-887c-2d4f8a86b599"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":18,"requestId":"5617d3b9-c0f7-4ded-806e-4204cae4ef41"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-002"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":18,"requestId":"5837f516-9934-41e0-becd-1f313924eccd"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"79bcf885-486d-4b32-86d3-040052d66dbe"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"b5a647c9-af92-48ad-8354-c94612957b74"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"2855ebe1-216b-4563-af79-caaac4c850a8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"7029b76c-9582-4903-895d-a99fba9fcaa4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":18,"requestId":"b4c431be-b42a-40e9-97f2-ba355baad548"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"5b986632-119d-4f2f-bffd-88cec37fbc69"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"603be209-b82a-412d-9bd2-9f61ac4eaf43"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":19,"requestId":"310e81c7-04a8-43f7-8ddd-c7c9302f197b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"e66296e8-bf81-43ea-8afd-8f2d1e472e21"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"f2e6e982-7475-4f55-b8a1-bf56f4099d93"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":18,"requestId":"03938adc-da1c-463b-9fb4-21b87dda61a3"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"836eea6f-2630-4469-b6fa-acec6582e8f6"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"af2de77f-f527-4b92-ae09-67e7786af18b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":17,"requestId":"379496ba-e246-4f2d-8717-f4009428cbd9"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"4f61a138-02e5-43c2-9379-f2ca75138b96"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":0,"requestId":"3d2d09cb-5127-4815-b71d-8b432309b50e"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"593dd48b-a695-4ad8-beb3-27cc8edf73e1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"b48a2c1f-c9a5-4f22-b57f-27c4711a31b8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"7c4768b7-04e3-4042-9cdd-170a323d548c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"0d5c8486-8f23-4f22-841d-a67ed223f506"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"c2a31c5a-758b-432a-869f-5e07fb901b89"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"670da4fe-0afb-4d47-a8f2-7e53e8526bc3"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"0384f45b-c8e2-45b4-8bd0-2558de0373e4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"4d10936a-f9cc-49da-bbad-01d395d71fb8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"107678a1-5085-4051-a46d-727ca7360b5a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"83250d18-fcc0-46ee-8775-79b3a2d03d3e"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"f67350a7-781d-4ba9-9215-dcc7d4b5aa95"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":0,"requestId":"e78536a3-0cda-43f8-b445-614d604a6351"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"ffe993b3-f448-4f2a-a43e-90ac088fd03b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":0,"requestId":"bb56d8eb-52b2-42ca-8167-ac186cd6e343"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":0,"requestId":"4947128f-f4f7-4137-804a-26e260ab7bc1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":0,"requestId":"c8842ad7-0322-4113-b6b3-9cda2f9f2973"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":3,"requestId":"8c6c69a3-cc5e-45fc-a6cb-c31e161c99c8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":3,"requestId":"d7aea58d-6473-4c85-b2e7-1e035f122fea"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":1,"requestId":"7a2a6d37-46e6-4d06-bb44-6edd5e348d3b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":400,"duration":3,"requestId":"15326b1a-9142-4a47-ab6c-b5460ad8b15d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"4cd77a88-16d8-4877-b4ea-d92db28a4be5"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":200,"duration":3,"requestId":"64aa38cd-7495-456e-bb8a-c4775235e1a7"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":18,"requestId":"d52f78c5-9181-4786-acb9-bdb6aa4dbdb3"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-002"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"ed09e2f4-e1a9-452a-9958-5deab51ff6f0"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-003"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":19,"requestId":"af7c95f6-971c-4638-a428-df9bb75b868d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":200,"duration":3,"requestId":"f369efd5-d0fe-4646-9cd1-73dd14e083e8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":200,"duration":2,"requestId":"2130ff79-8b75-4af5-ac6b-d0a633034461"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":17,"requestId":"a1852b30-06d5-40c2-9f1e-1751cac493ff"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-002"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"c8c15c8a-0f49-4a13-a3d3-330a8654faa6"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-003"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"ad51191d-5a43-45f5-b32f-15cee06f0496"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":200,"duration":2,"requestId":"e9b1eebc-1afe-4171-9e10-c359c606c46c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":400,"duration":0,"requestId":"391ca39c-9cab-4101-b421-fa6f406e3cc1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":400,"duration":0,"requestId":"a032cc1a-cfe6-46db-93b7-5b3d1e2662b0"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":400,"duration":0,"requestId":"88f14777-58da-4aee-9690-30a6bdd901af"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":400,"duration":1,"requestId":"0cdec865-5847-4665-98dd-1ca8a67c3bff"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":400,"duration":0,"requestId":"1b28da21-22ea-4c1b-9aec-3e5c67b1062c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":400,"duration":1,"requestId":"050ef668-dabb-46f5-aeab-22b186a2b313"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":400,"duration":1,"requestId":"286260d8-eee5-4aec-bd45-c67c819ff91c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":400,"duration":0,"requestId":"43a78bc6-0c06-4cbe-a954-bb986b7954ac"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":400,"duration":1,"requestId":"b4516351-8cf3-436e-88e9-9e717b18508a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":200,"duration":1,"requestId":"4626274c-c5fd-412d-9b53-e5eb54b97b73"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"4eb560c6-7c07-4e80-85f0-ca493e802bb9"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-002"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":13,"requestId":"2d3ae1bd-bc39-464c-a5c1-f21cfd23ad13"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":200,"duration":2,"requestId":"75c50134-e19e-4a59-9d46-75fefcc527da"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":13,"requestId":"f96c2888-3cf4-4b86-b43d-4362809aa14a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":200,"duration":2,"requestId":"4a7b1415-a95b-4dde-9209-bb1e73e6fe59"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"18870506-a200-4f0b-9000-f5d5177e41cd"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":200,"duration":2,"requestId":"fd5ad5f7-77f0-480a-ad62-59ffa8e53962"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"611fdd87-ff8a-4eef-8f3c-c7627038f3b0"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":200,"duration":2,"requestId":"523db639-b5c0-4b63-a0a0-c4bd20fed472"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":500,"duration":10,"requestId":"d20a622a-cf7f-4872-831a-db70cc5b1e32"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"886cfeaf-39ce-4e86-a9b4-a987eba06a09"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"8908fa2a-7319-458a-bd30-7942d5e4498b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":200,"duration":2,"requestId":"77552146-d3a8-42b4-98a4-bee763ce491d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":18,"requestId":"16d27d13-1aae-4180-a2cf-7d659cf2eff4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":200,"duration":1,"requestId":"18009354-69f7-457c-a15a-dc63c1e670f4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":200,"duration":2,"requestId":"ac65b615-d45c-43d8-97de-ef62ec30399a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad7749f38e71a6867615435","status":200,"duration":1,"requestId":"3c50a3e4-bd57-4602-91a0-c847f24a05f3"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"5eaccff9-8160-4d96-9237-9d0c27c501ef"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"215849b6-10b5-4bfd-9293-b914085a54a4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad7749f38e71a6867615451","status":200,"duration":2,"requestId":"0e2f8dc1-6626-4ae7-8ae7-3fe2aceae55c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"2f251f52-b313-43f4-a736-2771faf509b0"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad7749f38e71a686761545d","status":200,"duration":2,"requestId":"eedfcba7-a5b1-4088-b052-2591e7a6b1fb"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"edc3f6e8-4b0e-4fee-9bd0-0914b66e1e45"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad7749f38e71a6867615469","status":200,"duration":3,"requestId":"85805ebf-2bdc-4a31-a300-f9bb8b31ebb9"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"a00d9d9f-bf58-4cff-998a-3b626ec6cc47"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad7749f38e71a6867615473","status":200,"duration":2,"requestId":"c85ce4be-9276-498e-b182-cc9d3343ab72"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad7749f38e71a686761547a","status":404,"duration":1,"requestId":"7471ddd3-f673-49a6-b6a6-8105ca0021ad"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/no-es-un-id","status":404,"duration":1,"requestId":"3706e1c8-3f89-418f-9684-6cf127f1fb81"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":17,"requestId":"30ccbc3c-8944-4391-ae44-ba1efae718c0"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a6867615486","status":200,"duration":11,"requestId":"85f9c6a5-5a60-4c8d-b623-a28891f4b372"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":17,"requestId":"e67f0e06-a1fd-4a52-8a38-3b569a6aa31a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a6867615494","status":200,"duration":9,"requestId":"0ec7983b-c78c-4e03-af93-0999f55f3025"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"dff82117-6517-4c8c-9369-c6e0306f897e"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a686761549e","status":400,"duration":2,"requestId":"41970486-6076-4104-877e-7b53278e73a5"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"e1fcf395-f060-48e4-83b1-9d53fa2094e6"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154a7","status":200,"duration":9,"requestId":"7226b4f5-367c-4ca9-8109-a07da0a6b503"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"ad7e3a75-65ac-476f-bfcf-6a8f4373820b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154b2","status":200,"duration":7,"requestId":"e08b4cbd-3be9-43b3-adbd-af05b12d39fe"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-002"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"20c0b2f8-f773-4cee-af45-502774260cc1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154b8","status":200,"duration":11,"requestId":"0cf6ef31-dba0-43e4-b9bb-1b8533a8178d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"d77dc6f8-3325-4965-82a9-ba865936a697"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154c2","status":200,"duration":8,"requestId":"39623c74-fd31-4488-9626-e1e904775e26"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-002"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"3d9f746d-b78c-4b9e-bbb6-1d74bb5715c0"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154c8","status":200,"duration":7,"requestId":"b783fd60-d95e-46bc-99c8-f31b507e98fc"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"acc8f49a-e20a-4248-8e6c-a2a6dc37e1fe"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154d2","status":400,"duration":0,"requestId":"90216afc-8a90-44ea-a1b8-40756d9d1ada"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154d9","status":404,"duration":1,"requestId":"8080c7b1-dfc0-4ced-b943-8d2328c5c2bc"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/xyz","status":404,"duration":0,"requestId":"5cb13616-63b6-48ba-8619-1b9ab1db55e3"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"e13febb0-3d84-4e39-9222-ae24d3a80023"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154e5","status":400,"duration":0,"requestId":"725ac5ff-15d4-4334-bfcf-7bbeced20a8f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154e5","status":400,"duration":1,"requestId":"56cd3bec-c0c0-42cb-a384-769022433f30"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154e5","status":400,"duration":1,"requestId":"a325fd14-6008-4b6c-a6e0-c2654b02aeb9"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"7716189a-eda1-41e6-9e7e-1bf3d1e090e4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154ed","status":400,"duration":1,"requestId":"3a7d7bf7-7d3e-4b2d-a001-0e747dc0a9b4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154ed","status":400,"duration":1,"requestId":"014c0cfb-dcab-4cf5-b302-f7ecf93c313e"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"bfa30f27-f4eb-432b-9b53-8d6993f27da5"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154f5","status":200,"duration":7,"requestId":"f2f383ce-22ba-4ead-b1fa-ec9812e82f91"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":17,"requestId":"89ad27d5-bebb-48ca-8b76-60bb0e51fa50"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154ff","status":400,"duration":0,"requestId":"fbae5b17-1b17-49fc-bb98-c40d21bfae4b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a68676154ff","status":400,"duration":5,"requestId":"cd7f9777-aab1-4512-ac1a-68295d8174fd"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":13,"requestId":"8ad43449-03f2-4fd0-82de-16ed29661f8a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a6867615508","status":400,"duration":1,"requestId":"9355104a-f70f-4db0-95a8-e42103be4fe2"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a6867615508","status":400,"duration":2,"requestId":"b7c84937-ea94-4881-afc4-877065de35fa"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"ff5ccf02-d50d-4ff9-bca3-eb81cefea22d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a6867615515","status":200,"duration":8,"requestId":"5d3ade61-357b-4089-9e61-1b11cfd752c1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad774a038e71a6867615515","status":200,"duration":2,"requestId":"cb7aafa7-5e29-429e-a2b5-7ede5f341ebb"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":17,"requestId":"6305fcae-1184-4f75-b81b-6b2aececde13"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a6867615524","status":400,"duration":2,"requestId":"c4a9a98f-97b9-42f8-b613-b30e3e2539bb"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"29abfc97-4e2e-4753-960b-62e9b71cdf10"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a686761552f","status":400,"duration":2,"requestId":"df9d69e0-f4e0-4d4e-8caa-23db531db245"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"a5eddbf5-2fdf-4e54-a0eb-e0e536464419"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a686761553b","status":200,"duration":9,"requestId":"ee1e8947-729d-4c14-a3d1-bd36b56189b0"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":16,"requestId":"4d893198-7a5e-4bf8-8b88-b710f7e029ce"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a6867615546","status":200,"duration":9,"requestId":"a100d9a0-5ff1-4106-a3c7-d6c9e0711827"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad774a038e71a6867615546","status":200,"duration":2,"requestId":"e0ffa6e3-c965-4cfd-87fa-c68597f2b635"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":17,"requestId":"94d0d153-6efc-409c-a14a-365112a60197"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a6867615554","status":200,"duration":8,"requestId":"4bd911ff-894a-49ad-845a-a7908f2b6c6a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a6867615554","status":200,"duration":8,"requestId":"fa6cf7b6-ada5-44ad-9acf-68cf205f1dc2"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a6867615554","status":200,"duration":8,"requestId":"074e28fe-f230-481f-bf1b-0ac9db872487"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad774a038e71a6867615554","status":200,"duration":2,"requestId":"227f1f80-b47e-4ae0-b6d7-c4685c735f75"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"d832b33d-a35e-4c73-893a-698f0a439c56"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a6867615564","status":200,"duration":8,"requestId":"d30939bc-8f43-4279-9916-0cfffcf385e9"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"6b787b66-7e19-4bc0-8a6c-b63197633b41"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a038e71a686761556e","status":400,"duration":0,"requestId":"36b60caa-f194-4663-ac62-ce6e22c59b0c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":17,"requestId":"22928e30-ee60-42c6-b722-9c8f48e9414c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":409,"duration":1,"requestId":"4a8725ce-6455-423c-8365-a1d28c51cbbe"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2026-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":14,"requestId":"475808b0-f87d-4ccc-a751-f538155c5ca5"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2030-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":17,"requestId":"96e2a2b0-2210-4fc5-9bbc-ed50a36fcae3"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"event":"customer_created","code":"PRO-2031-001"}
+
+      at CustomerService.log [as create] (src/services/CustomerService.ts:298:13)
+
+    console.log
+      {"method":"POST","path":"/api/customers","status":201,"duration":15,"requestId":"9763316b-b7c3-48b5-8320-64003f3944a6"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers/6ad774a138e71a68676155be","status":500,"duration":1,"requestId":"9c8414e1-28a9-419d-9b4d-9f7945f9f711"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/customers/6ad774a138e71a68676155c3","status":500,"duration":1,"requestId":"83d67852-f1e6-4c9f-ac08-f6f9a40b01c8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/customers","status":500,"duration":1,"requestId":"9f6a98b9-3a79-4b8f-8efb-a6fc42483f33"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"DELETE","path":"/api/customers/6ad774a138e71a68676155cd","status":404,"duration":1,"requestId":"4e64c69f-8e90-481c-a65f-8a6a189b8b73"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PATCH","path":"/api/customers","status":404,"duration":0,"requestId":"ad3cc60c-82a5-401a-8b48-f3f6f8afe7fc"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PATCH","path":"/api/customers","status":401,"duration":0,"requestId":"5daaa900-1d9a-4986-aa77-a0844d70ed6c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"DELETE","path":"/api/orders/6ad774a138e71a68676155d6","status":404,"duration":0,"requestId":"3a29ba30-31f2-4c24-804c-af08ae33abab"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+PASS src/__tests__/seedExecutives.spec.ts
+  ● Console
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":9,"requestId":"4b36a352-859a-4b93-87e3-592cf6ad01a6"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+PASS src/__tests__/executives.spec.ts
+  ● Console
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":10,"requestId":"e0e9e219-ebc3-4481-86cb-2de5d4b8ea7e"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"2f318a14-3b7e-43cd-9832-bcf8d475a77c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"c3184c77-785a-41a9-bfc0-0acb524bae0c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"905afd8a-31ed-4ebb-b2ab-eb8dc54ae961"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"532a7044-7f50-4791-a017-ab751bc74dd9"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"92ea5dce-770f-45bc-b9b2-52c8819feb7b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"7c80d20f-5f55-4e43-8961-1d8e8cfc0800"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":401,"duration":1,"requestId":"f62b6eff-5d6a-4aaf-b059-8fc676daced8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":401,"duration":0,"requestId":"eeb74eb9-7ab0-4d50-9432-98fd856e72f9"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":401,"duration":0,"requestId":"51eaa949-f1e9-4a08-984c-cd21b27fd736"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":401,"duration":1,"requestId":"345db9d1-3d12-4c2e-99c5-0e61c1708baf"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":401,"duration":1,"requestId":"5a77c74d-b320-469c-8543-d61e731557b5"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":401,"duration":0,"requestId":"559d713a-0e3d-42a2-8616-314d63847bf6"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/executives","status":401,"duration":0,"requestId":"0444a843-ef5a-47af-834c-56978c2cf57e"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"DELETE","path":"/api/executives","status":401,"duration":0,"requestId":"17881038-b46d-435b-9271-812165b3ce8c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"PUT","path":"/api/executives","status":401,"duration":0,"requestId":"c7bcb049-644f-4284-a5fd-49fe72a2b124"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives/123","status":401,"duration":1,"requestId":"ed1f93b0-fc30-4928-b629-de746fcca6be"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/executives","status":401,"duration":0,"requestId":"e7a6e32a-c6b7-4a20-aa2d-631172339715"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"POST","path":"/api/executives","status":404,"duration":6,"requestId":"5f683ef4-dd68-44eb-b769-a8ebecce09c7"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives/123","status":404,"duration":1,"requestId":"da93d391-603c-4b67-8264-bb5d5cd29b99"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"d5398783-cbee-4904-aa1f-44d5e6c400e4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"fd130c11-e63c-4822-a87a-69f09a250eb8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"b0cfe6c0-9eb2-4001-98ec-900f93a9891d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"3ecc5e6a-9868-4501-b740-847bf65f7ffc"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"6e9b7e4a-8e4f-44ef-9c50-53a8b104331b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"1287fda1-9c39-4b66-b2a3-928ba25585f7"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"10378b90-cbcd-4f23-8b5e-8a92dffa6463"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"a3168d8a-2d48-41ca-9e22-9c667d8f8447"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"e9e84539-21dd-4d04-bb52-89beaf4e0d77"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"896c185e-7247-4c71-93d6-742a5d70e28f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"f7706125-9af3-4b3b-9cb6-d4ee6b4bd8d6"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"4380b1c4-480f-488d-89c2-295608e26129"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"1de046b5-5950-4f99-bd1d-ea78a10f7fe6"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"def52078-10ea-419b-958d-7df1efd2eb4b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":4,"requestId":"f931d40b-6399-495d-aa38-aeb1d11b9c6e"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"52b3e815-cb75-4764-8c70-4a6bfee7fb75"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"ffa8ead7-be4a-4dd6-a611-1cae237df5b3"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"eb7211c4-e7d1-4e4a-b4f2-8149736eeab9"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"f18132c8-2a41-4c15-8646-9fee200258a2"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"2bb97f3a-8563-47db-b975-f0bda5956053"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"9c71a0ab-3961-4a51-9a2d-467572460b36"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"d323ff5f-13bd-4ae3-bdb2-beaaa584eccb"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"4af49bb9-179b-48d4-bbdd-17d37c66ff38"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"56af2fff-7e5a-4822-94a0-64cfc4da5676"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"b696ccad-8002-4104-8790-7014f541198c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"f86f2800-dde3-4511-a4f5-cced6e16bf45"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"d5b51365-5704-46b3-adee-eb2bfb3c6a50"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"9beda6f8-e1dd-42cc-8d5f-bc49072c9f7d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"e2d85646-b240-4d50-a8af-f7500c355f15"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":4,"requestId":"2f15d678-8d58-4ea3-a49e-3f209bd6bc31"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"f754b980-6d7c-49d2-971f-d6061816ff1a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"eb6494de-247e-4cbf-87f5-8fe8c3ac221a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"010a7488-9c72-43f7-af72-4f6a7c8921af"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":1,"requestId":"00d32bac-3ee8-408c-88ad-894f17e03879"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"a8929856-ace3-42cd-b37a-aa2e401f7ed4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"0c1de2ea-aaca-4e15-a57b-16a1f2602f14"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"dadf932c-3d7f-4e27-9a0b-d8b7a6e75b45"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"6d7db625-52fa-4804-987a-ccdd5a84a268"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":2,"requestId":"75bb417d-185f-42b0-80ba-c0104a31913a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":200,"duration":3,"requestId":"f246e20e-b7d7-448d-9a48-e6bf4bcd11d4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"metric":"GET /api/executives p95 ms","p95":5.06}
+
+      at Object.<anonymous> (src/__tests__/executives.spec.ts:331:13)
+
+    console.log
+      {"method":"GET","path":"/api/executives","status":500,"duration":1,"requestId":"16e32087-7339-4f89-8edc-91ddbbb54fde"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+PASS src/__tests__/customerMigration.spec.ts
+PASS src/__tests__/migration.spec.ts
+  ● Console
+
+    console.log
+      === Migration Log — WI-ORD-API-005 ===
+      Fecha: 2026-10-20T14:03:23.265Z
+      
+      Colecciones disponibles: products, orders
+      
+      Índices en la colección 'products':
+        - _id_: {"_id":1}
+        - sku_1: {"sku":1} [UNIQUE]
+        - active_1_name_1_sku_1: {"active":1,"name":1,"sku":1}
+      
+      Índices en la colección 'orders':
+        - _id_: {"_id":1}
+        - code_1: {"code":1} [UNIQUE]
+        - customerId_1_createdAt_-1: {"customerId":1,"createdAt":-1}
+      
+      Resultado: OK — colecciones products y orders creadas con sus índices
+
+      at Object.<anonymous> (src/__tests__/migration.spec.ts:124:13)
+
+PASS src/__tests__/mongoUnitOfWork.spec.ts
+PASS src/__tests__/products.spec.ts
+  ● Console
+
+    console.log
+      {"method":"GET","path":"/api/products","status":200,"duration":10,"requestId":"a573aa6b-283c-47d8-a22f-cb929c13cde4"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":200,"duration":3,"requestId":"beb7c832-7a7a-4aec-82b5-f4e0b2cb1e2f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":200,"duration":3,"requestId":"4259d96c-5b4a-471f-99e0-7996dc8adbe3"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":200,"duration":3,"requestId":"79c720dc-f808-4d52-8f0b-67ca1d939529"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":200,"duration":3,"requestId":"a623f498-c4c7-4362-ac80-5875b7bf3e83"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":200,"duration":2,"requestId":"325f5d8a-25c2-4546-af33-d8de02f4bb68"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":200,"duration":1,"requestId":"1aeeb791-cd5d-4167-b92c-08626ae8c1f6"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":400,"duration":1,"requestId":"e2ace3d9-3e47-4eeb-ba6f-21add72aaeec"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":400,"duration":1,"requestId":"9dcbeebd-df59-4b70-b0fe-f8f1a94126f8"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":400,"duration":0,"requestId":"f20003da-e61b-4ce2-b3f0-880c9a8d5c5a"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":400,"duration":0,"requestId":"7d440aed-0a61-483d-861c-9f9e2316e13c"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":400,"duration":1,"requestId":"83f7f0be-4b25-47b2-a0f8-5c4f6d70b32d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":400,"duration":1,"requestId":"57ff5d1b-4882-4e90-a52a-989efaea9129"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":400,"duration":1,"requestId":"1d210e86-9b52-492b-99dd-fb421fc1ca94"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":400,"duration":0,"requestId":"d8541b2d-9892-457e-b64b-90891304d040"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":400,"duration":1,"requestId":"493ae8e6-8b52-4637-b354-eba61bb748d3"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":400,"duration":0,"requestId":"014c4ea4-6e48-42de-af26-384ffcbfefca"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":400,"duration":1,"requestId":"e207fb6a-39cf-4f0e-8be2-cd0d6f70117d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":401,"duration":1,"requestId":"ff21d838-be29-4865-8ab9-4d24230324d2"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":401,"duration":0,"requestId":"94ee6de0-d6e7-4c2b-9d2f-9462be7f7c0f"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":401,"duration":1,"requestId":"f88077ec-7316-4568-9b6d-0a050c5be50d"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":401,"duration":1,"requestId":"b3bf190e-a6b9-4a79-949a-b1da3d508f21"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":401,"duration":1,"requestId":"fde1d240-f8de-41f4-bf39-60c8570183b1"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":401,"duration":0,"requestId":"2f9a908d-8bc2-414a-9b43-12e193bbc777"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":401,"duration":0,"requestId":"ce59e42d-14ff-4d5c-971d-fb4861e00ece"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":401,"duration":0,"requestId":"e1e7ad99-74b4-4f68-9738-87f7e633d32b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":200,"duration":2,"requestId":"dd798c43-14f2-404d-81f1-10d365aae19b"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":200,"duration":1,"requestId":"43f5f63c-7879-4156-af9b-fbfa05b0e836"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+    console.log
+      {"method":"GET","path":"/api/products","status":401,"duration":0,"requestId":"86d70f1d-ff6d-4052-8735-abce7b6d5331"}
+
+      at ServerResponse.log (src/middlewares/requestLogger.middleware.ts:17:13)
+
+PASS src/__tests__/orderService.unit.spec.ts
+  ● Console
+
+    console.log
+      {"event":"order_created","orderId":"6ad774b0b6e5f5cee56c751e","customerId":"customer-test-001"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"event":"order_created","orderId":"6ad774b0b6e5f5cee56c7521","customerId":"customer-test-001"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"event":"order_created","orderId":"6ad774b0b6e5f5cee56c7526","customerId":"customer-test-001"}
+
+      at OrderService.log [as create] (src/services/OrderService.ts:179:17)
+
+    console.log
+      {"event":"order_confirmed","orderId":"6ad774b0b6e5f5cee56c753b","customerId":"customer-test-001"}
+
+      at log (src/services/OrderService.ts:327:15)
+
+    console.log
+      {"event":"order_confirmed","orderId":"6ad774b0b6e5f5cee56c753e","customerId":"customer-test-001","idempotent":true}
+
+      at log (src/services/OrderService.ts:282:19)
+
+    console.log
+      {"event":"stock_insufficient","orderId":"6ad774b0b6e5f5cee56c7547","customerId":"customer-test-001","insufficient":[{"productId":"6ad774b0b6e5f5cee56c7546","requested":5,"available":2}]}
+
+      at log (src/services/OrderService.ts:306:17)
+
+PASS src/__tests__/evidence.spec.ts
+---------------------------------|---------|----------|---------|---------|-------------------
+File                             | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+---------------------------------|---------|----------|---------|---------|-------------------
+All files                        |   97.85 |    92.59 |   96.93 |   98.14 |                   
+ scripts                         |   92.45 |    80.76 |    87.5 |   91.83 |                   
+  evidence.js                    |   92.45 |    80.76 |    87.5 |   91.83 | 139-146           
+ src                             |     100 |      100 |     100 |     100 |                   
+  app.ts                         |     100 |      100 |     100 |     100 |                   
+ src/controllers                 |   98.76 |      100 |     100 |   98.75 |                   
+  CustomerController.ts          |     100 |      100 |     100 |     100 |                   
+  ExecutiveController.ts         |     100 |      100 |     100 |     100 |                   
+  OrderController.ts             |     100 |      100 |     100 |     100 |                   
+  ProductController.ts           |   88.88 |      100 |     100 |   88.88 | 86                
+ src/lib                         |   95.89 |    86.66 |   96.96 |    96.4 |                   
+  MongoOrderRepository.ts        |   94.11 |     87.5 |     100 |   96.77 | 86                
+  MongoUnitOfWork.ts             |     100 |      100 |     100 |     100 |                   
+  customerNormalization.ts       |     100 |      100 |     100 |     100 |                   
+  errors.ts                      |     100 |      100 |     100 |     100 |                   
+  obfuscate.ts                   |       0 |        0 |       0 |       0 | 4-8               
+  safeErrorLog.ts                |     100 |    86.66 |     100 |     100 | 46-47             
+  transaction.ts                 |     100 |      100 |     100 |     100 |                   
+ src/middlewares                 |   98.55 |    93.54 |     100 |   98.52 |                   
+  authenticate.middleware.ts     |   96.29 |     87.5 |     100 |   96.29 | 47                
+  errorHandler.middleware.ts     |     100 |      100 |     100 |     100 |                   
+  requestLogger.middleware.ts    |     100 |      100 |     100 |     100 |                   
+  withErrorDetails.middleware.ts |     100 |      100 |     100 |     100 |                   
+ src/models                      |     100 |      100 |     100 |     100 |                   
+  counter.ts                     |     100 |      100 |     100 |     100 |                   
+  customer.ts                    |     100 |      100 |     100 |     100 |                   
+  executive.ts                   |     100 |      100 |     100 |     100 |                   
+  order.ts                       |     100 |      100 |     100 |     100 |                   
+  product.ts                     |     100 |      100 |     100 |     100 |                   
+ src/routes                      |     100 |      100 |     100 |     100 |                   
+  api.routes.ts                  |     100 |      100 |     100 |     100 |                   
+ src/scripts                     |   92.68 |    80.76 |   76.92 |    96.1 |                   
+  seedExecutives.ts              |   92.68 |    80.76 |   76.92 |    96.1 | 149,154,188       
+ src/services                    |   98.57 |    91.66 |     100 |   98.47 |                   
+  CustomerService.ts             |   99.15 |    93.22 |     100 |   99.09 | 379               
+  ExecutiveService.ts            |     100 |      100 |     100 |     100 |                   
+  OrderService.ts                |   99.03 |      100 |     100 |   98.97 | 209               
+  ProductService.ts              |   94.28 |    55.55 |     100 |   93.75 | 118-119           
+ src/validators                  |     100 |    98.42 |     100 |     100 |                   
+  customer.validator.ts          |     100 |    98.55 |     100 |     100 | 180               
+  executive.validator.ts         |     100 |      100 |     100 |     100 |                   
+  order.validator.ts             |     100 |    97.61 |     100 |     100 | 40                
+  product.validator.ts           |     100 |      100 |     100 |     100 |                   
+---------------------------------|---------|----------|---------|---------|-------------------
+
+Test Suites: 10 passed, 10 total
+Tests:       364 passed, 364 total
+Snapshots:   0 total
+Time:        27.222 s
+Ran all test suites.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

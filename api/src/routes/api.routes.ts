@@ -15,11 +15,13 @@ import {
 import { ProductController } from '../controllers/ProductController';
 import { OrderController } from '../controllers/OrderController';
 import { CustomerController } from '../controllers/CustomerController';
+import { ExecutiveController } from '../controllers/ExecutiveController';
 
 export interface ApiRouterDeps {
   productController: ProductController;
   orderController: OrderController;
   customerController: CustomerController;
+  executiveController: ExecutiveController;
 }
 
 /**
@@ -30,7 +32,7 @@ export interface ApiRouterDeps {
 export function createApiRouter(deps: ApiRouterDeps): Router {
   const router = Router();
 
-  const { productController, orderController, customerController } = deps;
+  const { productController, orderController, customerController, executiveController } = deps;
 
   // GET /api/products — catálogo de productos activos
   router.get(
@@ -89,6 +91,10 @@ export function createApiRouter(deps: ApiRouterDeps): Router {
 
   // PUT /api/customers/:id — edición de un cliente
   router.put('/customers/:id', validateUpdateCustomerBody, customerController.update);
+
+  // GET /api/executives — ejecutivos activos como opciones (sin permisos por rol). Como en
+  // /api/customers, app.ts monta withErrorDetails y authenticate para todo /api/executives.
+  router.get('/executives', executiveController.listActive);
 
   return router;
 }
