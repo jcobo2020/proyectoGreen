@@ -26,7 +26,7 @@ import { ExecutiveService } from '../services/ExecutiveService';
  *       required: [value, label]
  *     ExecutiveUnauthorizedError:
  *       type: object
- *       description: '401 de /api/executives: sin token o con uno inválido o caducado; details siempre viaja (vacío)'
+ *       description: '401 de /api/executives: sin token o con uno inválido o caducado; details siempre viaja (vacío). La autenticación va antes que todo: un método no declarado o una subruta sin token también responden 401 (con token, 404 NOT_FOUND con details vacío).'
  *       properties:
  *         code: { type: string, enum: [UNAUTHORIZED] }
  *         message: { type: string }

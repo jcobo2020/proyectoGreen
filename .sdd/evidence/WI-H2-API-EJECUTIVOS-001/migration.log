@@ -1,3 +1,5 @@
+# Base vacía: AC-03 (dos siembras, baja de Paola Cedeño, tercera siembra y «daniela ríos»)
+
 $ npm run seed:executives
 
 > greenfield-api@1.0.0 seed:executives
@@ -72,5 +74,24 @@ $ node -e const m=require('mongoose');m.connect(process.env.MONGODB_URI).then(()
 {"name":"Karla Mendoza","active":true}
 {"name":"Mauricio León","active":true}
 {"name":"Paola Cedeño","active":false}
+(código de salida: 0)
+
+# Otra base con datos previos repetidos sin distinguir mayúsculas y sin índices (M1): falla cerrada
+
+$ node -e const m=require('mongoose');m.connect(process.env.MONGODB_URI).then(()=>m.connection.db.collection('executives').insertMany([{name:'Karla Mendoza',active:true},{name:'karla mendoza',active:true}])).then(r=>{console.log('Insertados:',r.insertedCount);return m.disconnect()})
+Insertados: 2
+(código de salida: 0)
+
+$ npm run seed:executives
+
+> greenfield-api@1.0.0 seed:executives
+> tsc && node dist/scripts/seedExecutives.js
+
+Error en seed:executives: No se pudo dejar el esquema de executives: falta el índice name_1 (con la intercalación es). No se ha sembrado nada. Puede haber ejecutivos con el mismo nombre sin distinguir mayúsculas: deja uno solo en la colección executives y vuelve a ejecutar npm run seed:executives.
+(código de salida: 1)
+
+$ node -e const m=require('mongoose');m.connect(process.env.MONGODB_URI).then(async()=>{const c=m.connection.db.collection('executives');console.log('Índices:',(await c.listIndexes().toArray()).map(i=>i.name).join(', '));console.log('Ejecutivos en la colección:',await c.countDocuments())}).then(()=>m.disconnect())
+Índices: _id_, active_1_name_1
+Ejecutivos en la colección: 2
 (código de salida: 0)
 

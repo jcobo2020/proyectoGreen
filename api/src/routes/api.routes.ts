@@ -92,8 +92,9 @@ export function createApiRouter(deps: ApiRouterDeps): Router {
   // PUT /api/customers/:id — edición de un cliente
   router.put('/customers/:id', validateUpdateCustomerBody, customerController.update);
 
-  // GET /api/executives — ejecutivos activos como opciones (sin permisos por rol)
-  router.get('/executives', authenticate, executiveController.listActive);
+  // GET /api/executives — ejecutivos activos como opciones (sin permisos por rol). Como en
+  // /api/customers, app.ts monta withErrorDetails y authenticate para todo /api/executives.
+  router.get('/executives', executiveController.listActive);
 
   return router;
 }

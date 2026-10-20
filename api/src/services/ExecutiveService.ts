@@ -24,6 +24,18 @@ export function normalizeExecutiveName(name: string): string {
   return name.trim().replace(/\s+/g, ' ');
 }
 
+/** Compara como el índice único (intercalación es, strength 2): sin distinguir mayúsculas, sí tildes. */
+const executiveNameCollator = new Intl.Collator(EXECUTIVE_COLLATION.locale, { sensitivity: 'accent' });
+
+/** Los nombres normalizados, sin repetidos sin distinguir mayúsculas; se queda la primera forma. */
+export function uniqueExecutiveNames(names: string[]): string[] {
+  const unique: string[] = [];
+  for (const name of names.map(normalizeExecutiveName)) {
+    if (!unique.some((kept) => executiveNameCollator.compare(kept, name) === 0)) unique.push(name);
+  }
+  return unique;
+}
+
 export class ExecutiveService {
   /**
    * Ejecutivos activos como opciones, en orden alfabético español; lista corta, sin paginar (RN-01).
@@ -41,12 +53,13 @@ export class ExecutiveService {
    * Siembra (RN-03, R4-ARQ-2): crea con active = true los ejecutivos de la lista que falten y
    * nunca toca a los que ya existen (no reactiva a uno dado de baja: su baja la gobernará
    * «Administración»). La unicidad se comprueba aquí, antes de persistir, sin distinguir
-   * mayúsculas (la intercalación del índice único): «daniela ríos» no crea otro si ya está
-   * «Daniela Ríos». Las escrituras van en orden, así que un repetido dentro de la misma lista
-   * tampoco crea otro.
+   * mayúsculas: los repetidos de la lista se quitan primero (uniqueExecutiveNames) y cada
+   * escritura busca el nombre con la intercalación del índice único, así que «daniela ríos» no
+   * crea otro si ya está «Daniela Ríos». Si aun así coincidieran dos escrituras, el índice único
+   * rechaza la segunda: nunca queda un repetido.
    */
   async seedMissing(names: string[]): Promise<SeedExecutivesResult> {
-    const unique = Array.from(new Set(names.map(normalizeExecutiveName)));
+    const unique = uniqueExecutiveNames(names);
     if (unique.length === 0) {
       return { created: 0, unchanged: 0 };
     }
@@ -59,8 +72,7 @@ export class ExecutiveService {
           upsert: true,
           collation: EXECUTIVE_COLLATION,
         },
-      })),
-      { ordered: true }
+      }))
     );
 
     const created = result.upsertedCount;

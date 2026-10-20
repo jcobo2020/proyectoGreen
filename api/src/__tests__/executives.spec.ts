@@ -225,6 +225,46 @@ describe('GET /api/executives — AC-02 / RN-AUTH: 401 sin token válido', () =>
   });
 });
 
+describe('/api/executives — la autenticación va antes que todo (constitución: toda ruta de /api exige usuario)', () => {
+  const UNAUTHORIZED = { code: 'UNAUTHORIZED', message: expect.any(String), details: [] };
+
+  it('un método no declarado sin token responde 401 con details, no 404', async () => {
+    for (const res of [
+      await request(app).post('/api/executives').send({ name: 'x' }),
+      await request(app).delete('/api/executives'),
+      await request(app).put('/api/executives'),
+    ]) {
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual(UNAUTHORIZED);
+    }
+  });
+
+  it('una subruta sin token responde 401 con details, no 404', async () => {
+    const res = await request(app).get('/api/executives/123');
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual(UNAUTHORIZED);
+  });
+
+  it('sin token y con un cuerpo que no es JSON válido responde 401, no 400', async () => {
+    const res = await request(app)
+      .post('/api/executives')
+      .set('Content-Type', 'application/json')
+      .send('{no es json');
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual(UNAUTHORIZED);
+  });
+
+  it('con token, un método no declarado o una subruta responden 404 NOT_FOUND con details vacío', async () => {
+    for (const res of [
+      await request(app).post('/api/executives').set('Authorization', `Bearer ${validToken}`).send({}),
+      await request(app).get('/api/executives/123').set('Authorization', `Bearer ${validToken}`),
+    ]) {
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ code: 'NOT_FOUND', message: expect.any(String), details: [] });
+    }
+  });
+});
+
 describe('GET /api/executives — R4-REND-1: consulta por el índice {active, name}', () => {
   it('find({active: true}).sort({name: 1}) con intercalación es usa el índice active_1_name_1 (IXSCAN, sin SORT en memoria)', async () => {
     await ExecutiveModel.create([
@@ -250,6 +290,21 @@ describe('GET /api/executives — R4-REND-1: consulta por el índice {active, na
       expect(collationSpy).toHaveBeenCalledWith(EXECUTIVE_COLLATION);
     } finally {
       collationSpy.mockRestore();
+    }
+  });
+
+  it('el orden lo pide la consulta del servicio, no lo regala el índice: con el índice oculto sigue en orden español', async () => {
+    // Insertados fuera de orden; con active_1_name_1 oculto el planificador no puede devolverlos
+    // en el orden del índice: sin .sort() saldrían en el de inserción, y sin la intercalación, en binario
+    await ExecutiveModel.syncIndexes();
+    await ExecutiveModel.create(['Zoe Vera', 'andrés Gil', 'Óscar Paz', 'Álvaro Díaz', 'Ñusta Rey', 'Nora Sol'].map((name) => ({ name })));
+    const db = mongoose.connection.db!;
+    await db.command({ collMod: 'executives', index: { name: 'active_1_name_1', hidden: true } });
+    try {
+      const options = await new ExecutiveService().listActive();
+      expect(options.map((o) => o.label)).toEqual(['Álvaro Díaz', 'andrés Gil', 'Nora Sol', 'Ñusta Rey', 'Óscar Paz', 'Zoe Vera']);
+    } finally {
+      await db.command({ collMod: 'executives', index: { name: 'active_1_name_1', hidden: false } });
     }
   });
 

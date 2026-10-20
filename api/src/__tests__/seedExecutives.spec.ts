@@ -21,6 +21,8 @@ import {
   runSeedExecutives,
   seedExecutivesCli,
   TEAM_EXECUTIVES_FILE,
+  SeedExecutivesError,
+  connectForSeed,
 } from '../scripts/seedExecutives';
 import { ValidationError } from '../lib/errors';
 
@@ -29,6 +31,17 @@ const TEAM = ['Daniela Ríos', 'Mauricio León', 'Paola Cedeño', 'Andrés Villa
 
 let replSet: MongoMemoryReplSet;
 let tmpDir: string;
+
+/** Los índices que la siembra tiene que dejar (§3): {name} único y {active, name}, los dos con intercalación es. */
+async function expectExecutiveSchema(): Promise<void> {
+  const indexes = await ExecutiveModel.collection.listIndexes().toArray();
+  const byName = new Map(indexes.map((i) => [i.name as string, i]));
+  expect(byName.get('name_1')).toMatchObject({ key: { name: 1 }, unique: true, collation: { locale: 'es', strength: 2 } });
+  expect(byName.get('active_1_name_1')).toMatchObject({
+    key: { active: 1, name: 1 },
+    collation: { locale: 'es', strength: 2 },
+  });
+}
 
 beforeAll(async () => {
   replSet = await MongoMemoryReplSet.create({ replSet: { count: 1, storageEngine: 'wiredTiger' } });
@@ -155,10 +168,24 @@ describe('ExecutiveService.seedMissing — RN-03: crea los que falten y nunca to
     expect((await ExecutiveModel.findById(existing._id))?.name).toBe('daniela ríos');
   });
 
-  it('un repetido con otra capitalización dentro de la misma lista no crea otro', async () => {
-    const result = await service.seedMissing(['Daniela Ríos', 'daniela ríos']);
-    expect(result).toEqual({ created: 1, unchanged: 1 });
+  it('un repetido con otra capitalización dentro de la misma lista cuenta una vez y no crea otro', async () => {
+    // El servicio quita los repetidos sin distinguir mayúsculas antes de escribir: no depende
+    // del orden en que la base ejecute las escrituras
+    const bulkWrite = jest.spyOn(ExecutiveModel, 'bulkWrite');
+    try {
+      const result = await service.seedMissing(['Daniela Ríos', 'daniela ríos', 'DANIELA RÍOS']);
+      expect(result).toEqual({ created: 1, unchanged: 0 });
+      expect(bulkWrite).toHaveBeenCalledTimes(1);
+      expect(bulkWrite.mock.calls[0][0]).toHaveLength(1);
+    } finally {
+      bulkWrite.mockRestore();
+    }
     expect(await ExecutiveModel.countDocuments()).toBe(1);
+    expect((await ExecutiveModel.findOne({}).lean())?.name).toBe('Daniela Ríos');
+  });
+
+  it('las tildes sí distinguen: «Daniela Rios» y «Daniela Ríos» son dos', async () => {
+    expect(await service.seedMissing(['Daniela Ríos', 'Daniela Rios'])).toEqual({ created: 2, unchanged: 0 });
   });
 
   it('no toca a los ejecutivos que no están en la lista', async () => {
@@ -187,8 +214,9 @@ describe('AC-03 · npm run seed:executives dos veces, y otra tras dar de baja a 
     // Collection limpia y sin índices: la siembra crea el esquema ella misma
     await ExecutiveModel.collection.drop().catch(() => undefined);
 
-    // Sin argumento: la lista versionada del equipo
+    // Sin argumento: la lista versionada del equipo; la primera siembra crea el esquema
     expect(await seedExecutivesCli([], cliDeps)).toBe(0);
+    await expectExecutiveSchema();
     expect(await seedExecutivesCli([], cliDeps)).toBe(0);
     expect(await ExecutiveModel.countDocuments()).toBe(5);
 
@@ -238,6 +266,8 @@ describe('Script seed:executives', () => {
   });
 
   it('crea el esquema, siembra y lista lo que la base tiene', async () => {
+    // Sin colección ni índices previos: no depende de lo que hayan dejado otras pruebas
+    await ExecutiveModel.collection.drop().catch(() => undefined);
     const lines: string[] = [];
     const result = await runSeedExecutives(['Ana López', 'Bruno Díaz'], (l) => lines.push(l));
 
@@ -250,6 +280,7 @@ describe('Script seed:executives', () => {
     expect(output).toContain('[collation es strength 2]');
     expect(output).toContain('Creados: 2 · Ya existían (sin tocar): 0');
     expect(output).toContain('Ejecutivos activos: 2');
+    await expectExecutiveSchema();
   });
 
   describe('seedExecutivesCli (npm run seed:executives [-- <fichero.json>])', () => {
@@ -297,15 +328,100 @@ describe('Script seed:executives', () => {
       expect(d.out.join('\n')).not.toContain('Ana López');
     });
 
-    it('si falla la conexión sale con 1 con el mensaje del error', async () => {
+    it('sin MONGODB_URI la conexión de la siembra falla con un SeedExecutivesError legible', async () => {
+      const previous = process.env['MONGODB_URI'];
+      delete process.env['MONGODB_URI'];
+      try {
+        await expect(connectForSeed()).rejects.toThrow(SeedExecutivesError);
+        await expect(connectForSeed()).rejects.toThrow(/MONGODB_URI/);
+      } finally {
+        if (previous !== undefined) process.env['MONGODB_URI'] = previous;
+      }
+    });
+
+    it('si falla la conexión sale con 1 con el mensaje de la configuración (no es un dato personal)', async () => {
       const d = deps();
       d.cli.connect = jest.fn(async () => {
-        throw new Error('MONGODB_URI no está definida');
+        throw new SeedExecutivesError('MONGODB_URI no está definida');
       });
       const file = path.join(tmpDir, 'equipo2.json');
       fs.writeFileSync(file, JSON.stringify(['Ana López']), 'utf8');
       expect(await seedExecutivesCli([file], d.cli)).toBe(1);
       expect(d.err.join('\n')).toContain('MONGODB_URI no está definida');
     });
+  });
+});
+
+describe('M1 · la siembra falla CERRADA si no queda el índice único {name}', () => {
+  const PEOPLE = ['Karla Mendoza', 'karla mendoza'];
+
+  function capture() {
+    const out: string[] = [];
+    const err: string[] = [];
+    return {
+      out,
+      err,
+      deps: {
+        connect: async () => undefined,
+        disconnect: async () => undefined,
+        log: (l: string) => out.push(l),
+        logError: (l: string) => err.push(l),
+      },
+    };
+  }
+
+  beforeEach(async () => {
+    // Datos previos repetidos sin distinguir mayúsculas y sin índices: name_1 no se puede crear
+    await ExecutiveModel.collection.drop().catch(() => undefined);
+    await ExecutiveModel.collection.insertMany(PEOPLE.map((name) => ({ name, active: true })));
+  });
+
+  it('con repetidos por mayúsculas sale con 1, dice qué hacer, no siembra y no escribe ningún nombre', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const consoleLog = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    try {
+      const c = capture();
+      expect(await seedExecutivesCli([], c.deps)).toBe(1);
+
+      const stderr = c.err.join('\n');
+      expect(stderr).toContain('name_1');
+      expect(stderr).toContain('npm run seed:executives');
+      expect(stderr).toMatch(/mismo nombre/);
+      const everything = [...c.out, ...c.err, ...consoleError.mock.calls.flat(), ...consoleLog.mock.calls.flat()]
+        .map(String)
+        .join('\n');
+      for (const name of [...PEOPLE, ...TEAM]) expect(everything).not.toContain(name);
+      expect(everything).not.toContain('dup key');
+
+      // No sembró nada: siguen los dos de antes
+      expect(await ExecutiveModel.countDocuments()).toBe(2);
+    } finally {
+      consoleError.mockRestore();
+      consoleLog.mockRestore();
+    }
+  });
+
+  it('aunque syncIndexes no avise (la carrera con el autoIndex de Mongoose), comprueba los índices y sale con 1', async () => {
+    const sync = jest.spyOn(ExecutiveModel, 'syncIndexes').mockResolvedValue([]);
+    try {
+      const c = capture();
+      expect(await seedExecutivesCli([], c.deps)).toBe(1);
+      expect(c.err.join('\n')).toContain('name_1');
+      expect(await ExecutiveModel.countDocuments()).toBe(2);
+    } finally {
+      sync.mockRestore();
+    }
+  });
+
+  it('un error inesperado se registra sin su mensaje (puede llevar un nombre)', async () => {
+    const c = capture();
+    c.deps.connect = async () => {
+      throw Object.assign(new Error('E11000 duplicate key error dup key: { name: "Karla Mendoza" }'), { code: 11000 });
+    };
+    expect(await seedExecutivesCli([], c.deps)).toBe(1);
+    const stderr = c.err.join('\n');
+    expect(stderr).toContain('11000');
+    expect(stderr).not.toContain('Karla Mendoza');
+    expect(stderr).not.toContain('dup key');
   });
 });
