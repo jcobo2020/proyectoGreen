@@ -3,6 +3,7 @@ import { CustomerModel, IdType, PersonType } from '../models/customer';
 import { CounterModel } from '../models/counter';
 import { CustomerDuplicateError, CustomerNotFoundError, ValidationError } from '../lib/errors';
 import { CUSTOMER_MESSAGES } from '../validators/customer.validator';
+import { isEmptyText, normalizeEmail, normalizeIdNumber } from '../lib/customerNormalization';
 
 // ─── Tipos públicos ───────────────────────────────────────────────────────────
 
@@ -159,11 +160,6 @@ export function toPublicCustomer(obj: CustomerRecord): PublicCustomer {
 
 // ─── Normalización y reglas puras ─────────────────────────────────────────────
 
-/** RN-11: el correo (email y contactEmail) se guarda y se devuelve en minúsculas y sin espacios alrededor. */
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
 /** Nombre de la fila del listado: legalName, o firstNames + lastNames si es persona natural. */
 export function customerDisplayName(obj: Pick<CustomerRecord, 'personType' | 'legalName' | 'firstNames' | 'lastNames'>): string {
   if (obj.personType === 'legal') return obj.legalName ?? '';
@@ -173,10 +169,6 @@ export function customerDisplayName(obj: Pick<CustomerRecord, 'personType' | 'le
 /** Suma de valores redondeada a 2 decimales (RN-07). */
 export function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
-}
-
-export function normalizeIdNumber(idNumber: string): string {
-  return idNumber.trim();
 }
 
 /** RN-06: PRO-AAAA-NNN, con la secuencia anual en al menos 3 dígitos. */
@@ -245,10 +237,11 @@ function executiveName(row: WithExecutive): string {
 // ─── Servicio ─────────────────────────────────────────────────────────────────
 
 export class CustomerService {
-  /** `now` se inyecta para poder fijar el año del código en las pruebas. */
+  /** `now` es el reloj del alta: se inyecta para poder fijar la fecha de creación en las pruebas. */
   constructor(private readonly now: () => Date = () => new Date()) {}
 
   async create(input: CreateCustomerInput): Promise<PublicCreatedCustomer> {
+    // RN-02: sin espacios y en mayúsculas; «ab12345» y «AB12345» son la misma identificación (RN-01)
     const idNumber = normalizeIdNumber(input.idNumber);
 
     // RN-01: unicidad comprobada en el servicio antes de persistir (el índice único cubre la carrera)
@@ -260,7 +253,9 @@ export class CustomerService {
       await this.assertActiveExecutive(input.accountExecutiveId);
     }
 
-    const code = await this.nextCode();
+    // RN-06: un único instante para la fecha de creación que se guarda y para el año del código
+    const createdAt = this.now();
+    const code = await this.nextCode(createdAt);
     const data: Record<string, unknown> = {
       code,
       personType: input.personType,
@@ -268,16 +263,18 @@ export class CustomerService {
       idNumber,
       email: normalizeEmail(input.email),
       sourceChannel: input.sourceChannel,
+      createdAt,
+      updatedAt: createdAt,
     };
+    // Un texto opcional vacío no se guarda: el cliente no lo tiene
     for (const key of ['legalName', 'firstNames', 'lastNames', ...EDITABLE_TEXT_FIELDS] as const) {
-      if (key !== 'email' && key !== 'sourceChannel' && input[key] !== undefined) {
-        data[key] = input[key];
+      const value = input[key];
+      if (key !== 'email' && key !== 'sourceChannel' && value !== undefined && !isEmptyText(value)) {
+        data[key] = value;
       }
     }
-    if (typeof input.contactEmail === 'string' && input.contactEmail.trim() !== '') {
-      data['contactEmail'] = normalizeEmail(input.contactEmail);
-    } else {
-      delete data['contactEmail'];
+    if (typeof data['contactEmail'] === 'string') {
+      data['contactEmail'] = normalizeEmail(data['contactEmail']);
     }
     if (input.accountExecutiveId) {
       data['accountExecutiveId'] = new Types.ObjectId(input.accountExecutiveId);
@@ -326,11 +323,12 @@ export class CustomerService {
       throw new CustomerNotFoundError();
     }
 
+    // RN-13: lo que no se envía no cambia; un texto opcional «» o null se vacía (deja de tenerlo)
     const set: Record<string, unknown> = {};
     const unset: Record<string, ''> = {};
     const apply = (key: string, value: string | null | undefined): void => {
       if (value === undefined) return;
-      if (value === null) unset[key] = '';
+      if (isEmptyText(value)) unset[key] = '';
       else set[key] = value;
     };
 
@@ -338,14 +336,8 @@ export class CustomerService {
       apply(key, input[key]);
     }
     set['email'] = normalizeEmail(input.email);
-    if (typeof input.contactEmail === 'string') {
-      if (input.contactEmail.trim() !== '') {
-        set['contactEmail'] = normalizeEmail(input.contactEmail);
-      } else {
-        // Un correo de contacto vacío lo quita
-        delete set['contactEmail'];
-        unset['contactEmail'] = '';
-      }
+    if (typeof set['contactEmail'] === 'string') {
+      set['contactEmail'] = normalizeEmail(set['contactEmail']);
     }
 
     // RN-05: solo la razón social (jurídica) o el nombre (natural), según el tipo guardado
@@ -364,16 +356,15 @@ export class CustomerService {
       throw new ValidationError('Entrada inválida', nameErrors);
     }
 
-    // RN-09: cambiar de ejecutivo exige uno activo; reenviar el que ya tiene vale aunque se
-    // haya desactivado (RN-10). Vacío o null lo quita.
-    if (input.accountExecutiveId === null || input.accountExecutiveId === '') {
-      unset['accountExecutiveId'] = '';
-    } else if (input.accountExecutiveId !== undefined) {
-      const sameExecutive = current.accountExecutiveId?.toString() === input.accountExecutiveId.toLowerCase();
+    // RN-13: accountExecutiveId ausente, «» o null conserva el ejecutivo (la edición no lo quita:
+    // RN-10). RN-09: cambiarlo exige uno activo; reenviar el que ya tiene vale aunque esté inactivo.
+    const executiveId = input.accountExecutiveId;
+    if (typeof executiveId === 'string' && !isEmptyText(executiveId)) {
+      const sameExecutive = current.accountExecutiveId?.toString() === executiveId.toLowerCase();
       if (!sameExecutive) {
-        await this.assertActiveExecutive(input.accountExecutiveId);
+        await this.assertActiveExecutive(executiveId);
       }
-      set['accountExecutiveId'] = new Types.ObjectId(input.accountExecutiveId);
+      set['accountExecutiveId'] = new Types.ObjectId(executiveId);
     }
 
     const updated = await CustomerModel.findOneAndUpdate(
@@ -431,9 +422,12 @@ export class CustomerService {
     }
   }
 
-  /** RN-06: contador atómico por año (findOneAndUpdate con $inc sobre counters, _id customers-AAAA). */
-  private async nextCode(): Promise<string> {
-    const year = this.now().getUTCFullYear();
+  /**
+   * RN-06: contador atómico por año (findOneAndUpdate con $inc sobre counters, _id customers-AAAA).
+   * AAAA es el año en UTC de la fecha de creación que se guarda en el cliente.
+   */
+  private async nextCode(createdAt: Date): Promise<string> {
+    const year = createdAt.getUTCFullYear();
     const counter = await CounterModel.findOneAndUpdate(
       { _id: `customers-${year}` },
       { $inc: { seq: 1 } },

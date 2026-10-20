@@ -5,6 +5,7 @@ import { swaggerSpec } from './config/swagger';
 import { createApiRouter } from './routes/api.routes';
 import { requestLogger } from './middlewares/requestLogger.middleware';
 import { notFound, errorHandler } from './middlewares/errorHandler.middleware';
+import { withErrorDetails } from './middlewares/withErrorDetails.middleware';
 import { ProductService } from './services/ProductService';
 import { OrderService } from './services/OrderService';
 import { MongoUnitOfWork } from './lib/MongoUnitOfWork';
@@ -23,9 +24,12 @@ export interface AppDeps {
 export function createApp(_connection?: typeof mongoose, deps?: AppDeps): Application {
   const app = express();
 
-  // Middlewares globales
-  app.use(express.json());
+  // Middlewares globales. El log por petición va primero: también registra las peticiones cuyo
+  // cuerpo no se puede parsear. /api/customers se marca ANTES de express.json(): un JSON mal
+  // formado también responde con details (RN-12, R4-SEG-3) sin cambiar los errores de /api/orders.
   app.use(requestLogger);
+  app.use('/api/customers', withErrorDetails);
+  app.use(express.json());
 
   // Composition root: construir servicios y controladores una sola vez
   const productService = new ProductService();

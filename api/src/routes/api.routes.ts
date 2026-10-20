@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { authenticate } from '../middlewares/authenticate.middleware';
-import { withErrorDetails } from '../middlewares/withErrorDetails.middleware';
 import { validateListProductsQuery } from '../validators/product.validator';
 import {
   validateCreateOrderQuery,
@@ -74,8 +73,7 @@ export function createApiRouter(deps: ApiRouterDeps): Router {
     orderController.confirmOrder
   );
 
-  // /api/customers: todo error lleva details (R4-SEG-3) sin cambiar la forma de los de /api/orders (R4-SEG-4)
-  router.use('/customers', withErrorDetails);
+  // /api/customers: todo error lleva details (R4-SEG-3); la marca la pone app.ts antes de express.json()
 
   // GET /api/customers — listado paginado de clientes
   router.get('/customers', authenticate, validateListCustomersQuery, customerController.list);

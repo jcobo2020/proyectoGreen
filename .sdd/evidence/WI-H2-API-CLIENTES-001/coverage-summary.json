@@ -1,28 +1,28 @@
 {
   "total": {
     "lines": {
-      "total": 761,
-      "covered": 748,
+      "total": 828,
+      "covered": 813,
       "skipped": 0,
-      "pct": 98.29
+      "pct": 98.18
     },
     "statements": {
-      "total": 796,
-      "covered": 781,
+      "total": 869,
+      "covered": 852,
       "skipped": 0,
-      "pct": 98.11
+      "pct": 98.04
     },
     "functions": {
-      "total": 122,
-      "covered": 120,
+      "total": 135,
+      "covered": 133,
       "skipped": 0,
-      "pct": 98.36
+      "pct": 98.51
     },
     "branches": {
-      "total": 308,
-      "covered": 289,
+      "total": 348,
+      "covered": 323,
       "skipped": 0,
-      "pct": 93.83
+      "pct": 92.81
     },
     "branchesTrue": {
       "total": 0,
@@ -31,10 +31,36 @@
       "pct": 100
     }
   },
+  "api/scripts/evidence.js": {
+    "lines": {
+      "total": 49,
+      "covered": 45,
+      "skipped": 0,
+      "pct": 91.83
+    },
+    "functions": {
+      "total": 8,
+      "covered": 7,
+      "skipped": 0,
+      "pct": 87.5
+    },
+    "statements": {
+      "total": 53,
+      "covered": 49,
+      "skipped": 0,
+      "pct": 92.45
+    },
+    "branches": {
+      "total": 26,
+      "covered": 21,
+      "skipped": 0,
+      "pct": 80.76
+    }
+  },
   "api/src/app.ts": {
     "lines": {
-      "total": 30,
-      "covered": 30,
+      "total": 32,
+      "covered": 32,
       "skipped": 0,
       "pct": 100
     },
@@ -45,8 +71,8 @@
       "pct": 100
     },
     "statements": {
-      "total": 30,
-      "covered": 30,
+      "total": 32,
+      "covered": 32,
       "skipped": 0,
       "pct": 100
     },
@@ -187,6 +213,32 @@
       "pct": 100
     }
   },
+  "api/src/lib/customerNormalization.ts": {
+    "lines": {
+      "total": 6,
+      "covered": 6,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 3,
+      "covered": 3,
+      "skipped": 0,
+      "pct": 100
+    },
+    "statements": {
+      "total": 6,
+      "covered": 6,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 3,
+      "covered": 3,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
   "api/src/lib/errors.ts": {
     "lines": {
       "total": 56,
@@ -237,6 +289,32 @@
       "covered": 0,
       "skipped": 0,
       "pct": 0
+    }
+  },
+  "api/src/lib/safeErrorLog.ts": {
+    "lines": {
+      "total": 10,
+      "covered": 10,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 3,
+      "covered": 3,
+      "skipped": 0,
+      "pct": 100
+    },
+    "statements": {
+      "total": 12,
+      "covered": 11,
+      "skipped": 0,
+      "pct": 91.66
+    },
+    "branches": {
+      "total": 11,
+      "covered": 8,
+      "skipped": 0,
+      "pct": 72.72
     }
   },
   "api/src/lib/transaction.ts": {
@@ -293,26 +371,26 @@
   },
   "api/src/middlewares/errorHandler.middleware.ts": {
     "lines": {
-      "total": 20,
-      "covered": 19,
+      "total": 27,
+      "covered": 27,
       "skipped": 0,
-      "pct": 95
+      "pct": 100
     },
     "functions": {
-      "total": 3,
-      "covered": 2,
+      "total": 4,
+      "covered": 4,
       "skipped": 0,
-      "pct": 66.66
+      "pct": 100
     },
     "statements": {
-      "total": 21,
-      "covered": 20,
+      "total": 28,
+      "covered": 28,
       "skipped": 0,
-      "pct": 95.23
+      "pct": 100
     },
     "branches": {
-      "total": 7,
-      "covered": 7,
+      "total": 13,
+      "covered": 13,
       "skipped": 0,
       "pct": 100
     }
@@ -475,8 +553,8 @@
   },
   "api/src/routes/api.routes.ts": {
     "lines": {
-      "total": 20,
-      "covered": 20,
+      "total": 18,
+      "covered": 18,
       "skipped": 0,
       "pct": 100
     },
@@ -487,8 +565,8 @@
       "pct": 100
     },
     "statements": {
-      "total": 20,
-      "covered": 20,
+      "total": 18,
+      "covered": 18,
       "skipped": 0,
       "pct": 100
     },
@@ -501,28 +579,28 @@
   },
   "api/src/services/CustomerService.ts": {
     "lines": {
-      "total": 118,
-      "covered": 116,
+      "total": 112,
+      "covered": 111,
       "skipped": 0,
-      "pct": 98.3
+      "pct": 99.1
     },
     "functions": {
-      "total": 23,
-      "covered": 23,
+      "total": 21,
+      "covered": 21,
       "skipped": 0,
       "pct": 100
     },
     "statements": {
-      "total": 125,
-      "covered": 122,
+      "total": 119,
+      "covered": 118,
       "skipped": 0,
-      "pct": 97.6
+      "pct": 99.15
     },
     "branches": {
-      "total": 71,
-      "covered": 65,
+      "total": 65,
+      "covered": 61,
       "skipped": 0,
-      "pct": 91.54
+      "pct": 93.84
     }
   },
   "api/src/services/OrderService.ts": {
@@ -579,8 +657,8 @@
   },
   "api/src/validators/customer.validator.ts": {
     "lines": {
-      "total": 104,
-      "covered": 104,
+      "total": 105,
+      "covered": 105,
       "skipped": 0,
       "pct": 100
     },
@@ -591,8 +669,8 @@
       "pct": 100
     },
     "statements": {
-      "total": 114,
-      "covered": 114,
+      "total": 115,
+      "covered": 115,
       "skipped": 0,
       "pct": 100
     },

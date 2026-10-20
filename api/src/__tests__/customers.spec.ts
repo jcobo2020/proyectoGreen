@@ -1,7 +1,7 @@
 /**
  * Tests de contrato e integración — /api/customers (WI-H2-API-CLIENTES-001)
- * Ronda 2, contra la spec v4 (pack v6).
- * AC-01..AC-07 · RN-01, RN-02, RN-03, RN-05, RN-06, RN-07, RN-08, RN-09, RN-10, RN-11, RN-12, RN-AUTH
+ * Ronda 3, contra la spec v6 (pack v7).
+ * AC-01..AC-07 · RN-01, RN-02, RN-03, RN-05, RN-06, RN-07, RN-08, RN-09, RN-10, RN-11, RN-12, RN-13, RN-AUTH
  */
 import request from 'supertest';
 import { Application } from 'express';
@@ -13,7 +13,8 @@ import { createApp } from '../app';
 import { CustomerModel } from '../models/customer';
 import { CounterModel } from '../models/counter';
 import { OrderModel } from '../models/order';
-import { listCustomersPipeline } from '../services/CustomerService';
+import { CustomerService, listCustomersPipeline } from '../services/CustomerService';
+import { CustomerController } from '../controllers/CustomerController';
 import { swaggerSpec } from '../config/swagger';
 
 let app: Application;
@@ -390,21 +391,21 @@ describe('POST /api/customers — AC-03 · RN-02: formato de la identificación'
     }
   });
 
-  it('idType ausente → «Tipo de identificación es obligatorio.»; fuera de cedula | ruc | passport → «Tipo de identificación no es válido.»', async () => {
+  it('idType ausente → «Tipo de identificación es obligatorio.»; fuera de cedula | ruc | passport → «El valor de Tipo de identificación no es válido.»', async () => {
     const missing = await auth(request(app).post('/api/customers')).send(naturalBody({ idType: undefined }));
     expect(missing.status).toBe(400);
     expect(messagesOf(missing)).toEqual({ idType: 'Tipo de identificación es obligatorio.' });
 
     const other = await auth(request(app).post('/api/customers')).send(naturalBody({ idType: 'dni' }));
     expect(other.status).toBe(400);
-    expect(messagesOf(other)).toEqual({ idType: 'Tipo de identificación no es válido.' });
+    expect(messagesOf(other)).toEqual({ idType: 'El valor de Tipo de identificación no es válido.' });
   });
 
   it('idNumber ausente con un idType desconocido → los dos campos con su mensaje', async () => {
     const res = await auth(request(app).post('/api/customers')).send(naturalBody({ idType: 'dni', idNumber: undefined }));
     expect(res.status).toBe(400);
     expect(messagesOf(res)).toEqual({
-      idType: 'Tipo de identificación no es válido.',
+      idType: 'El valor de Tipo de identificación no es válido.',
       idNumber: 'Número de identificación es obligatorio.',
     });
   });
@@ -461,30 +462,30 @@ describe('POST /api/customers — AC-03 · RN-03: nombre, correo y canal', () =>
     expect(messagesOf(res)).toEqual({ contactEmail: 'Ingresa un correo válido.' });
   });
 
-  it('un campo con un tipo que no es el suyo → 400 «<etiqueta> no es válido.»', async () => {
+  it('un campo con un tipo que no es el suyo → 400 «El valor de <etiqueta> no es válido.»', async () => {
     const res = await auth(request(app).post('/api/customers')).send(
       naturalBody({ city: 42, legalName: 7, mobilePhone: true, accountExecutiveId: 12, contactEmail: 5 })
     );
     expect(res.status).toBe(400);
     expect(messagesOf(res)).toEqual({
-      city: 'Ciudad no es válido.',
-      legalName: 'Razón social no es válido.',
-      mobilePhone: 'Teléfono celular no es válido.',
-      accountExecutiveId: 'Ejecutivo asignado no es válido.',
-      contactEmail: 'Correo no es válido.',
+      city: 'El valor de Ciudad no es válido.',
+      legalName: 'El valor de Razón social no es válido.',
+      mobilePhone: 'El valor de Teléfono celular no es válido.',
+      accountExecutiveId: 'El valor de Ejecutivo asignado no es válido.',
+      contactEmail: 'El valor de Correo no es válido.',
     });
   });
 
-  it('obligatorios con un tipo que no es el suyo → 400 «<etiqueta> no es válido.»', async () => {
+  it('obligatorios con un tipo que no es el suyo → 400 «El valor de <etiqueta> no es válido.»', async () => {
     const res = await auth(request(app).post('/api/customers')).send(
       naturalBody({ idNumber: 102030405, email: 7, sourceChannel: 3, firstNames: ['Ana'] })
     );
     expect(res.status).toBe(400);
     expect(messagesOf(res)).toEqual({
-      idNumber: 'Número de identificación no es válido.',
-      email: 'Correo electrónico no es válido.',
-      sourceChannel: 'Canal de origen no es válido.',
-      firstNames: 'Nombres no es válido.',
+      idNumber: 'El valor de Número de identificación no es válido.',
+      email: 'El valor de Correo electrónico no es válido.',
+      sourceChannel: 'El valor de Canal de origen no es válido.',
+      firstNames: 'El valor de Nombres no es válido.',
     });
   });
 });
@@ -524,10 +525,10 @@ describe('POST /api/customers — AC-03 · RN-12: los obligatorios del alta dice
     });
   });
 
-  it('personType=«otra» → 400 «Tipo de persona no es válido.»', async () => {
+  it('personType=«otra» → 400 «El valor de Tipo de persona no es válido.»', async () => {
     const res = await auth(request(app).post('/api/customers')).send(naturalBody({ personType: 'otra' }));
     expect(res.status).toBe(400);
-    expect(messagesOf(res)).toEqual({ personType: 'Tipo de persona no es válido.' });
+    expect(messagesOf(res)).toEqual({ personType: 'El valor de Tipo de persona no es válido.' });
   });
 
   it('cuerpo vacío → 400 con todos los obligatorios y su mensaje literal', async () => {
@@ -733,7 +734,7 @@ describe('GET /api/customers — AC-05 · RN-07: listado paginado', () => {
     expect(res.body.items[0]).toMatchObject({ accountExecutive: '', openOpportunities: 0, openValue: 0 });
   });
 
-  it('R4-ARQ-4 · un fallo de la base hace fallar la petición entera: 500 {code, message}', async () => {
+  it('R4-ARQ-4 · un fallo de la base hace fallar la petición entera: 500 {code, message, details}', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
     jest.spyOn(CustomerModel, 'aggregate').mockImplementationOnce(
       (() => Promise.reject(new Error('base caída'))) as never
@@ -782,36 +783,21 @@ describe('GET /api/customers — RN-10: el cliente conserva a su ejecutivo aunqu
   });
 });
 
-describe('GET /api/customers — R4-REND-1: p95 bajo 300 ms con 50 peticiones concurrentes', () => {
-  it('50 GET concurrentes del listado con p95 < 300 ms', async () => {
-    const executiveId = await seedExecutive('Marta Ruiz');
-    await CustomerModel.insertMany(
-      Array.from({ length: 60 }, (_v, i) => ({
-        code: `PRO-2026-${String(i + 1).padStart(3, '0')}`,
-        personType: 'natural',
-        idType: 'cedula',
-        idNumber: String(4000000000 + i),
-        firstNames: 'N',
-        lastNames: 'A',
-        email: `n${i}@example.com`,
-        sourceChannel: 'web',
-        accountExecutiveId: new mongoose.Types.ObjectId(executiveId),
-      }))
-    );
-    // Calentamiento: la primera petición compila rutas y abre conexiones
-    await auth(request(app).get('/api/customers'));
+describe('R4-REND-1 — las consultas usan sus índices (la medición del p95 va en npm run evidence)', () => {
+  it('el listado ordena con el índice {createdAt: -1, _id: -1}, sin ordenar en memoria', async () => {
+    await auth(request(app).post('/api/customers')).send(naturalBody());
+    const plan = await CustomerModel.aggregate(listCustomersPipeline(1, 20)).explain('queryPlanner');
+    const text = JSON.stringify(plan);
+    expect(text).toContain('createdAt_-1__id_-1');
+    expect(text).toContain('IXSCAN');
+    expect(text).not.toContain('"stage":"SORT"');
+  });
 
-    const durations = await Promise.all(
-      Array.from({ length: 50 }, async () => {
-        const start = Date.now();
-        const res = await auth(request(app).get('/api/customers'));
-        expect(res.status).toBe(200);
-        return Date.now() - start;
-      })
-    );
-    durations.sort((a, b) => a - b);
-    const p95 = durations[Math.ceil(durations.length * 0.95) - 1];
-    expect(p95).toBeLessThan(300);
+  it('la unicidad de la identificación se comprueba con el índice único de idNumber', async () => {
+    const plan = await CustomerModel.find({ idNumber: '0102030405' }).limit(1).explain('queryPlanner');
+    const text = JSON.stringify(plan);
+    expect(text).toContain('idNumber_1');
+    expect(text).not.toContain('COLLSCAN');
   });
 });
 
@@ -974,17 +960,6 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
     expect(resLegal.body).not.toHaveProperty('firstNames');
   });
 
-  it('200 · enviar accountExecutiveId vacío quita el ejecutivo asignado', async () => {
-    const executiveId = await seedExecutive('Marta Ruiz');
-    const created = await auth(request(app).post('/api/customers')).send(naturalBody({ accountExecutiveId: executiveId }));
-    const res = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
-      email: 'ana.perez@example.com',
-      accountExecutiveId: '',
-    });
-    expect(res.status).toBe(200);
-    expect(res.body).not.toHaveProperty('accountExecutiveId');
-  });
-
   it('404 · un cliente que no existe → CUSTOMER_NOT_FOUND', async () => {
     const res = await auth(request(app).put(`/api/customers/${new mongoose.Types.ObjectId().toString()}`)).send({
       email: 'a@example.com',
@@ -1004,7 +979,7 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
     const cases: Array<[Record<string, unknown>, string]> = [
       [{}, 'Correo electrónico es obligatorio.'],
       [{ email: 'mal' }, 'Ingresa un correo válido.'],
-      [{ email: 42 }, 'Correo electrónico no es válido.'],
+      [{ email: 42 }, 'El valor de Correo electrónico no es válido.'],
     ];
     for (const [body, message] of cases) {
       const res = await auth(request(app).put(`/api/customers/${created.body.id}`)).send(body);
@@ -1018,7 +993,7 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
     const created = await auth(request(app).post('/api/customers')).send(naturalBody());
     for (const [sourceChannel, message] of [
       [null, 'Selecciona el canal de origen.'],
-      [7, 'Canal de origen no es válido.'],
+      [7, 'El valor de Canal de origen no es válido.'],
     ] as const) {
       const res = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
         email: 'ana.perez@example.com',
@@ -1068,7 +1043,7 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
       firstNames: 3,
     });
     expect(res.status).toBe(400);
-    expect(messagesOf(res)).toEqual({ firstNames: 'Nombres no es válido.' });
+    expect(messagesOf(res)).toEqual({ firstNames: 'El valor de Nombres no es válido.' });
 
     const res2 = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
       email: 'ana.perez@example.com',
@@ -1120,26 +1095,311 @@ describe('PUT /api/customers/:id — AC-04: edición de un cliente', () => {
 });
 
 // ────────────────────────────────────────────────────────────────────────────
+// Ronda 3 (spec v6): RN-02, RN-06, RN-12, RN-13, R4-ARQ-4, R4-OBS-3 y la forma de los errores
+// ────────────────────────────────────────────────────────────────────────────
+
+/** Todo lo que se escribió en la consola, en una sola cadena. */
+function consoleText(...spies: jest.SpyInstance[]): string {
+  return spies
+    .flatMap((spy) => spy.mock.calls)
+    .map((call) => call.map((arg: unknown) => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' '))
+    .join('\n');
+}
+
+/** Las líneas JSON de un espía de la consola. */
+function jsonLines(spy: jest.SpyInstance): Array<Record<string, unknown>> {
+  return spy.mock.calls.flatMap((call) => {
+    try {
+      return [JSON.parse(String(call[0])) as Record<string, unknown>];
+    } catch {
+      return [];
+    }
+  });
+}
+
+describe('PUT /api/customers/:id — RN-13: campos vacíos en la edición', () => {
+  it('PUT con notes «» deja notes vacío (deja de tenerlas)', async () => {
+    const created = await auth(request(app).post('/api/customers')).send(naturalBody());
+    expect(created.body.notes).toBe('Cliente de prueba');
+    const res = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
+      email: 'ana.perez@example.com',
+      notes: '',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body).not.toHaveProperty('notes');
+    const stored = await CustomerModel.findById(created.body.id).lean();
+    expect(stored?.notes).toBeUndefined();
+  });
+
+  it('un texto opcional enviado como null o en blanco también se vacía', async () => {
+    const created = await auth(request(app).post('/api/customers')).send(naturalBody());
+    const res = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
+      email: 'ana.perez@example.com',
+      city: null,
+      mobilePhone: '   ',
+      address: '',
+    });
+    expect(res.status).toBe(200);
+    for (const field of ['city', 'mobilePhone', 'address']) {
+      expect(res.body).not.toHaveProperty(field);
+    }
+    const detail = await auth(request(app).get(`/api/customers/${created.body.id}`));
+    expect(detail.body).not.toHaveProperty('city');
+  });
+
+  it('PUT con accountExecutiveId «» o null conserva el ejecutivo, aunque esté inactivo', async () => {
+    const executiveId = await seedExecutive('Marta Ruiz');
+    const created = await auth(request(app).post('/api/customers')).send(naturalBody({ accountExecutiveId: executiveId }));
+    await executives().updateOne({ _id: new mongoose.Types.ObjectId(executiveId) }, { $set: { active: false } });
+
+    for (const accountExecutiveId of ['', null, undefined]) {
+      const res = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
+        email: 'ana.perez@example.com',
+        accountExecutiveId,
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.accountExecutiveId).toBe(executiveId);
+    }
+    const detail = await auth(request(app).get(`/api/customers/${created.body.id}`));
+    expect(detail.body).toMatchObject({ accountExecutiveId: executiveId, accountExecutive: 'Marta Ruiz' });
+  });
+
+  it('PUT sin city no la cambia (ni nada que no se envíe)', async () => {
+    const created = await auth(request(app).post('/api/customers')).send(naturalBody());
+    const res = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
+      email: 'ana.perez@example.com',
+      notes: 'Nueva nota',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      city: 'Quito',
+      mobilePhone: '0991234567',
+      address: 'Av. Amazonas N24-03',
+      sourceChannel: 'referido',
+      firstNames: 'Ana María',
+      lastNames: 'Pérez Gómez',
+      notes: 'Nueva nota',
+    });
+  });
+
+  it('un texto opcional con un tipo que no es el suyo → 400 «El valor de Ciudad no es válido.»', async () => {
+    const created = await auth(request(app).post('/api/customers')).send(naturalBody());
+    const res = await auth(request(app).put(`/api/customers/${created.body.id}`)).send({
+      email: 'ana.perez@example.com',
+      city: 42,
+    });
+    expect(res.status).toBe(400);
+    expect(messagesOf(res)).toEqual({ city: 'El valor de Ciudad no es válido.' });
+  });
+});
+
+describe('RN-02 · RN-01 — el número de identificación se guarda sin espacios y en mayúsculas', () => {
+  it('POST con «ab 12345 » guarda «AB12345», y después «AB12345» responde 409', async () => {
+    const first = await auth(request(app).post('/api/customers')).send(
+      naturalBody({ idType: 'passport', idNumber: ' ab 12345 ' })
+    );
+    expect(first.status).toBe(201);
+    expect(first.body.idNumber).toBe('AB12345');
+    const stored = await CustomerModel.findById(first.body.id).lean();
+    expect(stored?.idNumber).toBe('AB12345');
+
+    const second = await auth(request(app).post('/api/customers')).send(
+      naturalBody({ idType: 'passport', idNumber: 'AB12345', email: 'otro@example.com' })
+    );
+    expect(second.status).toBe(409);
+    expect(second.body.code).toBe('CUSTOMER_DUPLICATE');
+    expect(await CustomerModel.countDocuments()).toBe(1);
+  });
+
+  it('una cédula escrita con espacios se valida y se guarda sin ellos', async () => {
+    const res = await auth(request(app).post('/api/customers')).send(naturalBody({ idNumber: '01 0203 0405' }));
+    expect(res.status).toBe(201);
+    expect(res.body.idNumber).toBe('0102030405');
+  });
+});
+
+describe('RN-06 — el año del código sale de la fecha de creación guardada, en UTC', () => {
+  function appWithClock(instant: Date): Application {
+    return createApp(mongoose, { customerController: new CustomerController(new CustomerService(() => instant)) });
+  }
+
+  it('el último milisegundo de 2030 en UTC da PRO-2030 y es el createdAt que se guarda', async () => {
+    const instant = new Date('2030-12-31T23:59:59.999Z');
+    const res = await auth(request(appWithClock(instant)).post('/api/customers')).send(naturalBody());
+    expect(res.status).toBe(201);
+    expect(res.body.code).toBe('PRO-2030-001');
+    expect(res.body.createdAt).toBe(instant.toISOString());
+    const stored = await CustomerModel.findById(res.body.id).lean();
+    expect(stored?.createdAt.toISOString()).toBe(instant.toISOString());
+    expect(await CounterModel.findById('customers-2030').lean()).toMatchObject({ seq: 1 });
+  });
+
+  it('un instante que en Ecuador (UTC-5) aún es 2030 pero en UTC ya es 2031 da PRO-2031', async () => {
+    const instant = new Date('2031-01-01T03:00:00.000Z');
+    const res = await auth(request(appWithClock(instant)).post('/api/customers')).send(naturalBody());
+    expect(res.status).toBe(201);
+    expect(res.body.code).toBe('PRO-2031-001');
+    expect(new Date(res.body.createdAt).getUTCFullYear()).toBe(2031);
+  });
+});
+
+describe('RN-12 · R4-OBS-3 — un cuerpo que no es un JSON válido', () => {
+  const malformed = '{"email":"ana.perez@example.com","mobilePhone":"0991234567",';
+
+  it.each([
+    ['POST /api/customers', () => auth(request(app).post('/api/customers'))],
+    ['PUT /api/customers/:id', () => auth(request(app).put(`/api/customers/${new mongoose.Types.ObjectId().toString()}`))],
+  ])('%s → 400 VALIDATION_ERROR con details vacío, sin registrar el cuerpo', async (_name, build) => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const res = await build().set('Content-Type', 'application/json').send(malformed);
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({
+      code: 'VALIDATION_ERROR',
+      message: 'El cuerpo de la petición no es un JSON válido.',
+      details: [],
+    });
+    expect(await CustomerModel.countDocuments()).toBe(0);
+    const logged = consoleText(errorSpy, logSpy);
+    expect(logged).not.toContain('ana.perez@example.com');
+    expect(logged).not.toContain('0991234567');
+    // R4-OBS-1: la petición rechazada también queda en el log por petición
+    expect(jsonLines(logSpy).find((line) => 'requestId' in line)).toMatchObject({ status: 400 });
+  });
+
+  it('/api/orders conserva la forma de su contrato ({code, message}) y tampoco registra el cuerpo', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const res = await auth(request(app).post('/api/orders')).set('Content-Type', 'application/json').send(malformed);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ code: 'INTERNAL_ERROR', message: 'Error interno del servidor' });
+    const logged = consoleText(errorSpy, logSpy);
+    expect(logged).not.toContain('ana.perez@example.com');
+    expect(logged).not.toContain('0991234567');
+    const [entry] = jsonLines(errorSpy);
+    expect(entry).toMatchObject({ event: 'unexpected_error', error: { name: 'SyntaxError', type: 'entity.parse.failed' } });
+    expect(entry['error']).not.toHaveProperty('message');
+  });
+});
+
+describe('R4-ARQ-4 · R4-OBS-3 — un error no previsto: 500 con details y sin el cuerpo en el log', () => {
+  const INTERNAL = { code: 'INTERNAL_ERROR', message: 'Error interno del servidor', details: [] };
+
+  it('POST /api/customers: 500 {code, message, details} y el log no lleva el cuerpo ni el mensaje del error', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    jest.spyOn(CustomerModel, 'create').mockImplementationOnce((() =>
+      Promise.reject(new Error('fallo al guardar ana.perez@example.com 0991234567'))) as never);
+
+    const res = await auth(request(app).post('/api/customers')).send(naturalBody());
+
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual(INTERNAL);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    const [entry] = jsonLines(errorSpy);
+    expect(entry).toMatchObject({ level: 'error', event: 'unexpected_error', method: 'POST', path: '/api/customers' });
+    expect(typeof entry['requestId']).toBe('string');
+    expect((entry['error'] as { name: string; stack: string[] }).name).toBe('Error');
+    expect((entry['error'] as { stack: string[] }).stack.length).toBeGreaterThan(0);
+    const logged = consoleText(errorSpy, logSpy);
+    for (const personal of ['ana.perez@example.com', '0991234567', 'Pérez Gómez', '0102030405']) {
+      expect(logged).not.toContain(personal);
+    }
+  });
+
+  it('GET /api/customers/:id: 500 {code, message, details}', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.spyOn(CustomerModel, 'aggregate').mockImplementationOnce((() => Promise.reject(new Error('base caída'))) as never);
+    const res = await auth(request(app).get(`/api/customers/${new mongoose.Types.ObjectId().toString()}`));
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual(INTERNAL);
+  });
+
+  it('PUT /api/customers/:id: 500 {code, message, details}', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.spyOn(CustomerModel, 'findById').mockImplementationOnce(() => {
+      throw new Error('base caída');
+    });
+    const res = await auth(request(app).put(`/api/customers/${new mongoose.Types.ObjectId().toString()}`)).send({
+      email: 'ana.perez@example.com',
+    });
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual(INTERNAL);
+  });
+
+  it('un error que no es un objeto también se registra sin datos', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.spyOn(CustomerModel, 'aggregate').mockImplementationOnce((() => Promise.reject('texto suelto')) as never);
+    const res = await auth(request(app).get('/api/customers'));
+    expect(res.status).toBe(500);
+    expect(jsonLines(errorSpy)[0]).toMatchObject({ error: { name: 'string', stack: [] } });
+    expect(consoleText(errorSpy)).not.toContain('texto suelto');
+  });
+});
+
+describe('R4-SEG-3 · R4-SEG-4 — un método no declarado bajo /api/customers', () => {
+  it('DELETE /api/customers/:id y PATCH /api/customers → 404 con details', async () => {
+    const deleted = await auth(request(app).delete(`/api/customers/${new mongoose.Types.ObjectId().toString()}`));
+    expect(deleted.status).toBe(404);
+    expect(deleted.body).toEqual({ code: 'NOT_FOUND', message: expect.any(String), details: [] });
+
+    const patched = await request(app).patch('/api/customers');
+    expect(patched.status).toBe(404);
+    expect(patched.body.details).toEqual([]);
+  });
+
+  it('fuera de /api/customers el 404 conserva su forma {code, message}', async () => {
+    const res = await auth(request(app).delete(`/api/orders/${new mongoose.Types.ObjectId().toString()}`));
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ code: 'NOT_FOUND', message: expect.any(String) });
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
 // Swagger veraz (observación del revisor de la ronda 1)
 // ────────────────────────────────────────────────────────────────────────────
 
 describe('Swagger — /api/customers documentado como lo implementa el código', () => {
-  type Schema = { required?: string[]; allOf?: Schema[]; oneOf?: Array<{ $ref: string }>; properties?: Record<string, Schema> };
+  type Schema = {
+    description?: string;
+    required?: string[];
+    allOf?: Schema[];
+    oneOf?: Array<{ $ref: string }>;
+    properties?: Record<string, Schema>;
+  };
   const spec = swaggerSpec as {
-    paths: Record<string, Record<string, { responses: Record<string, unknown> }>>;
+    paths: Record<string, Record<string, { description?: string; responses: Record<string, unknown> }>>;
     components: { schemas: Record<string, Schema> };
   };
   const schemas = spec.components.schemas;
   const requiredOf = (name: string): string[] =>
     (schemas[name].allOf ?? [schemas[name]]).flatMap((part) => part.required ?? []);
 
-  it('documenta los cuatro endpoints con sus respuestas', () => {
+  it('documenta los cuatro endpoints con sus respuestas, el 500 en todos (R4-ARQ-4)', () => {
     expect(Object.keys(spec.paths['/api/customers']).sort()).toEqual(['get', 'post']);
     expect(Object.keys(spec.paths['/api/customers/{id}']).sort()).toEqual(['get', 'put']);
-    expect(Object.keys(spec.paths['/api/customers'].post.responses).sort()).toEqual(['201', '400', '401', '409']);
+    expect(Object.keys(spec.paths['/api/customers'].post.responses).sort()).toEqual(['201', '400', '401', '409', '500']);
     expect(Object.keys(spec.paths['/api/customers'].get.responses).sort()).toEqual(['200', '400', '401', '500']);
-    expect(Object.keys(spec.paths['/api/customers/{id}'].get.responses).sort()).toEqual(['200', '401', '404']);
-    expect(Object.keys(spec.paths['/api/customers/{id}'].put.responses).sort()).toEqual(['200', '400', '401', '404']);
+    expect(Object.keys(spec.paths['/api/customers/{id}'].get.responses).sort()).toEqual(['200', '401', '404', '500']);
+    expect(Object.keys(spec.paths['/api/customers/{id}'].put.responses).sort()).toEqual(['200', '400', '401', '404', '500']);
+  });
+
+  it('el PUT documenta que los nombres del otro tipo de persona se ignoran y los vacíos de RN-13', () => {
+    const update = schemas['UpdateCustomerBody'].description ?? '';
+    expect(update).toContain('los nombres del otro tipo de persona se ignoran');
+    expect(update).toContain('(RN-13)');
+    expect(update).toContain('accountExecutiveId ausente, «» o null conserva el ejecutivo');
+    expect(spec.paths['/api/customers/{id}'].put.description).toContain('Los nombres del otro tipo de persona se ignoran');
+  });
+
+  it('el 400 documenta los mensajes de RN-12 de la v6', () => {
+    const validation = schemas['CustomerValidationError'].description ?? '';
+    expect(validation).toContain('«El valor de <etiqueta> no es válido.»');
+    expect(validation).toContain('«El cuerpo de la petición no es un JSON válido.» y details vacío');
   });
 
   it('el alta exige sourceChannel y el nombre según el tipo de persona', () => {

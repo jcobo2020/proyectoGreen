@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { ValidationError } from '../lib/errors';
 import { ID_TYPES, PERSON_TYPES } from '../models/customer';
+import { normalizeIdNumber } from '../lib/customerNormalization';
 
 type FieldError = { field: string; message: string };
 type Body = Record<string, unknown>;
 
-// ─── Mensajes literales de la spec (GREEN-H2-API-CLIENTES-001 v4) ─────────────
+// ─── Mensajes literales de la spec (GREEN-H2-API-CLIENTES-001 v6) ─────────────
 
 export const CUSTOMER_MESSAGES = {
   rucInvalid: 'El RUC debe tener 13 dígitos y terminar en 001.', // RN-02
@@ -26,7 +27,7 @@ export const CUSTOMER_MESSAGES = {
 /**
  * Etiqueta de cada campo del alta, la que da el contrato (respuesta 201 de POST /api/customers).
  * RN-12: un campo con un tipo que no es el suyo, o con un valor fuera de su lista, responde
- * «<etiqueta> no es válido.».
+ * «El valor de <etiqueta> no es válido.».
  */
 export const CUSTOMER_FIELD_LABELS = {
   personType: 'Tipo de persona',
@@ -50,7 +51,7 @@ export const CUSTOMER_FIELD_LABELS = {
 type CustomerField = keyof typeof CUSTOMER_FIELD_LABELS;
 
 export function notValidMessage(field: CustomerField): string {
-  return `${CUSTOMER_FIELD_LABELS[field]} no es válido.`;
+  return `El valor de ${CUSTOMER_FIELD_LABELS[field]} no es válido.`;
 }
 
 /** Campos de texto opcionales que no tienen otra regla que ser texto. */
@@ -75,16 +76,19 @@ export function isValidEmail(value: unknown): boolean {
   return typeof value === 'string' && EMAIL_PATTERN.test(value.trim());
 }
 
-/** RN-02: formato de la identificación según su tipo. Devuelve el mensaje literal o null. */
+/**
+ * RN-02: formato de la identificación según su tipo, sobre el número tal como se guardará (sin
+ * espacios y en mayúsculas). Devuelve el mensaje literal o null.
+ */
 export function idNumberError(idType: string, idNumber: string): string | null {
-  const value = idNumber.trim();
+  const value = normalizeIdNumber(idNumber);
   switch (idType) {
     case 'ruc':
       return /^\d{10}001$/.test(value) ? null : CUSTOMER_MESSAGES.rucInvalid;
     case 'cedula':
       return /^\d{10}$/.test(value) ? null : CUSTOMER_MESSAGES.cedulaInvalid;
     default: // passport: 5 a 20 letras o dígitos, sin otra validación
-      return /^[A-Za-z0-9]{5,20}$/.test(value) ? null : CUSTOMER_MESSAGES.idNumberInvalid;
+      return /^[A-Z0-9]{5,20}$/.test(value) ? null : CUSTOMER_MESSAGES.idNumberInvalid;
   }
 }
 
@@ -188,7 +192,8 @@ export function createCustomerErrors(rawBody: unknown): FieldError[] {
  * Errores de forma de PUT /api/customers/:id. idType, idNumber y personType no se validan:
  * no cambian tras el alta y se ignoran (RN-05). Que el nombre quede completo según el tipo
  * de persona GUARDADO lo comprueba el servicio (RN-03). El canal es opcional, pero si viene
- * no puede ir vacío (RN-03).
+ * no puede ir vacío (RN-03). Un texto opcional «» o null vale: lo vacía (RN-13); un
+ * accountExecutiveId «» o null también vale: conserva el ejecutivo (RN-13).
  */
 export function updateCustomerErrors(rawBody: unknown): FieldError[] {
   const body = asBody(rawBody);

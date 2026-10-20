@@ -1,0 +1,6 @@
+=== R4-REND-1 — GET /api/customers (WI-H2-API-CLIENTES-001) ===
+Fecha: 2026-10-20T00:56:42.298Z
+Node: v23.11.0 · MongoDB en memoria (mongodb-memory-server, wiredTiger) · 60 clientes con ejecutivo
+Peticiones concurrentes: 50 (tras una de calentamiento)
+p50: 68.0 ms · p95: 84.2 ms · máx: 85.1 ms
+Límite: p95 < 300 ms → CUMPLE

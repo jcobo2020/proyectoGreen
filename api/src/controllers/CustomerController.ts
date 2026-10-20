@@ -5,7 +5,7 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  * @swagger
  * tags:
  *   name: Customers
- *   description: Clientes del CRM (personas jurídicas y naturales) — contrato GREEN-H2-API-CLIENTES-001 v4
+ *   description: Clientes del CRM (personas jurídicas y naturales) — contrato GREEN-H2-API-CLIENTES-001 v6
  */
 
 /**
@@ -20,7 +20,7 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *         code: { type: string, description: 'Código legible PRO-AAAA-NNN', example: PRO-2026-001 }
  *         personType: { type: string, enum: [legal, natural], description: Tipo de persona (jurídica o natural) }
  *         idType: { type: string, enum: [cedula, ruc, passport], description: Tipo de identificación }
- *         idNumber: { type: string, description: Número de identificación (único) }
+ *         idNumber: { type: string, description: 'Número de identificación (único), sin espacios y en mayúsculas (RN-02)' }
  *         legalName: { type: string, description: Razón social (persona jurídica) }
  *         firstNames: { type: string, description: Nombres (persona natural) }
  *         lastNames: { type: string, description: Apellidos (persona natural) }
@@ -44,7 +44,7 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *         id: { type: string }
  *         code: { type: string, description: 'PRO-AAAA-NNN: año de creación en UTC y secuencia anual de al menos 3 dígitos (RN-06)', example: PRO-2026-001 }
  *         idType: { type: string, enum: [cedula, ruc, passport], description: Tipo de identificación }
- *         idNumber: { type: string, description: Número de identificación }
+ *         idNumber: { type: string, description: 'Número de identificación, sin espacios y en mayúsculas (RN-02)' }
  *         legalName: { type: string, description: Razón social }
  *         firstNames: { type: string, description: Nombres }
  *         lastNames: { type: string, description: Apellidos }
@@ -108,7 +108,7 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *           properties:
  *             personType: { type: string, enum: [legal, natural], description: Tipo de persona }
  *             idType: { type: string, enum: [cedula, ruc, passport], description: Tipo de identificación }
- *             idNumber: { type: string, description: 'RUC: 13 dígitos terminados en 001 · cédula: 10 dígitos · pasaporte: 5 a 20 letras o dígitos (RN-02)' }
+ *             idNumber: { type: string, description: 'RUC: 13 dígitos terminados en 001 · cédula: 10 dígitos · pasaporte: 5 a 20 letras o dígitos (RN-02). Se valida y se guarda sin espacios y en mayúsculas: «ab12345» y «AB12345» son la misma identificación (RN-01)' }
  *     CreateLegalCustomerBody:
  *       description: Persona jurídica — la razón social (legalName) es obligatoria (RN-03)
  *       allOf:
@@ -141,8 +141,12 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *       description: >
  *         idType, idNumber y personType no cambian tras el alta y se ignoran si se envían (RN-05).
  *         El nombre se exige según el tipo de persona GUARDADO: legalName de una jurídica, firstNames
- *         y lastNames de una natural no pueden quedar vacíos (RN-03). sourceChannel es opcional,
- *         pero si viene no puede ir vacío. Reenviar el ejecutivo que ya tiene vale aunque esté inactivo (RN-09).
+ *         y lastNames de una natural no pueden quedar vacíos (RN-03); los nombres del otro tipo de
+ *         persona se ignoran (firstNames y lastNames en una jurídica, legalName en una natural).
+ *         sourceChannel es opcional, pero si viene no puede ir vacío (RN-03). Un campo que no se envía
+ *         no cambia; un texto opcional enviado como «» o null se vacía y deja de venir en la respuesta
+ *         (RN-13). accountExecutiveId ausente, «» o null conserva el ejecutivo que el cliente tiene;
+ *         cambiarlo exige uno activo, y reenviar el que ya tiene vale aunque esté inactivo (RN-09, RN-10).
  *       allOf:
  *         - $ref: '#/components/schemas/CustomerWriteFields'
  *         - type: object
@@ -158,10 +162,12 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *       description: >
  *         400 de /api/customers. details lista cada campo con su mensaje literal: «Tipo de persona es obligatorio.»,
  *         «Tipo de identificación es obligatorio.», «Número de identificación es obligatorio.», «Correo electrónico es obligatorio.»,
- *         «<etiqueta> no es válido.» (tipo o valor fuera de su lista), «El RUC debe tener 13 dígitos y terminar en 001.»,
+ *         «El valor de <etiqueta> no es válido.» (tipo o valor fuera de su lista, p. ej. «El valor de Ciudad no es válido.»),
+ *         «El RUC debe tener 13 dígitos y terminar en 001.»,
  *         «La cédula debe tener 10 dígitos.», «Número no válido.», «Completa el nombre.», «Ingresa un correo válido.»,
  *         «Selecciona el canal de origen.», «Selecciona un ejecutivo válido.», «La página no es válida.»,
- *         «El tamaño de página no es válido.»
+ *         «El tamaño de página no es válido.». Un cuerpo que no es un JSON válido responde con el mensaje
+ *         «El cuerpo de la petición no es un JSON válido.» y details vacío (RN-12).
  *       properties:
  *         code: { type: string, enum: [VALIDATION_ERROR] }
  *         message: { type: string }
@@ -195,7 +201,7 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *       required: [code, message, details]
  *     CustomerInternalError:
  *       type: object
- *       description: '500 de /api/customers: un fallo de la base hace fallar la petición entera, nunca una página a medias'
+ *       description: '500 de /api/customers: un error no previsto (p. ej. un fallo de la base) hace fallar la petición entera, nunca una página a medias (R4-ARQ-4); se registra sin el cuerpo de la petición (R4-OBS-3)'
  *       properties:
  *         code: { type: string, enum: [INTERNAL_ERROR] }
  *         message: { type: string }
@@ -273,7 +279,7 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *           application/json:
  *             schema: { $ref: '#/components/schemas/CreatedCustomer' }
  *       400:
- *         description: Entrada inválida; details lista cada campo con su mensaje literal
+ *         description: Entrada inválida (details lista cada campo con su mensaje literal) o un cuerpo que no es un JSON válido (details vacío)
  *         content:
  *           application/json:
  *             schema: { $ref: '#/components/schemas/CustomerValidationError' }
@@ -287,6 +293,11 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *         content:
  *           application/json:
  *             schema: { $ref: '#/components/schemas/CustomerDuplicateError' }
+ *       500:
+ *         description: Error no previsto (p. ej. un fallo de la base)
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CustomerInternalError' }
  * /api/customers/{id}:
  *   get:
  *     summary: Ficha de un cliente
@@ -314,9 +325,17 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *         content:
  *           application/json:
  *             schema: { $ref: '#/components/schemas/CustomerNotFoundError' }
+ *       500:
+ *         description: Error no previsto (p. ej. un fallo de la base)
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CustomerInternalError' }
  *   put:
  *     summary: Edición de un cliente
- *     description: Actualiza la razón social o el nombre, el contacto y los datos comerciales (RN-05).
+ *     description: >
+ *       Actualiza la razón social o el nombre, el contacto y los datos comerciales (RN-05). Los nombres
+ *       del otro tipo de persona se ignoran; lo que no se envía no cambia y un texto opcional «» o null
+ *       se vacía (RN-13).
  *     tags: [Customers]
  *     security:
  *       - bearerAuth: []
@@ -337,7 +356,7 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *           application/json:
  *             schema: { $ref: '#/components/schemas/PublicCustomer' }
  *       400:
- *         description: Entrada inválida; details lista cada campo con su mensaje literal
+ *         description: Entrada inválida (details lista cada campo con su mensaje literal) o un cuerpo que no es un JSON válido (details vacío)
  *         content:
  *           application/json:
  *             schema: { $ref: '#/components/schemas/CustomerValidationError' }
@@ -351,6 +370,11 @@ import { CustomerService, CreateCustomerInput, UpdateCustomerInput } from '../se
  *         content:
  *           application/json:
  *             schema: { $ref: '#/components/schemas/CustomerNotFoundError' }
+ *       500:
+ *         description: Error no previsto (p. ej. un fallo de la base)
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CustomerInternalError' }
  */
 
 const WRITE_FIELDS = [
