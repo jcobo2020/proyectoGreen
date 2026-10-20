@@ -1,13 +1,76 @@
+$ npm run seed:executives
 
 > greenfield-api@1.0.0 seed:executives
-> tsc && node dist/scripts/seedExecutives.js ../.sdd-local/seed-vacio.json
+> tsc && node dist/scripts/seedExecutives.js
 
 === seed:executives ===
 Colección 'executives': existe
 Índices en 'executives':
   - _id_: {"_id":1}
-  - name_1: {"name":1} [UNIQUE]
-  - active_1_name_1: {"active":1,"name":1}
-Nombres en el fichero: 0
-Creados: 0 · Reactivados: 0 · Sin cambios: 0
-Ejecutivos en la colección: 0 · Ejecutivos activos: 0
+  - name_1: {"name":1} [UNIQUE] [collation es strength 2]
+  - active_1_name_1: {"active":1,"name":1} [collation es strength 2]
+Nombres en la lista: 5
+Creados: 5 · Ya existían (sin tocar): 0
+Ejecutivos en la colección: 5 · Ejecutivos activos: 5
+(código de salida: 0)
+
+$ npm run seed:executives
+
+> greenfield-api@1.0.0 seed:executives
+> tsc && node dist/scripts/seedExecutives.js
+
+=== seed:executives ===
+Colección 'executives': existe
+Índices en 'executives':
+  - _id_: {"_id":1}
+  - name_1: {"name":1} [UNIQUE] [collation es strength 2]
+  - active_1_name_1: {"active":1,"name":1} [collation es strength 2]
+Nombres en la lista: 5
+Creados: 0 · Ya existían (sin tocar): 5
+Ejecutivos en la colección: 5 · Ejecutivos activos: 5
+(código de salida: 0)
+
+$ node -e const m=require('mongoose');m.connect(process.env.MONGODB_URI).then(()=>m.connection.db.collection('executives').updateOne({name:'Paola Cedeño'},{$set:{active:false}})).then(r=>{console.log('Baja de Paola Cedeño: matched',r.matchedCount,'modified',r.modifiedCount);return m.disconnect()})
+Baja de Paola Cedeño: matched 1 modified 1
+(código de salida: 0)
+
+$ npm run seed:executives
+
+> greenfield-api@1.0.0 seed:executives
+> tsc && node dist/scripts/seedExecutives.js
+
+=== seed:executives ===
+Colección 'executives': existe
+Índices en 'executives':
+  - _id_: {"_id":1}
+  - name_1: {"name":1} [UNIQUE] [collation es strength 2]
+  - active_1_name_1: {"active":1,"name":1} [collation es strength 2]
+Nombres en la lista: 5
+Creados: 0 · Ya existían (sin tocar): 5
+Ejecutivos en la colección: 5 · Ejecutivos activos: 4
+(código de salida: 0)
+
+$ npm run seed:executives -- ../.sdd-local/daniela-minusculas.json
+
+> greenfield-api@1.0.0 seed:executives
+> tsc && node dist/scripts/seedExecutives.js ../.sdd-local/daniela-minusculas.json
+
+=== seed:executives ===
+Colección 'executives': existe
+Índices en 'executives':
+  - _id_: {"_id":1}
+  - name_1: {"name":1} [UNIQUE] [collation es strength 2]
+  - active_1_name_1: {"active":1,"name":1} [collation es strength 2]
+Nombres en la lista: 1
+Creados: 0 · Ya existían (sin tocar): 1
+Ejecutivos en la colección: 5 · Ejecutivos activos: 4
+(código de salida: 0)
+
+$ node -e const m=require('mongoose');m.connect(process.env.MONGODB_URI).then(()=>m.connection.db.collection('executives').find({},{projection:{_id:0,name:1,active:1}}).collation({locale:'es',strength:2}).sort({name:1}).toArray()).then(d=>{d.forEach(x=>console.log(JSON.stringify(x)));return m.disconnect()})
+{"name":"Andrés Villacís","active":true}
+{"name":"Daniela Ríos","active":true}
+{"name":"Karla Mendoza","active":true}
+{"name":"Mauricio León","active":true}
+{"name":"Paola Cedeño","active":false}
+(código de salida: 0)
+

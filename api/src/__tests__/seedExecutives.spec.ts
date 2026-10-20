@@ -1,18 +1,31 @@
 /**
  * Tests del esquema y de la siembra de executives (WI-H2-API-EJECUTIVOS-001)
- * §3 (índices {name} único y {active, name}) y R4-ARQ-2 (seed idempotente: upsert por name, active = true).
+ * §3 (índices {name} único sin distinguir mayúsculas y {active, name}, con intercalación es),
+ * AC-03 / RN-03 (la siembra crea los del equipo que falten y nunca toca a los que existen) y R4-ARQ-2.
  * No escriben ficheros versionados: la evidencia de migración sale de ejecutar `npm run seed:executives`.
  */
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import crypto from 'crypto';
 import mongoose from 'mongoose';
+import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
+import { createApp } from '../app';
 import { ExecutiveModel } from '../models/executive';
 import { ExecutiveService, normalizeExecutiveName } from '../services/ExecutiveService';
 import { parseExecutiveSeed } from '../validators/executive.validator';
-import { readExecutiveSeedFile, runSeedExecutives, seedExecutivesCli } from '../scripts/seedExecutives';
+import {
+  readExecutiveSeedFile,
+  runSeedExecutives,
+  seedExecutivesCli,
+  TEAM_EXECUTIVES_FILE,
+} from '../scripts/seedExecutives';
 import { ValidationError } from '../lib/errors';
+
+/** La lista del equipo de la spec (§1 y RN-03), tal como va versionada en api/data/executives.json */
+const TEAM = ['Daniela Ríos', 'Mauricio León', 'Paola Cedeño', 'Andrés Villacís', 'Karla Mendoza'];
 
 let replSet: MongoMemoryReplSet;
 let tmpDir: string;
@@ -34,15 +47,17 @@ beforeEach(async () => {
 });
 
 describe('Esquema de Executive (§3)', () => {
-  it('crea la colección executives con el índice único {name} y el índice {active, name}', async () => {
+  it('crea la colección executives con {name} único y {active, name}, los dos con intercalación es sin distinguir mayúsculas', async () => {
     await ExecutiveModel.syncIndexes();
     const indexes = await ExecutiveModel.collection.listIndexes().toArray();
 
     expect(ExecutiveModel.collection.collectionName).toBe('executives');
     const nameIndex = indexes.find((i) => JSON.stringify(i.key) === JSON.stringify({ name: 1 }));
     expect(nameIndex?.unique).toBe(true);
+    expect(nameIndex?.collation).toMatchObject({ locale: 'es', strength: 2 });
     const listIndex = indexes.find((i) => JSON.stringify(i.key) === JSON.stringify({ active: 1, name: 1 }));
     expect(listIndex).toBeDefined();
+    expect(listIndex?.collation).toMatchObject({ locale: 'es', strength: 2 });
   });
 
   it('active vale true por defecto y name es obligatorio y único', async () => {
@@ -52,6 +67,15 @@ describe('Esquema de Executive (§3)', () => {
 
     await expect(ExecutiveModel.create({ active: true })).rejects.toThrow();
     await expect(ExecutiveModel.create({ name: 'Ana López' })).rejects.toThrow();
+  });
+
+  it('RN-03 · el nombre es único sin distinguir mayúsculas: el índice rechaza «daniela ríos» si ya está «Daniela Ríos»', async () => {
+    await ExecutiveModel.syncIndexes();
+    await ExecutiveModel.create({ name: 'Daniela Ríos' });
+
+    await expect(ExecutiveModel.create({ name: 'daniela ríos' })).rejects.toThrow(/duplicate key/);
+    await expect(ExecutiveModel.create({ name: 'DANIELA RÍOS' })).rejects.toThrow(/duplicate key/);
+    expect(await ExecutiveModel.countDocuments()).toBe(1);
   });
 });
 
@@ -88,41 +112,115 @@ describe('parseExecutiveSeed (validación de la entrada del seed)', () => {
   });
 });
 
-describe('ExecutiveService.seedActive — R4-ARQ-2: upsert por name, active = true', () => {
+describe('La lista del equipo versionada (§1 y RN-03)', () => {
+  it('api/data/executives.json trae exactamente los 5 ejecutivos del equipo', () => {
+    expect(path.relative(path.resolve(__dirname, '../..'), TEAM_EXECUTIVES_FILE)).toBe(path.join('data', 'executives.json'));
+    expect(readExecutiveSeedFile(TEAM_EXECUTIVES_FILE)).toEqual(TEAM);
+  });
+});
+
+describe('ExecutiveService.seedMissing — RN-03: crea los que falten y nunca toca a los que existen', () => {
   const service = new ExecutiveService();
 
-  it('crea los que no existen y es idempotente', async () => {
+  beforeEach(async () => {
     await ExecutiveModel.syncIndexes();
-    const first = await service.seedActive(['Ana López', 'Bruno Díaz']);
-    expect(first).toEqual({ created: 2, updated: 0, unchanged: 0 });
-
-    const second = await service.seedActive(['Ana López', 'Bruno Díaz']);
-    expect(second).toEqual({ created: 0, updated: 0, unchanged: 2 });
-    expect(await ExecutiveModel.countDocuments()).toBe(2);
   });
 
-  it('deja active = true a un ejecutivo existente inactivo', async () => {
-    await ExecutiveModel.syncIndexes();
-    const existing = await ExecutiveModel.create({ name: 'Ana López', active: false });
+  it('crea los que no existen, con active = true, y es idempotente', async () => {
+    const first = await service.seedMissing(TEAM);
+    expect(first).toEqual({ created: 5, unchanged: 0 });
+    expect(await ExecutiveModel.countDocuments({ active: true })).toBe(5);
 
-    const result = await service.seedActive(['Ana López']);
-    expect(result).toEqual({ created: 0, updated: 1, unchanged: 0 });
+    const second = await service.seedMissing(TEAM);
+    expect(second).toEqual({ created: 0, unchanged: 5 });
+    expect(await ExecutiveModel.countDocuments()).toBe(5);
+  });
+
+  it('no reactiva a un ejecutivo dado de baja', async () => {
+    const existing = await ExecutiveModel.create({ name: 'Paola Cedeño', active: false });
+
+    const result = await service.seedMissing(TEAM);
+    expect(result).toEqual({ created: 4, unchanged: 1 });
 
     const after = await ExecutiveModel.findById(existing._id);
-    expect(after?.active).toBe(true);
+    expect(after?.active).toBe(false);
+  });
+
+  it('no cambia el nombre de uno que ya existe con otra capitalización ni crea otro', async () => {
+    const existing = await ExecutiveModel.create({ name: 'daniela ríos' });
+
+    const result = await service.seedMissing(['Daniela Ríos']);
+    expect(result).toEqual({ created: 0, unchanged: 1 });
+    expect(await ExecutiveModel.countDocuments()).toBe(1);
+    expect((await ExecutiveModel.findById(existing._id))?.name).toBe('daniela ríos');
+  });
+
+  it('un repetido con otra capitalización dentro de la misma lista no crea otro', async () => {
+    const result = await service.seedMissing(['Daniela Ríos', 'daniela ríos']);
+    expect(result).toEqual({ created: 1, unchanged: 1 });
+    expect(await ExecutiveModel.countDocuments()).toBe(1);
   });
 
   it('no toca a los ejecutivos que no están en la lista', async () => {
-    await ExecutiveModel.syncIndexes();
     await ExecutiveModel.create({ name: 'Carlos Pérez', active: false });
-    await service.seedActive(['Ana López']);
+    await service.seedMissing(['Ana López']);
 
     const carlos = await ExecutiveModel.findOne({ name: 'Carlos Pérez' });
     expect(carlos?.active).toBe(false);
   });
 
   it('una lista vacía no escribe nada', async () => {
-    expect(await service.seedActive([])).toEqual({ created: 0, updated: 0, unchanged: 0 });
+    expect(await service.seedMissing([])).toEqual({ created: 0, unchanged: 0 });
+    expect(await ExecutiveModel.countDocuments()).toBe(0);
+  });
+});
+
+describe('AC-03 · npm run seed:executives dos veces, y otra tras dar de baja a «Paola Cedeño»', () => {
+  const cliDeps = {
+    connect: async () => undefined,
+    disconnect: async () => undefined,
+    log: () => undefined,
+    logError: () => undefined,
+  };
+
+  it('deja los 5 del equipo, Paola inactiva y fuera de GET /api/executives, y «daniela ríos» no crea otro', async () => {
+    // Collection limpia y sin índices: la siembra crea el esquema ella misma
+    await ExecutiveModel.collection.drop().catch(() => undefined);
+
+    // Sin argumento: la lista versionada del equipo
+    expect(await seedExecutivesCli([], cliDeps)).toBe(0);
+    expect(await seedExecutivesCli([], cliDeps)).toBe(0);
+    expect(await ExecutiveModel.countDocuments()).toBe(5);
+
+    // Baja de Paola (la gobernará «Administración»; aquí, directamente en la base)
+    await ExecutiveModel.updateOne({ name: 'Paola Cedeño' }, { $set: { active: false } });
+    expect(await seedExecutivesCli([], cliDeps)).toBe(0);
+
+    // «daniela ríos» es la misma que «Daniela Ríos»
+    const lowercaseFile = path.join(tmpDir, 'daniela-minusculas.json');
+    fs.writeFileSync(lowercaseFile, JSON.stringify(['daniela ríos']), 'utf8');
+    expect(await seedExecutivesCli([lowercaseFile], cliDeps)).toBe(0);
+
+    const docs = await ExecutiveModel.find({}).lean();
+    expect(docs.map((d) => d.name).sort()).toEqual([...TEAM].sort());
+    expect(docs.find((d) => d.name === 'Paola Cedeño')?.active).toBe(false);
+    expect(docs.filter((d) => d.active)).toHaveLength(4);
+
+    // Y GET /api/executives no la ofrece
+    process.env['JWT_SECRET'] = crypto.randomBytes(32).toString('hex');
+    const token = jwt.sign(
+      { sub: 'executive-test-ac03', exp: Math.floor(Date.now() / 1000) + 3600 },
+      process.env['JWT_SECRET'],
+      { algorithm: 'HS256', noTimestamp: true }
+    );
+    const res = await request(createApp(mongoose)).get('/api/executives').set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect((res.body as Array<{ label: string }>).map((o) => o.label)).toEqual([
+      'Andrés Villacís',
+      'Daniela Ríos',
+      'Karla Mendoza',
+      'Mauricio León',
+    ]);
   });
 });
 
@@ -143,16 +241,18 @@ describe('Script seed:executives', () => {
     const lines: string[] = [];
     const result = await runSeedExecutives(['Ana López', 'Bruno Díaz'], (l) => lines.push(l));
 
-    expect(result).toEqual({ created: 2, updated: 0, unchanged: 0 });
+    expect(result).toEqual({ created: 2, unchanged: 0 });
     const output = lines.join('\n');
     expect(output).toContain('executives');
     expect(output).toContain('active_1_name_1');
     expect(output).toContain('name_1');
     expect(output).toContain('[UNIQUE]');
+    expect(output).toContain('[collation es strength 2]');
+    expect(output).toContain('Creados: 2 · Ya existían (sin tocar): 0');
     expect(output).toContain('Ejecutivos activos: 2');
   });
 
-  describe('seedExecutivesCli (npm run seed:executives -- <fichero.json>)', () => {
+  describe('seedExecutivesCli (npm run seed:executives [-- <fichero.json>])', () => {
     function deps() {
       const out: string[] = [];
       const err: string[] = [];
@@ -161,11 +261,19 @@ describe('Script seed:executives', () => {
       return { out, err, connect, disconnect, cli: { connect, disconnect, log: (l: string) => out.push(l), logError: (l: string) => err.push(l) } };
     }
 
-    it('sin fichero sale con 1 y explica el uso, sin conectar', async () => {
+    it('sin fichero siembra la lista versionada del equipo y sale con 0 sin escribir nombres', async () => {
       const d = deps();
-      expect(await seedExecutivesCli([], d.cli)).toBe(1);
+      expect(await seedExecutivesCli([], d.cli)).toBe(0);
+      expect(d.connect).toHaveBeenCalledTimes(1);
+      expect(d.disconnect).toHaveBeenCalledTimes(1);
+      expect(d.out.join('\n')).toContain('Nombres en la lista: 5');
+      for (const name of TEAM) expect(d.out.join('\n')).not.toContain(name);
+    });
+
+    it('con un fichero que no existe sale con 1 y VALIDATION_ERROR, sin conectar', async () => {
+      const d = deps();
+      expect(await seedExecutivesCli([path.join(tmpDir, 'no-existe.json')], d.cli)).toBe(1);
       expect(d.err.join('\n')).toContain('VALIDATION_ERROR');
-      expect(d.err.join('\n')).toContain('npm run seed:executives');
       expect(d.connect).not.toHaveBeenCalled();
     });
 

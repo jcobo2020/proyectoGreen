@@ -1,4 +1,4 @@
-import { ExecutiveModel, IExecutive } from '../models/executive';
+import { ExecutiveModel, IExecutive, EXECUTIVE_COLLATION } from '../models/executive';
 
 /** Opción pública de un ejecutivo: un cliente guarda el value (_id), nunca el label (RN-02). */
 export interface PublicExecutive {
@@ -8,7 +8,6 @@ export interface PublicExecutive {
 
 export interface SeedExecutivesResult {
   created: number;
-  updated: number;
   unchanged: number;
 }
 
@@ -26,34 +25,45 @@ export function normalizeExecutiveName(name: string): string {
 }
 
 export class ExecutiveService {
-  /** Ejecutivos activos como opciones, ordenados por nombre; lista corta, sin paginar (RN-01). */
+  /**
+   * Ejecutivos activos como opciones, en orden alfabético español; lista corta, sin paginar (RN-01).
+   * La intercalación es la del índice {active, name}: la consulta lo usa y no ordena en memoria (R4-REND-1).
+   */
   async listActive(): Promise<PublicExecutive[]> {
-    const docs = await ExecutiveModel.find({ active: true }, { name: 1 }).sort({ name: 1 }).exec();
+    const docs = await ExecutiveModel.find({ active: true }, { name: 1 })
+      .collation(EXECUTIVE_COLLATION)
+      .sort({ name: 1 })
+      .exec();
     return docs.map(toPublicExecutive);
   }
 
   /**
-   * Siembra idempotente (R4-ARQ-2): upsert por name con active = true.
-   * Los ejecutivos que no están en la lista no se tocan.
+   * Siembra (RN-03, R4-ARQ-2): crea con active = true los ejecutivos de la lista que falten y
+   * nunca toca a los que ya existen (no reactiva a uno dado de baja: su baja la gobernará
+   * «Administración»). La unicidad se comprueba aquí, antes de persistir, sin distinguir
+   * mayúsculas (la intercalación del índice único): «daniela ríos» no crea otro si ya está
+   * «Daniela Ríos». Las escrituras van en orden, así que un repetido dentro de la misma lista
+   * tampoco crea otro.
    */
-  async seedActive(names: string[]): Promise<SeedExecutivesResult> {
+  async seedMissing(names: string[]): Promise<SeedExecutivesResult> {
     const unique = Array.from(new Set(names.map(normalizeExecutiveName)));
     if (unique.length === 0) {
-      return { created: 0, updated: 0, unchanged: 0 };
+      return { created: 0, unchanged: 0 };
     }
 
     const result = await ExecutiveModel.bulkWrite(
       unique.map((name) => ({
         updateOne: {
           filter: { name },
-          update: { $set: { active: true }, $setOnInsert: { name } },
+          update: { $setOnInsert: { name, active: true } },
           upsert: true,
+          collation: EXECUTIVE_COLLATION,
         },
-      }))
+      })),
+      { ordered: true }
     );
 
     const created = result.upsertedCount;
-    const updated = result.modifiedCount;
-    return { created, updated, unchanged: unique.length - created - updated };
+    return { created, unchanged: unique.length - created };
   }
 }

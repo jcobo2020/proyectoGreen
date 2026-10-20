@@ -1,6 +1,7 @@
 /**
  * Tests de contrato — GET /api/executives (WI-H2-API-EJECUTIVOS-001)
  * AC-01 (RN-01, RN-02), AC-02 (RN-AUTH) y las restricciones R4-SEG-*, R4-REND-1, R4-OBS-1.
+ * AC-03 (RN-03, la siembra) está en seedExecutives.spec.ts.
  */
 import request from 'supertest';
 import { Application } from 'express';
@@ -9,7 +10,7 @@ import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { createApp } from '../app';
-import { ExecutiveModel } from '../models/executive';
+import { ExecutiveModel, EXECUTIVE_COLLATION } from '../models/executive';
 import { ExecutiveService } from '../services/ExecutiveService';
 import { ExecutiveController } from '../controllers/ExecutiveController';
 
@@ -92,6 +93,54 @@ describe('GET /api/executives — AC-01: ejecutivos activos como opciones', () =
     expect(labels).not.toContain('Carlos Pérez');
   });
 
+  it('RN-01 · orden alfabético español: las tildes, las minúsculas y la ñ no van al final', async () => {
+    // En orden binario (sin intercalación) «andrés…», «Álvaro…», «Ñusta…» y «Óscar…» irían detrás de «Zoe…»
+    await ExecutiveModel.create([
+      { name: 'Zoe Vera' },
+      { name: 'Óscar Paz' },
+      { name: 'andrés Gil' },
+      { name: 'Beatriz Lara' },
+      { name: 'Ñusta Rey' },
+      { name: 'Nora Sol' },
+      { name: 'Álvaro Díaz' },
+      { name: 'Oliva Tapia' },
+    ]);
+
+    const res = await request(app)
+      .get('/api/executives')
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(res.status).toBe(200);
+    expect((res.body as Array<{ label: string }>).map((o) => o.label)).toEqual([
+      'Álvaro Díaz',
+      'andrés Gil',
+      'Beatriz Lara',
+      'Nora Sol',
+      'Ñusta Rey',
+      'Oliva Tapia',
+      'Óscar Paz',
+      'Zoe Vera',
+    ]);
+  });
+
+  it('RN-01 · el equipo del prototipo sale en orden alfabético español', async () => {
+    await ExecutiveModel.create(
+      ['Daniela Ríos', 'Mauricio León', 'Paola Cedeño', 'Andrés Villacís', 'Karla Mendoza'].map((name) => ({ name }))
+    );
+
+    const res = await request(app)
+      .get('/api/executives')
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect((res.body as Array<{ label: string }>).map((o) => o.label)).toEqual([
+      'Andrés Villacís',
+      'Daniela Ríos',
+      'Karla Mendoza',
+      'Mauricio León',
+      'Paola Cedeño',
+    ]);
+  });
+
   it('RN-02 · cada opción es {value: _id (ObjectId válido), label: name} y nada más', async () => {
     const created = await ExecutiveModel.create([
       { name: 'Ana López', active: true },
@@ -131,10 +180,11 @@ describe('GET /api/executives — AC-01: ejecutivos activos como opciones', () =
 });
 
 describe('GET /api/executives — AC-02 / RN-AUTH: 401 sin token válido', () => {
+  // R4-SEG-3: también el 401 viaja como {code, message, details}, con details vacío
   function expectUnauthorized(res: request.Response): void {
     expect(res.status).toBe(401);
-    expect(res.body.code).toBe('UNAUTHORIZED');
-    expect(typeof res.body.message).toBe('string');
+    expect(res.body).toEqual({ code: 'UNAUTHORIZED', message: expect.any(String), details: [] });
+    expect(res.body.message).not.toBe('');
   }
 
   it('401 UNAUTHORIZED sin cabecera Authorization', async () => {
@@ -176,13 +226,14 @@ describe('GET /api/executives — AC-02 / RN-AUTH: 401 sin token válido', () =>
 });
 
 describe('GET /api/executives — R4-REND-1: consulta por el índice {active, name}', () => {
-  it('find({active: true}).sort({name: 1}) usa el índice active_1_name_1 (IXSCAN, sin SORT en memoria)', async () => {
+  it('find({active: true}).sort({name: 1}) con intercalación es usa el índice active_1_name_1 (IXSCAN, sin SORT en memoria)', async () => {
     await ExecutiveModel.create([
       { name: 'Ana López', active: true },
       { name: 'Bruno Díaz', active: false },
     ]);
 
     const explain = (await ExecutiveModel.find({ active: true })
+      .collation(EXECUTIVE_COLLATION)
       .sort({ name: 1 })
       .explain('queryPlanner')) as unknown;
     const plan = JSON.stringify(explain);
@@ -190,6 +241,22 @@ describe('GET /api/executives — R4-REND-1: consulta por el índice {active, na
     expect(plan).toContain('IXSCAN');
     expect(plan).toContain('active_1_name_1');
     expect(plan).not.toContain('"stage":"SORT"');
+  });
+
+  it('la consulta del servicio es la que usa el índice: listActive pide la misma intercalación', async () => {
+    const collationSpy = jest.spyOn(mongoose.Query.prototype, 'collation');
+    try {
+      await new ExecutiveService().listActive();
+      expect(collationSpy).toHaveBeenCalledWith(EXECUTIVE_COLLATION);
+    } finally {
+      collationSpy.mockRestore();
+    }
+  });
+
+  it('sin la intercalación del índice, la misma consulta ordenaría en memoria (la prueba distingue)', async () => {
+    await ExecutiveModel.create([{ name: 'Ana López' }]);
+    const explain = (await ExecutiveModel.find({ active: true }).sort({ name: 1 }).explain('queryPlanner')) as unknown;
+    expect(JSON.stringify(explain)).toContain('"stage":"SORT"');
   });
 
   it('p95 por debajo de 100 ms en local', async () => {
@@ -232,10 +299,8 @@ describe('GET /api/executives — R4-OBS-1: log estructurado por petición', () 
         .find((e) => e !== null && e['requestId'] === 'req-ejecutivos-001');
 
       expect(entry).toBeDefined();
-      // El requestLogger compartido con /api/orders registra req.path, que dentro del router
-      // montado en /api queda sin el prefijo: hoy escribe '/executives' (igual que '/orders').
-      expect(entry).toMatchObject({ method: 'GET', status: 200 });
-      expect(String(entry!['path'])).toMatch(/\/executives$/);
+      // La ruta completa, con el prefijo /api (el requestLogger que ya corrigió /api/customers)
+      expect(entry).toMatchObject({ method: 'GET', path: '/api/executives', status: 200 });
       expect(typeof entry!['duration']).toBe('number');
       expect(lines.join('\n')).not.toContain(validToken);
     } finally {
@@ -256,7 +321,7 @@ describe('GET /api/executives — R4-SEG-3: un fallo inesperado pasa por el erro
         .set('Authorization', `Bearer ${validToken}`);
 
       expect(res.status).toBe(500);
-      expect(res.body).toEqual({ code: 'INTERNAL_ERROR', message: 'Error interno del servidor' });
+      expect(res.body).toEqual({ code: 'INTERNAL_ERROR', message: 'Error interno del servidor', details: [] });
       expect(JSON.stringify(res.body)).not.toContain('detalle interno');
     } finally {
       errorSpy.mockRestore();

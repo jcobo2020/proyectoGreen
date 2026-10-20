@@ -35,6 +35,9 @@ export function createApp(_connection?: typeof mongoose, deps?: AppDeps): Applic
   // details (RN-12, R4-SEG-3), sin cambiar los errores de /api/orders (R4-SEG-4).
   app.use(requestLogger);
   app.use('/api/customers', withErrorDetails, authenticate);
+  // /api/executives: todo error viaja también con details (vacío si no hay), como /api/customers
+  // (R4-SEG-3 de GREEN-H2-API-EJECUTIVOS-001); su autenticación va en la cadena de la ruta.
+  app.use('/api/executives', withErrorDetails);
   app.use(express.json());
 
   // Composition root: construir servicios y controladores una sola vez
