@@ -15,6 +15,7 @@ module.exports = {
     'src/validators/**/*.ts',
     'src/lib/**/*.ts',
     'src/routes/**/*.ts',
+    'src/scripts/**/*.ts',
     'src/app.ts'
   ],
   coverageThreshold: {

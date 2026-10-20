@@ -9,10 +9,12 @@ import {
 } from '../validators/order.validator';
 import { ProductController } from '../controllers/ProductController';
 import { OrderController } from '../controllers/OrderController';
+import { ExecutiveController } from '../controllers/ExecutiveController';
 
 export interface ApiRouterDeps {
   productController: ProductController;
   orderController: OrderController;
+  executiveController: ExecutiveController;
 }
 
 /**
@@ -23,7 +25,7 @@ export interface ApiRouterDeps {
 export function createApiRouter(deps: ApiRouterDeps): Router {
   const router = Router();
 
-  const { productController, orderController } = deps;
+  const { productController, orderController, executiveController } = deps;
 
   // GET /api/products — catálogo de productos activos
   router.get(
@@ -65,6 +67,9 @@ export function createApiRouter(deps: ApiRouterDeps): Router {
     validateOrderIdQuery,
     orderController.confirmOrder
   );
+
+  // GET /api/executives — ejecutivos activos como opciones (sin permisos por rol)
+  router.get('/executives', authenticate, executiveController.listActive);
 
   return router;
 }

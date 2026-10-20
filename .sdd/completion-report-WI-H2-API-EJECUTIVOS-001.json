@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 5,
+  "workItemCode": "WI-H2-API-EJECUTIVOS-001",
+  "summary": "GET /api/executives en el backend de api/ (modelo executive.ts con índices {name} único y {active, name}, ExecutiveService, ExecutiveController con Swagger y ruta con el middleware JWT de /api/orders): devuelve los ejecutivos activos como [{value: _id, label: name}] ordenados por nombre, [] si no hay, y 401 UNAUTHORIZED sin token válido. Incluye el seed idempotente npm run seed:executives (upsert por name, active = true), que crea la colección y sus índices, y las pruebas Jest con mongodb-memory-server escritas antes del código.",
+  "criteria": [
+    { "id": "AC-01", "status": "covered", "note": "api/src/__tests__/executives.spec.ts:53-131 — 200 [] sin ejecutivos y con solo inactivos; el inactivo no aparece y los activos salen ordenados por nombre; cada opción es exactamente {value, label} con value = _id (ObjectId válido) y label = name; sin 403 por rol. Implementación: ExecutiveService.listActive (api/src/services/ExecutiveService.ts:30)." },
+    { "id": "AC-02", "status": "covered", "note": "api/src/__tests__/executives.spec.ts:133-176 — 401 UNAUTHORIZED sin Authorization, con esquema no Bearer, con token de otra clave, caducado y con alg none; la respuesta 401 no filtra datos. Ruta con authenticate (api/src/routes/api.routes.ts:72)." }
+  ],
+  "gates": [
+    { "businessRuleId": "RN-01", "status": "cumple", "note": "executives.spec.ts: «RN-01 · 200 [] cuando no hay ejecutivos», «RN-01 · 200 [] cuando solo hay ejecutivos inactivos» y «RN-01 · un ejecutivo inactivo no aparece y los activos salen ordenados por nombre»." },
+    { "businessRuleId": "RN-02", "status": "cumple", "note": "executives.spec.ts: «RN-02 · cada opción es {value: _id (ObjectId válido), label: name} y nada más» — comprueba ObjectId.isValid, que value es el _id guardado y label su name, y que no hay más claves." },
+    { "businessRuleId": "RN-AUTH", "status": "cumple", "note": "executives.spec.ts: «401 UNAUTHORIZED sin cabecera Authorization» y el resto del describe AC-02 / RN-AUTH (esquema no Bearer, otra clave, caducado, alg none)." }
+  ],
+  "requirements": [
+    { "id": "R4-ARQ-1", "status": "cumple", "evidencia": "api/src/models/executive.ts · api/src/services/ExecutiveService.ts:30 · api/src/controllers/ExecutiveController.ts · api/src/routes/api.routes.ts:72 (router montado en /api por createApp, api/src/app.ts:37) · executives.spec.ts:53" },
+    { "id": "R4-ARQ-2", "status": "cumple", "evidencia": "api/package.json:11 (seed:executives) · api/src/scripts/seedExecutives.ts · ExecutiveService.seedActive (api/src/services/ExecutiveService.ts:39) · seedExecutives.spec.ts:91-201 (idempotente, reactiva, no toca a los demás, CLI). Los nombres del equipo no vienen en el pack: el script los lee de un fichero JSON (ver clarificationRequests)." },
+    { "id": "R4-PRUEBAS-1", "status": "cumple", "evidencia": "api/src/__tests__/executives.spec.ts y seedExecutives.spec.ts con MongoMemoryReplSet (wiredTiger); escritas antes de la implementación (la primera corrida falló por módulos inexistentes) · .sdd/evidence/WI-H2-API-EJECUTIVOS-001/test-results.txt" },
+    { "id": "R4-SEG-1", "status": "cumple", "evidencia": "api/src/routes/api.routes.ts:72 (authenticate, el mismo de /api/orders: HS256 con JWT_SECRET) · executives.spec.ts:133-176" },
+    { "id": "R4-SEG-2", "status": "cumple", "evidencia": "sin middleware de rol en api/src/routes/api.routes.ts:72 · executives.spec.ts:120 «R4-SEG-2 · cualquier usuario autenticado lee la lista»" },
+    { "id": "R4-SEG-3", "status": "cumple", "evidencia": "los errores pasan por el errorHandler.middleware.ts existente (next(err) en ExecutiveController) · executives.spec.ts:247 (500 INTERNAL_ERROR sin detalle interno) y :133 (401 {code, message}). El 401 del errorHandler actual no lleva details (ver clarificationRequests)." },
+    { "id": "R4-REND-1", "status": "cumple", "evidencia": "índice {active, name} en api/src/models/executive.ts:31 · executives.spec.ts:179 (explain: IXSCAN active_1_name_1, sin SORT) y :195 (p95 de 40 peticiones < 100 ms; medido 2.94 ms en la corrida de test-results.txt)" },
+    { "id": "R4-OBS-1", "status": "cumple", "evidencia": "requestLogger existente montado en createApp · executives.spec.ts:215 (JSON con method, path, status, duration y requestId, sin el token)" }
+  ],
+  "testsRun": [
+    { "name": "executives.spec.ts", "result": "pass" },
+    { "name": "seedExecutives.spec.ts", "result": "pass" },
+    { "name": "orders.spec.ts", "result": "pass" },
+    { "name": "products.spec.ts", "result": "pass" },
+    { "name": "migration.spec.ts", "result": "pass" },
+    { "name": "mongoUnitOfWork.spec.ts", "result": "pass" },
+    { "name": "orderService.unit.spec.ts", "result": "pass" }
+  ],
+  "deviations": [
+    { "description": "La ruta usa solo authenticate → controller, sin attachAuthenticatedUser ni paso de rol ni validador de entrada (plantilla §3).", "reason": "R4-SEG-1 pide el mismo middleware que /api/orders, que solo usa authenticate; attachAuthenticatedUser no existe en el repo; R4-SEG-2 dice que no hay permisos por rol; y el contrato de §2 no declara parámetros ni 400, así que no hay entrada que validar (los query params desconocidos se ignoran en vez de inventar un 400)." },
+    { "description": "Las evidencias test-results.txt y coverage-summary.json se copiaron de la salida real con un único cambio: el prefijo absoluto de la máquina se sustituyó por rutas relativas a la raíz del repo.", "reason": "No subir rutas absolutas de la máquina local; las cifras y resultados no se tocaron." },
+    { "description": "migration.log es la salida real de `npm run seed:executives` contra una MongoDB en memoria con un fichero de nombres vacío ([]): crea la colección executives y sus índices y los lista, con 0 ejecutivos sembrados.", "reason": "El pack no trae la lista de ejecutivos del equipo (R4-ARQ-2); no se inventan nombres." },
+    { "description": "npm test (migration.spec.ts de WI-ORD-API-005) reescribe .sdd/evidence/migration-WI-ORD-API-005.log en cada corrida; se restauró con git checkout y no va en este commit.", "reason": "Es evidencia versionada de otro work item." },
+    { "description": "La prueba de R4-OBS-1 acepta que el path registrado termine en /executives: el requestLogger compartido registra '/executives' en las respuestas 200 (req.path dentro del router montado en /api) y '/api/executives' en los errores.", "reason": "Es el comportamiento actual del logger de /api/orders («como /api/orders»); cambiarlo tocaría los logs de otro recurso, fuera del alcance de este work item." }
+  ],
+  "dodSelfAssessment": {
+    "met": true,
+    "blockers": []
+  },
+  "clarificationRequests": [
+    { "question": "¿Cuáles son los ejecutivos del equipo que debe sembrar npm run seed:executives? Hoy el script los lee de un fichero JSON con una lista de nombres que se pasa como argumento (npm run seed:executives -- <fichero.json>); no hay nombres en el repo.", "blocking": false, "context": "§4 R4-ARQ-2 dice «con los ejecutivos del equipo» y §3/§2 no los enumeran; la constitución pide no meter datos personales en el código ni en los logs." },
+    { "question": "R4-SEG-3 y el catálogo de errores dicen que todo error viaja como {code, message, details}, pero el errorHandler.middleware.ts que ya usa /api/orders responde el 401 como {code, message} sin details. ¿El 401 debe llevar details (p. ej. [])? Se dejó como responde hoy /api/orders.", "blocking": false, "context": "§2 (catálogo canónico de errores) y §4 R4-SEG-3 frente a api/src/middlewares/errorHandler.middleware.ts; cambiarlo afectaría a /api/orders y /api/products." },
+    { "question": "El seed deja active = true a cualquier nombre de la lista aunque esté inactivo: si «Administración» da de baja a un ejecutivo y luego se vuelve a ejecutar el seed con la lista antigua, se reactiva. ¿Es lo deseado?", "blocking": false, "context": "§4 R4-ARQ-2: «upsert por name, active = true»; se implementó literal." }
+  ],
+  "evidence": [
+    { "type": "test_results", "ref": ".sdd/evidence/WI-H2-API-EJECUTIVOS-001/test-results.txt", "note": "Salida de npm test -- --coverage --coverageReporters=text --coverageReporters=json-summary: 7 suites, 176 tests en verde" },
+    { "type": "api_docs", "ref": "api/src/controllers/ExecutiveController.ts", "note": "Bloque @swagger de GET /api/executives (200 array de PublicExecutive, 401 UnauthorizedError), servido en /api-docs" },
+    { "type": "migration_log", "ref": ".sdd/evidence/WI-H2-API-EJECUTIVOS-001/migration.log", "note": "Salida de npm run seed:executives contra MongoDB en memoria: colección executives con _id_, name_1 [UNIQUE] y active_1_name_1" },
+    { "type": "coverage_report", "ref": ".sdd/evidence/WI-H2-API-EJECUTIVOS-001/coverage-summary.json", "note": "Sentencias: 97.08 % sobre los ficheros tocados (133/137); 97.28 % total" }
+  ]
+}

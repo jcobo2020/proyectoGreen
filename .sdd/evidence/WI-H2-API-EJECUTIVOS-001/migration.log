@@ -1,0 +1,13 @@
+
+> greenfield-api@1.0.0 seed:executives
+> tsc && node dist/scripts/seedExecutives.js ../.sdd-local/seed-vacio.json
+
+=== seed:executives ===
+Colección 'executives': existe
+Índices en 'executives':
+  - _id_: {"_id":1}
+  - name_1: {"name":1} [UNIQUE]
+  - active_1_name_1: {"active":1,"name":1}
+Nombres en el fichero: 0
+Creados: 0 · Reactivados: 0 · Sin cambios: 0
+Ejecutivos en la colección: 0 · Ejecutivos activos: 0

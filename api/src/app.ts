@@ -11,10 +11,13 @@ import { MongoUnitOfWork } from './lib/MongoUnitOfWork';
 import { MongoOrderRepository } from './lib/MongoOrderRepository';
 import { ProductController } from './controllers/ProductController';
 import { OrderController } from './controllers/OrderController';
+import { ExecutiveService } from './services/ExecutiveService';
+import { ExecutiveController } from './controllers/ExecutiveController';
 
 export interface AppDeps {
   orderController?: OrderController;
   productController?: ProductController;
+  executiveController?: ExecutiveController;
 }
 
 export function createApp(_connection?: typeof mongoose, deps?: AppDeps): Application {
@@ -31,12 +34,14 @@ export function createApp(_connection?: typeof mongoose, deps?: AppDeps): Applic
   const orderService = new OrderService(productService, unitOfWork, orderRepository);
   const productController = deps?.productController ?? new ProductController(productService);
   const orderController = deps?.orderController ?? new OrderController(orderService);
+  const executiveController =
+    deps?.executiveController ?? new ExecutiveController(new ExecutiveService());
 
   // Documentación Swagger
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
   // Rutas de la API
-  app.use('/api', createApiRouter({ productController, orderController }));
+  app.use('/api', createApiRouter({ productController, orderController, executiveController }));
 
   // Manejo de rutas no encontradas y errores (este orden es obligatorio)
   app.use(notFound);
