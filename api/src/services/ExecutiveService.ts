@@ -1,4 +1,4 @@
-import { ExecutiveModel, IExecutive, EXECUTIVE_COLLATION } from '../models/executive';
+import { ExecutiveModel, IExecutive, EXECUTIVE_COLLATION, EXECUTIVE_NAME_COLLATION } from '../models/executive';
 
 /** Opción pública de un ejecutivo: un cliente guarda el value (_id), nunca el label (RN-02). */
 export interface PublicExecutive {
@@ -24,10 +24,13 @@ export function normalizeExecutiveName(name: string): string {
   return name.trim().replace(/\s+/g, ' ');
 }
 
-/** Compara como el índice único (intercalación es, strength 2): sin distinguir mayúsculas, sí tildes. */
-const executiveNameCollator = new Intl.Collator(EXECUTIVE_COLLATION.locale, { sensitivity: 'accent' });
+/**
+ * Compara como el índice único (EXECUTIVE_NAME_COLLATION: raíz de Unicode, fuerza 1): sin distinguir
+ * mayúsculas, tildes ni la ñ. sensitivity 'base' es la fuerza 1 de ICU.
+ */
+const executiveNameCollator = new Intl.Collator(EXECUTIVE_NAME_COLLATION.locale, { sensitivity: 'base' });
 
-/** Los nombres normalizados, sin repetidos sin distinguir mayúsculas; se queda la primera forma. */
+/** Los nombres normalizados, sin repetidos sin distinguir mayúsculas, tildes ni la ñ; se queda la primera forma. */
 export function uniqueExecutiveNames(names: string[]): string[] {
   const unique: string[] = [];
   for (const name of names.map(normalizeExecutiveName)) {
@@ -50,12 +53,25 @@ export class ExecutiveService {
   }
 
   /**
+   * Cuántos nombres de la colección se repiten con la equivalencia del índice único (RN-03): los
+   * agrupa la base con su intercalación. Solo devuelve la cuenta, nunca los nombres.
+   */
+  async countDuplicateNames(): Promise<number> {
+    const [result] = await ExecutiveModel.aggregate<{ repeated: number }>([
+      { $group: { _id: '$name', count: { $sum: 1 } } },
+      { $match: { count: { $gt: 1 } } },
+      { $count: 'repeated' },
+    ]).collation(EXECUTIVE_NAME_COLLATION);
+    return result?.repeated ?? 0;
+  }
+
+  /**
    * Siembra (RN-03, R4-ARQ-2): crea con active = true los ejecutivos de la lista que falten y
    * nunca toca a los que ya existen (no reactiva a uno dado de baja: su baja la gobernará
    * «Administración»). La unicidad se comprueba aquí, antes de persistir, sin distinguir
-   * mayúsculas: los repetidos de la lista se quitan primero (uniqueExecutiveNames) y cada
-   * escritura busca el nombre con la intercalación del índice único, así que «daniela ríos» no
-   * crea otro si ya está «Daniela Ríos». Si aun así coincidieran dos escrituras, el índice único
+   * mayúsculas, tildes ni la ñ: los repetidos de la lista se quitan primero (uniqueExecutiveNames)
+   * y cada escritura busca el nombre con la intercalación del índice único, así que «daniela rios»
+   * no crea otro si ya está «Daniela Ríos», ni «Nana Torres» si ya está «Ñaña Torres». Si aun así coincidieran dos escrituras, el índice único
    * rechaza la segunda: nunca queda un repetido.
    */
   async seedMissing(names: string[]): Promise<SeedExecutivesResult> {
@@ -70,7 +86,7 @@ export class ExecutiveService {
           filter: { name },
           update: { $setOnInsert: { name, active: true } },
           upsert: true,
-          collation: EXECUTIVE_COLLATION,
+          collation: EXECUTIVE_NAME_COLLATION,
         },
       }))
     );

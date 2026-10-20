@@ -26,9 +26,17 @@ import { ExecutiveService } from '../services/ExecutiveService';
  *       required: [value, label]
  *     ExecutiveUnauthorizedError:
  *       type: object
- *       description: '401 de /api/executives: sin token o con uno inválido o caducado; details siempre viaja (vacío). La autenticación va antes que todo: un método no declarado o una subruta sin token también responden 401 (con token, 404 NOT_FOUND con details vacío).'
+ *       description: '401 de /api/executives: sin token o con uno inválido o caducado; details siempre viaja (vacío). La autenticación va antes que todo: un método no declarado o una subruta sin token también responden 401, antes que el 404.'
  *       properties:
  *         code: { type: string, enum: [UNAUTHORIZED] }
+ *         message: { type: string }
+ *         details: { type: array, maxItems: 0, items: {} }
+ *       required: [code, message, details]
+ *     ExecutiveNotFoundError:
+ *       type: object
+ *       description: '404 de /api/executives: un método o una subruta no declarados bajo /api/executives, con sesión válida (sin sesión, 401 antes); details vacío'
+ *       properties:
+ *         code: { type: string, enum: [NOT_FOUND] }
  *         message: { type: string }
  *         details: { type: array, maxItems: 0, items: {} }
  *       required: [code, message, details]
@@ -71,8 +79,14 @@ import { ExecutiveService } from '../services/ExecutiveService';
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ExecutiveUnauthorizedError'
+ *       404:
+ *         description: Método o subruta no declarados bajo /api/executives, con sesión válida (sin sesión, 401 antes)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ExecutiveNotFoundError'
  *       500:
- *         description: Error no previsto
+ *         description: Fallo inesperado; sin detalles internos ni datos personales
  *         content:
  *           application/json:
  *             schema:

@@ -7,13 +7,23 @@ export interface IExecutive extends Document {
 }
 
 /**
- * Intercalación española de la colección (§3, RN-01, RN-03): ordena alfabéticamente en español
- * (las tildes y las mayúsculas no van al final, la ñ va tras la n) y, con strength 2, compara sin
- * distinguir mayúsculas: «daniela ríos» y «Daniela Ríos» son el mismo nombre. Las tildes sí
- * distinguen («Rios» ≠ «Ríos»): la spec solo pide no distinguir mayúsculas.
- * La usan los dos índices y las consultas: un índice solo sirve a la consulta con su misma intercalación.
+ * Intercalación española del ORDEN (§3, RN-01): ordena alfabéticamente en español (las tildes y las
+ * mayúsculas no van al final, la ñ es una letra propia que va tras la n). La usan el índice
+ * {active, name} y la consulta de la lista: un índice solo sirve a la consulta con su misma intercalación.
  */
 export const EXECUTIVE_COLLATION = { locale: 'es', strength: 2 } as const;
+
+/**
+ * Intercalación de la UNICIDAD del nombre (§3 y RN-03 de la v6): el nombre es único sin distinguir
+ * mayúsculas, tildes ni la ñ («Ñaña Torres» = «Nana Torres» = «nana torres»).
+ * No puede ser la es: la intercalación española hace de la ñ una letra propia (diferencia primaria),
+ * y con ella «Nana» y «Ñaña» son distintos aunque se ignoren tildes y mayúsculas (fuerza 1).
+ * La intercalación raíz de Unicode (CLDR), que es la de 'en' sin adaptaciones, trata la ñ como una n
+ * con tilde (diferencia secundaria), y la fuerza 1 solo compara las letras base: ignora tildes
+ * (secundaria) y mayúsculas (terciaria). Así el índice único {name} garantiza la regla en cualquier
+ * escritura, sin un campo derivado que mantener.
+ */
+export const EXECUTIVE_NAME_COLLATION = { locale: 'en', strength: 1 } as const;
 
 const executiveSchema = new Schema<IExecutive>(
   {
@@ -34,8 +44,8 @@ const executiveSchema = new Schema<IExecutive>(
   }
 );
 
-// {name} único sin distinguir mayúsculas: el nombre es el label de la opción y la clave de la siembra
-executiveSchema.index({ name: 1 }, { unique: true, collation: EXECUTIVE_COLLATION });
+// {name} único sin distinguir mayúsculas, tildes ni la ñ: el nombre es el label de la opción y la clave de la siembra
+executiveSchema.index({ name: 1 }, { unique: true, collation: EXECUTIVE_NAME_COLLATION });
 // Índice de la lista: find({active: true}).sort({name: 1}) con la misma intercalación (R4-REND-1)
 executiveSchema.index({ active: 1, name: 1 }, { collation: EXECUTIVE_COLLATION });
 

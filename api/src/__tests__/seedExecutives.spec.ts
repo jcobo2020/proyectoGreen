@@ -417,6 +417,19 @@ describe('Script seed:executives', () => {
     }
   });
 
+  it('connectDB (la conexión centralizada) pasa sus opciones a mongoose.connect y sin URI falla', async () => {
+    const connect = jest.spyOn(mongoose, 'connect').mockResolvedValue(mongoose);
+    try {
+      await connectDBModule.connectDB('mongodb://127.0.0.1:1/opciones', { autoIndex: false });
+      expect(connect).toHaveBeenCalledWith('mongodb://127.0.0.1:1/opciones', { autoIndex: false });
+      await connectDBModule.connectDB('mongodb://127.0.0.1:1/sin-opciones');
+      expect(connect).toHaveBeenLastCalledWith('mongodb://127.0.0.1:1/sin-opciones', undefined);
+      await expect(connectDBModule.connectDB('')).rejects.toThrow(/MONGODB_URI/);
+    } finally {
+      connect.mockRestore();
+    }
+  });
+
   it('sin MONGODB_URI la conexión de la siembra falla con un SeedExecutivesError legible', async () => {
       const previous = process.env['MONGODB_URI'];
       delete process.env['MONGODB_URI'];

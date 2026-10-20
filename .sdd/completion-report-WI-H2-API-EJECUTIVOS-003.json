@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 5,
+  "workItemCode": "WI-H2-API-EJECUTIVOS-003",
+  "summary": "Evolución a la v6 sobre lo que entregó WI-H2-API-EJECUTIVOS-001 (be7c882): el nombre del ejecutivo es único sin distinguir mayúsculas, tildes ni la ñ, garantizado por el índice único {name} con la intercalación raíz de Unicode a fuerza 1 ({locale: 'en', strength: 1}); la intercalación es del orden no sirve para la unicidad porque hace de la ñ una letra propia («Nana» ≠ «Ñaña» aun a fuerza 1, comprobado en seedExecutives.spec.ts:111). El orden de la lista sigue siendo el alfabético español (índice {active, name} y consulta con es). Se eligió la intercalación y no una clave normalizada porque deja la entidad con los campos de §3 (sin un campo derivado que mantener en cada escritura, también en las de «Administración») y la base garantiza la regla en cualquier escritura. La siembra cuenta en la base (con esa misma intercalación) los nombres previos repetidos y, si hay alguno, sale con 1 sin sembrar, sin intentar crear el índice y sin escribir ningún nombre; conecta sin autoIndex para que nada cree índices antes de esa comprobación, y en una base de la v4 sustituye name_1. Swagger declara el 404 y el 500, que la v6 ya trae en el contrato. Lo que no cambió (GET, 401, RN-01, RN-02, R4-SEG, R4-REND-1, R4-OBS-1) se dejó como estaba.",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "status": "covered",
+      "note": "Sin cambios de comportamiento en la v6: executives.spec.ts:57, :66, :80 (solo activos, 200 []), :98 y :128 (orden alfabético español con tildes, minúsculas y ñ), :146 (RN-02) y :298 (el orden lo pide la consulta del servicio). El 404 con sesión (:259) y el 500 (:370) ya son respuestas del contrato y Swagger los declara (:396, :401)."
+    },
+    {
+      "id": "AC-02",
+      "status": "covered",
+      "note": "executives.spec.ts:192-222: sin Authorization, otro esquema, otra clave, caducado y alg none responden 401 {code: UNAUTHORIZED, message, details: []}; :233 y :244: un método o subruta sin sesión, 401 antes que el 404."
+    },
+    {
+      "id": "AC-03",
+      "status": "covered",
+      "note": "seedExecutives.spec.ts:287 (dos siembras dejan 5, Paola dada de baja sigue inactiva y fuera de GET, «daniela rios» sin mayúsculas ni tilde no crea otro); :519 («Nana Torres» y «Ñaña Torres» previos: sale con 1, no siembra, no intenta crear name_1 y ningún nombre en la salida ni en console.*), :524 (solo una tilde) y :530 (solo mayúsculas). Con el comando real en .sdd/evidence/WI-H2-API-EJECUTIVOS-003/migration.log (escenarios 1 y 3)."
+    }
+  ],
+  "gates": [
+    {
+      "businessRuleId": "RN-01",
+      "status": "cumple",
+      "note": "executives.spec.ts:66 y :80 (un inactivo no aparece), :57 (sin ejecutivos, 200 []), :98 (orden español: la ñ tras la n, las tildes y minúsculas no al final) y :298 (con el índice oculto la consulta del servicio sigue ordenando en español)."
+    },
+    {
+      "businessRuleId": "RN-02",
+      "status": "cumple",
+      "note": "executives.spec.ts:146: cada opción tiene solo {value, label}, value es un ObjectId válido del documento y label su name."
+    },
+    {
+      "businessRuleId": "RN-AUTH",
+      "status": "cumple",
+      "note": "executives.spec.ts:192 (sin Authorization, 401 UNAUTHORIZED con details vacío) y :197-222 (token inválido, caducado, sin firma); :171 (sin permisos por rol, no hay 403)."
+    },
+    {
+      "businessRuleId": "RN-03",
+      "status": "cumple",
+      "note": "seedExecutives.spec.ts:287 (dos siembras dejan 5; tras la baja sigue inactiva; «daniela rios» no crea otro), :91 y :101 («daniela rios», «DANIELA RÍOS», «Daniela Rios» = «Daniela Ríos»; «Nana Torres», «nana torres», «ÑAÑA TORRES» = «Ñaña Torres» en el índice), :138 y :142 (la misma equivalencia en los repetidos de la lista), :221 y :246 (en la siembra), :519 (con «Nana Torres» y «Ñaña Torres» previos sale con error, sin sembrar ni nombres en el log) y :536 (dice cuántos, no cuáles). Saboteado: con la intercalación es fallan 10 pruebas; sin la comprobación previa, 4."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R4-ARQ-1",
+      "status": "cumple",
+      "evidencia": "Sin cambios de estructura: api/src/models/executive.ts, services/ExecutiveService.ts, controllers/ExecutiveController.ts, routes/api.routes.ts:97, montado en app.ts:41 con el authenticate de /api/orders. La v6 solo cambia el modelo (executive.ts:26 y :48) y el servicio (ExecutiveService.ts:31, :59, :77)."
+    },
+    {
+      "id": "R4-ARQ-2",
+      "status": "cumple",
+      "evidencia": "api/src/scripts/seedExecutives.ts:82 (con nombres previos repetidos no siembra ni toca el esquema), :92 (syncIndexes: una base de la v4 cambia de índice, seedExecutives.spec.ts:543) y :173 (sin autoIndex, seedExecutives.spec.ts:406); idempotente y sin reactivar bajas (seedExecutives.spec.ts:192, :202, :287); migration.log escenarios 1-3."
+    },
+    {
+      "id": "R4-PRUEBAS-1",
+      "status": "cumple",
+      "evidencia": "Test-first: el commit 3a85de9 trae solo las pruebas nuevas de la v6, en rojo (la suite de la siembra no compilaba y, sin el chequeo de tipos, 18 fallos; Swagger, 2), con su salida en .sdd/evidence/WI-H2-API-EJECUTIVOS-003/tests-en-rojo.txt; el código va en el commit siguiente. Cubre solo activos, {value, label}, lista vacía y 401 (executives.spec.ts), el orden español con tildes y ñ por el servicio (:298), la siembra dos veces, tras una baja y con repetidos (seedExecutives.spec.ts:287, :519-:536) y la equivalencia del nombre (:91, :101, :138, :142). Con mongodb-memory-server (MongoMemoryReplSet, wiredTiger)."
+    },
+    {
+      "id": "R4-SEG-1",
+      "status": "cumple",
+      "evidencia": "Sin cambios: app.ts:41 (authenticate, HS256 con JWT_SECRET, el de /api/orders); executives.spec.ts:192-222."
+    },
+    {
+      "id": "R4-SEG-2",
+      "status": "cumple",
+      "evidencia": "Sin cambios: executives.spec.ts:171 (cualquier usuario autenticado, sin 403)."
+    },
+    {
+      "id": "R4-SEG-3",
+      "status": "cumple",
+      "evidencia": "Sin cambios de código: 401 (executives.spec.ts:192), 404 (:259) y 500 (:370) viajan como {code, message, details} con details vacío; Swagger los documenta con su código del catálogo (:401, ExecutiveController.ts:35 y :82)."
+    },
+    {
+      "id": "R4-REND-1",
+      "status": "cumple",
+      "evidencia": "executives.spec.ts:271 (IXSCAN por active_1_name_1, sin SORT en memoria; el índice de la lista sigue con la intercalación es) y :319 (p95 = 4.04 ms en esta corrida, test-results.txt)."
+    },
+    {
+      "id": "R4-OBS-1",
+      "status": "cumple",
+      "evidencia": "Sin cambios: executives.spec.ts:339 (JSON con method, path /api/executives, status, duration y requestId, sin el token)."
+    }
+  ],
+  "testsRun": [
+    { "name": "executives.spec.ts", "result": "pass" },
+    { "name": "seedExecutives.spec.ts", "result": "pass" },
+    { "name": "customers.spec.ts", "result": "pass" },
+    { "name": "orders.spec.ts", "result": "pass" },
+    { "name": "migration.spec.ts", "result": "pass" },
+    { "name": "customerMigration.spec.ts", "result": "pass" },
+    { "name": "mongoUnitOfWork.spec.ts", "result": "pass" },
+    { "name": "products.spec.ts", "result": "pass" },
+    { "name": "orderService.unit.spec.ts", "result": "pass" },
+    { "name": "evidence.spec.ts", "result": "pass" }
+  ],
+  "deviations": [
+    {
+      "description": "La cadena de /api/executives sigue siendo authenticate → controller (montado en app.ts para todo /api/executives con withErrorDetails), sin attachAuthenticatedUser, paso de rol ni validador (plantilla §3). Heredado de WI-H2-API-EJECUTIVOS-001, sin cambios.",
+      "reason": "Constitución (toda ruta de /api exige un usuario autenticado) sobre la plantilla: así un método no declarado o una subruta sin sesión responden 401 y no 404, que es lo que dice ahora el propio 404 del contrato («sin sesión, 401 antes»). El contrato no tiene permisos por rol ni entrada que validar."
+    },
+    {
+      "description": "El cambio de índice de una base existente (name_1 de la v4, con la intercalación es) lo hace npm run seed:executives (syncIndexes), no el arranque de la API: el autoIndex de Mongoose al arrancar no sustituye un índice que ya existe con otras opciones.",
+      "reason": "R4-ARQ-2 hace de la siembra el paso que aplica el esquema; demostrado en migration.log (escenario 2) y seedExecutives.spec.ts:543. Al desplegar la v6 hay que ejecutar la siembra."
+    },
+    {
+      "description": "Los repetidos de la lista que se va a sembrar se quitan en el servicio con Intl.Collator('en', {sensitivity: 'base'}), el equivalente en Node de la fuerza 1 de ICU; los repetidos previos de la base los cuenta la propia base con la intercalación del índice.",
+      "reason": "Plantilla §3: unicidad en el servicio antes de persistir. Si en algún caso límite el ICU de Node y el de mongod discreparan, el índice único rechaza la escritura y la siembra falla cerrada sin nombres (seedExecutives.spec.ts:569)."
+    },
+    {
+      "description": "config/connectDB.ts admite ahora un segundo parámetro opcional (ConnectOptions) y entra en collectCoverageFrom de jest.config.js. La prueba directa de connectDB (seedExecutives.spec.ts:420) se escribió después del código, para cubrir el fichero; el comportamiento que pide RN-03 (la siembra conecta sin autoIndex) sí se probó antes (seedExecutives.spec.ts:406, en rojo en 3a85de9).",
+      "reason": "La conexión es centralizada (plantilla §1): se amplía la pieza existente en vez de abrir otra conexión. La cobertura debe incluir todo fichero tocado."
+    },
+    {
+      "description": "test-results.txt, coverage-summary.json y tests-en-rojo.txt son la salida real de sus comandos con un único cambio: el prefijo absoluto de la máquina sustituido por rutas relativas y sin los códigos de color. En migration.log las líneas «# …», «$ …» y «(código de salida: N)» las escribe el bucle que ejecutó cada comando; los node -e largos de preparación o listado se resumen como «node -e <qué hace>»; el resto es su salida tal cual.",
+      "reason": "No subir rutas locales y que el log se lea."
+    },
+    {
+      "description": "npm test (migration.spec.ts de WI-ORD-API-005) reescribe .sdd/evidence/migration-WI-ORD-API-005.log en cada corrida; se restauró con git checkout -- y no va en este commit.",
+      "reason": "Es evidencia versionada de otro work item."
+    },
+    {
+      "description": "La baja de «Paola Cedeño» en migration.log y en la prueba AC-03 se hace con un updateOne directo en la base; los datos previos repetidos del escenario 3, con un insertMany directo.",
+      "reason": "La baja la gobernará «Administración», que aún no tiene spec; este contrato solo lee."
+    }
+  ],
+  "dodSelfAssessment": {
+    "met": true,
+    "blockers": []
+  },
+  "clarificationRequests": [
+    {
+      "question": "Si la API arranca (autoIndex de Mongoose) sobre una base que ya repite un nombre con la nueva equivalencia, la creación de name_1 falla en MongoDB y el log de la propia base puede citar el nombre repetido. ¿RN-03 («no escribe el nombre en ningún log») se refiere solo a la siembra, o hay que desactivar también el autoIndex del servidor?",
+      "blocking": false,
+      "context": "RN-03 y R4-ARQ-2 hablan de la siembra; §7 dice que server.ts no cambie lo que exige al arrancar. La siembra conecta sin autoIndex y en el escenario 3 de migration.log el log de MongoDB (getLog global) no tiene ninguna línea con el nombre ni intentos de crear name_1 (control: 4 en el escenario 1). No toqué el arranque."
+    },
+    {
+      "question": "El pack de este correctivo dice en §1 que lo entregado por WI-H2-API-EJECUTIVOS-001 es el punto de partida, pero §6-bis marca GET /api/executives y Executive como «SIN evidencia en el código: lo creas TÚ», y su commit base (5a185ea) no contiene esa entrega (PR #10, sin mergear). Tampoco dice qué cambió de la v4 a la v6 más allá de «cambiada».",
+      "blocking": false,
+      "context": "Seguí §1: trabajé el delta sobre be7c882. El delta lo saqué comparando §3 y RN-03 de la v6 con lo que declaró WI-H2-API-EJECUTIVOS-001 en §6-bis (intercalación es strength 2: «sí distingue tildes»), y con el catálogo de errores (404 y 500 ya declarados)."
+    }
+  ],
+  "evidence": [
+    { "type": "test_results", "ref": ".sdd/evidence/WI-H2-API-EJECUTIVOS-003/test-results.txt", "note": "Tests unitarios passing: 381/381 con el comando de la plataforma; el rojo previo en tests-en-rojo.txt" },
+    { "type": "api_docs", "ref": "api/src/controllers/ExecutiveController.ts", "note": "Endpoints documentados en Swagger: GET /api/executives con 200, 401, 404 y 500" },
+    { "type": "migration_log", "ref": ".sdd/evidence/WI-H2-API-EJECUTIVOS-003/migration.log", "note": "Migración ejecutada exitosamente: base vacía (AC-03), base de la v4 (cambia name_1) y datos repetidos (sale con 1 sin sembrar)" },
+    { "type": "coverage_report", "ref": ".sdd/evidence/WI-H2-API-EJECUTIVOS-003/coverage-summary.json", "note": "Reporte de cobertura ≥80%: 96.27 % de sentencias en los ficheros tocados (129/134), 97.97 % en total" }
+  ]
+}
