@@ -28,4 +28,9 @@ describe('serverRoutes (app.routes.server.ts)', () => {
     const ruta = serverRoutes.find(r => r.path === 'nuevo-prospecto');
     expect(ruta?.renderMode).toBe(RenderMode.Client);
   });
+
+  it('/reportes usa RenderMode.Client (protegida por authGuard, usa sessionStorage)', () => {
+    const ruta = serverRoutes.find(r => r.path === 'reportes');
+    expect(ruta?.renderMode).toBe(RenderMode.Client);
+  });
 });

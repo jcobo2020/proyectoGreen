@@ -16,6 +16,11 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client
   },
   {
+    // /reportes usa authGuard y sessionStorage → solo cliente
+    path: 'reportes',
+    renderMode: RenderMode.Client
+  },
+  {
     path: '**',
     renderMode: RenderMode.Prerender
   }

@@ -12,6 +12,11 @@ export const routes: Routes = [
       import('./feature/customers/customers.routes').then(m => m.customersRoutes)
   },
   {
+    path: 'reportes',
+    loadChildren: () =>
+      import('./feature/reports/reports.routes').then(m => m.reportsRoutes)
+  },
+  {
     path: '',
     redirectTo: 'orders',
     pathMatch: 'full'

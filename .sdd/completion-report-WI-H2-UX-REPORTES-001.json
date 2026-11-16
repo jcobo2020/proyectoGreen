@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 6,
+  "workItemCode": "WI-H2-UX-REPORTES-001",
+  "summary": "Implementada la pantalla /reportes con todos sus estados (cargando, vacío, error 400/401/500, con datos) siguiendo la arquitectura por capas domain/application/infrastructure/ui. Incluye el formulario con selector Período (valor de partida «Este año», validación requerida), tabla de reportes con navegación a /oportunidades/:id, botón Exportar (mensaje sin API) y botón Filtrar. Cobertura total 94.23% de statements.",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "status": "covered",
+      "note": "Estado 'loading' con texto «Cargando…» mientras la petición está en vuelo. Probado en report-list.component.spec.ts · 'AC-01 · estado cargando'."
+    },
+    {
+      "id": "AC-02",
+      "status": "covered",
+      "note": "Estado 'empty' con texto «No hay datos que mostrar.» cuando la lista está vacía. Probado en report-list.component.spec.ts · 'AC-02 · estado vacío'."
+    },
+    {
+      "id": "AC-03",
+      "status": "covered",
+      "note": "Estado 'error' con texto «No se pudo cargar. Vuelve a intentarlo.» ante errores 500. Probado en report-list.component.spec.ts · 'AC-03 · estado error (infraestructura)'."
+    },
+    {
+      "id": "AC-04",
+      "status": "covered",
+      "note": "Estado 'error' con texto «Revisa los datos marcados.» ante InvalidReportInputError (400). Probado en report-list.component.spec.ts · 'AC-04 · estado 400'."
+    },
+    {
+      "id": "AC-05",
+      "status": "covered",
+      "note": "Estado 'unauthorized' con texto «Tu sesión terminó: vuelve a entrar.» ante ReportUnauthorizedError (401). Probado en report-list.component.spec.ts · 'AC-05 · estado 401 (R4-SEG-1)'."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R4-PRUEBAS-1",
+      "status": "cumple",
+      "evidencia": "frontend/src/app/feature/reports/ui/report-list/report-list.component.spec.ts · estados cargando/vacío/error; Período obligatorio (fld_f931c8aa65:required); navega a /oportunidades/:id (dv_bf50351776 · nav_4d20350fae)"
+    },
+    {
+      "id": "R4-PRUEBAS-2",
+      "status": "cumple",
+      "evidencia": "frontend/src/app/feature/reports/infrastructure/http-report.repository.spec.ts · respuestas 200 (devuelve página), 401 (ReportUnauthorizedError), 400 (InvalidReportInputError)"
+    },
+    {
+      "id": "R4-SEG-1",
+      "status": "cumple",
+      "evidencia": "frontend/src/app/feature/reports/infrastructure/session.interceptor.ts:11-13 (limpia sesión en 401) · session.interceptor.spec.ts 'ante un 401 limpia el token'; report-list.component.spec.ts 'AC-05 muestra «Tu sesión terminó: vuelve a entrar.»'"
+    }
+  ],
+  "testsRun": [
+    { "name": "frontend/src/app/feature/reports/infrastructure/http-report.repository.spec.ts", "result": "pass" },
+    { "name": "frontend/src/app/feature/reports/infrastructure/session.interceptor.spec.ts", "result": "pass" },
+    { "name": "frontend/src/app/feature/reports/application/report.use-cases.spec.ts", "result": "pass" },
+    { "name": "frontend/src/app/feature/reports/ui/report-list/report-list.component.spec.ts", "result": "pass" },
+    { "name": "frontend/src/app/feature/reports/reports.routes.spec.ts", "result": "pass" },
+    { "name": "frontend/src/app/app.routes.spec.ts", "result": "pass" },
+    { "name": "frontend/src/app/app.routes.server.spec.ts", "result": "pass" }
+  ],
+  "deviations": [
+    {
+      "description": "La navegación a /actividades (nav_35547b4526) declarada en §8 ocurre desde el menú lateral de la aplicación (shell S01), no desde el componente /reportes. El componente no tiene un control «click» directo a /actividades. El test de esta prueba verifica que la ruta /reportes existe y el componente se inicializa; la navegación entre pantallas mediante el menú la cubre el work item del shell.",
+      "reason": "El pack §2 no define ningún botón ni control dentro de /reportes que lleve a /actividades. La referencia en §8 'nav_35547b4526' es la navegación desde el menú, que no es responsabilidad de este componente.",
+      "respondeA": "spec"
+    },
+    {
+      "description": "El shell y menú lateral (S01) no estaba construido en el repositorio. Se montó la pantalla /reportes en su ruta propia con `RenderMode.Client` en app.routes.server.ts. No se dibujó menú ni cabecera en el componente, como indica el pack §7-ter.",
+      "reason": "El pack §7-ter indica: «Si el shell aún no está en el repositorio: pon la pantalla en un contenedor provisional con su ruta, y dilo en tu informe.»",
+      "respondeA": "spec"
+    },
+    {
+      "description": "reports.routes.ts tiene cobertura de statements del 33.33% porque el test de routes verifica la estructura del array pero no ejecuta loadComponent (carga lazy). El resto de ficheros de la feature tienen >90% de cobertura. La cobertura total (94.23%) supera el umbral del 80%.",
+      "reason": "El patrón establecido en el repo no ejecuta el loadComponent lazy en los tests de routes (igual que orders.routes.spec.ts). La cobertura global excede el umbral exigido.",
+      "respondeA": "plantilla"
+    }
+  ],
+  "dodSelfAssessment": {
+    "met": true,
+    "blockers": []
+  },
+  "clarificationRequests": [
+    {
+      "question": "¿Qué dato lleva la pantalla /reportes al navegar a /oportunidades/:id al pulsar una fila? La spec dice «no dice qué dato lleva al ir a la pantalla de oportunidades».",
+      "blocking": false,
+      "context": "§2 · 'Cómo se relaciona: lo que la spec aún no dice' · La pantalla «Reportes»: no dice qué dato lleva al ir a la pantalla de «oportunidades» con «Una fila de la lista». Se usó el campo id del reporte como parámetro de ruta (compatible con la spec del endpoint GET /api/reports que lo devuelve siempre)."
+    },
+    {
+      "question": "El menú lateral (shell S01) no existe aún en el repo. ¿Cuándo se construye y cómo debe integrarse la entrada «Reportes» (icono bar-chart) en él?",
+      "blocking": false,
+      "context": "§7-ter · La pantalla fue declarada como entrada del menú lateral sin grupo, pero el shell no está en el repositorio. Se montó en ruta provisional según las instrucciones del pack."
+    }
+  ],
+  "evidence": [
+    {
+      "type": "coverage_report",
+      "ref": ".sdd/evidence/WI-H2-UX-REPORTES-001/coverage-summary.json",
+      "note": "Reporte de cobertura ≥80% — coverage total 94.23% de statements; ficheros de la feature reports con cobertura individual >90% (excepto reports.routes.ts que por diseño del patrón lazy no se ejecuta en test)."
+    }
+  ],
+  "usoDelPack": {
+    "usadas": ["§1", "§1-bis", "§2", "§4", "§4-bis", "§6", "§7", "§7-ter", "§8", "§10", "§11"],
+    "noSirvieron": [],
+    "falto": []
+  }
+}
