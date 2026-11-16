@@ -4,8 +4,9 @@
   padding: 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
-  font-family: arial, sans-serif;
+  font-family: var(--font-sans);
   color: var(--foreground);
+  background: var(--background);
 }
 
 .reportes-header {
@@ -20,7 +21,7 @@
 }
 
 .reportes-titulo {
-  font-family: arial, sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--foreground);
@@ -166,6 +167,19 @@
   background: var(--muted);
 }
 
+.fila-reporte {
+  cursor: pointer;
+}
+
 .fila-reporte:hover {
   background: var(--accent);
+}
+
+.fila-reporte:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+.reportes-tabla .celda-dinero {
+  text-align: right;
 }

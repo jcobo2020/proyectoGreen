@@ -1,6 +1,6 @@
 <div class="reportes-container">
 
-  <!-- Cabecera -->
+  <!-- Cabecera: título, «Exportar» junto al título (ctl_b48178afeb) y el subtítulo -->
   <div class="reportes-header">
     <div class="reportes-titulo-grupo">
       <h1 class="reportes-titulo">Reportes</h1>
@@ -19,7 +19,7 @@
         </svg>
         Exportar
       </button>
-      <!-- nav_35547b4526: enlace hacia /actividades -->
+      <!-- nav_35547b4526: «click» → /actividades. §2 no declara el control: ver el informe -->
       <button
         type="button"
         class="btn btn-secondary"
@@ -36,27 +36,24 @@
     </div>
     <p class="reportes-subtitulo">Analítica sobre la información del CRM · clic en una barra para ver el detalle</p>
 
-    @if (mensajeExportar()) {
-      <div class="aviso-exportar" role="status">Generamos el reporte en Excel.</div>
+    @if (exportado()) {
+      <div class="aviso-exportar" role="status">{{ mensajeExportar }}</div>
     }
   </div>
 
   <!-- Estado: sin sesión (AC-05 · R4-SEG-1) -->
   @if (estadoVista() === 'unauthorized') {
-    <div class="estado-sin-permiso">
+    <div class="estado-sin-permiso" role="alert">
       <p>{{ estados.unauthorized }}</p>
       <a [href]="urlDeEntrada">vuelve a entrar</a>
     </div>
-  }
-
-  <!-- Tarjeta Reportes (grupo 1: filtros + tabla) -->
-  @if (estadoVista() !== 'unauthorized') {
+  } @else {
+    <!-- Tarjeta «Reportes»: los filtros encima de la tabla -->
     <div class="card reportes-card">
 
-      <!-- Barra de filtros -->
+      <!-- Barra de herramientas: filtros (sección 1) y «Filtrar» (ctl_529e1c2a36) -->
       <form [formGroup]="form" class="reportes-filtros" (ngSubmit)="filtrar()" novalidate>
 
-        <!-- Grupo 1: Período -->
         <div class="campo-grupo">
           <label for="periodo" class="campo-label">
             Período
@@ -79,7 +76,6 @@
           }
         </div>
 
-        <!-- Botón Filtrar (ctl_529e1c2a36) -->
         <div class="filtros-acciones">
           <button type="submit" class="btn btn-secondary" aria-label="Filtrar reportes">
             <!-- Lucide filter 16px -->
@@ -101,7 +97,7 @@
         </div>
       }
 
-      <!-- Estado: error general (AC-03 / AC-04) -->
+      <!-- Estado: error de carga (AC-03) o 400 (AC-04) -->
       @if (estadoVista() === 'error') {
         <div class="estado-error" role="alert">
           <p>{{ mensajeError() }}</p>
@@ -118,10 +114,10 @@
         </div>
       }
 
-      <!-- Estado: con datos (tabla) -->
+      <!-- Estado: con datos — vista «Reportes» (dv_bf50351776) -->
       @if (estadoVista() === 'data') {
         <div class="estado-datos">
-          <table class="reportes-tabla" aria-label="Lista de reportes">
+          <table class="reportes-tabla" aria-label="Reportes">
             <thead>
               <tr>
                 <th scope="col">Ejecutivo</th>
@@ -134,13 +130,18 @@
               </tr>
             </thead>
             <tbody>
-              @for (reporte of reportesFiltrados(); track reporte.id) {
-                <tr class="fila-reporte" (click)="abrirFila(reporte.id)" style="cursor:pointer" [attr.data-id]="reporte.id">
+              @for (reporte of reportes(); track reporte.id) {
+                <tr
+                  class="fila-reporte"
+                  tabindex="0"
+                  [attr.data-id]="reporte.id"
+                  (click)="abrirFila(reporte.id)"
+                  (keydown.enter)="abrirFila(reporte.id)">
                   <td>{{ reporte.ejecutivo }}</td>
                   <td>{{ reporte.equipo }}</td>
                   <td>{{ reporte.abiertas }}</td>
-                  <td>{{ reporte.valorAbierto | number:'1.2-2' }}</td>
-                  <td>{{ reporte.ganado | number:'1.2-2' }}</td>
+                  <td class="celda-dinero">{{ reporte.valorAbierto | number:'1.2-2' }}</td>
+                  <td class="celda-dinero">{{ reporte.ganado | number:'1.2-2' }}</td>
                   <td>{{ reporte.conversion }}</td>
                   <td>{{ reporte.actVencidas }}</td>
                 </tr>
