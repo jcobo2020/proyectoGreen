@@ -1,0 +1,185 @@
+/* /reportes — estilos usando variables del design system (perfil de UI §7-ter) */
+
+.reportes-container {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background: var(--background);
+}
+
+.reportes-header {
+  margin-bottom: 1.5rem;
+}
+
+.reportes-titulo-grupo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.reportes-titulo {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 0;
+}
+
+.reportes-subtitulo {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+/* Botones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius, 4px);
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s;
+}
+
+.btn-secondary {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  border-color: var(--border);
+}
+
+.btn-secondary:hover {
+  opacity: 0.85;
+}
+
+/* Aviso exportar */
+.aviso-exportar {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-radius: var(--radius, 4px);
+  font-size: 0.875rem;
+}
+
+/* Estado sin permiso */
+.estado-sin-permiso {
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+/* Card */
+.card {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 4px);
+  padding: 1.25rem;
+}
+
+/* Filtros */
+.reportes-filtros {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.campo-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.campo-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.campo-obligatorio {
+  color: var(--destructive);
+  margin-left: 0.2rem;
+}
+
+.campo-select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--input);
+  border-radius: var(--radius, 4px);
+  background: var(--background);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.875rem;
+  min-width: 160px;
+}
+
+.campo-error {
+  color: var(--destructive);
+  font-size: 0.75rem;
+}
+
+.filtros-acciones {
+  padding-bottom: 0.1rem;
+}
+
+/* Estados */
+.estado-cargando,
+.estado-vacio,
+.estado-error {
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.estado-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Tabla */
+.reportes-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.reportes-tabla th,
+.reportes-tabla td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.reportes-tabla th {
+  font-weight: 600;
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
+
+.fila-reporte {
+  cursor: pointer;
+}
+
+.fila-reporte:hover {
+  background: var(--accent);
+}
+
+.fila-reporte:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+.reportes-tabla .celda-dinero {
+  text-align: right;
+}

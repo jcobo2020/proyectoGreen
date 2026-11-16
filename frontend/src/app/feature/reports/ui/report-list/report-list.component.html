@@ -1,0 +1,157 @@
+<div class="reportes-container">
+
+  <!-- Cabecera: título, «Exportar» junto al título (ctl_b48178afeb) y el subtítulo -->
+  <div class="reportes-header">
+    <div class="reportes-titulo-grupo">
+      <h1 class="reportes-titulo">Reportes</h1>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        aria-label="Exportar reporte"
+        (click)="exportar()">
+        <!-- Lucide download 16px -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+          stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Exportar
+      </button>
+      <!-- nav_35547b4526: «click» → /actividades. §2 no declara el control: ver el informe -->
+      <button
+        type="button"
+        class="btn btn-secondary"
+        aria-label="Ver actividades"
+        (click)="irAActividades()">
+        <!-- Lucide activity 16px -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+          stroke-linejoin="round" aria-hidden="true">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Actividades
+      </button>
+    </div>
+    <p class="reportes-subtitulo">Analítica sobre la información del CRM · clic en una barra para ver el detalle</p>
+
+    @if (exportado()) {
+      <div class="aviso-exportar" role="status">{{ mensajeExportar }}</div>
+    }
+  </div>
+
+  <!-- Estado: sin sesión (AC-05 · R4-SEG-1) -->
+  @if (estadoVista() === 'unauthorized') {
+    <div class="estado-sin-permiso" role="alert">
+      <p>{{ estados.unauthorized }}</p>
+      <a [href]="urlDeEntrada">vuelve a entrar</a>
+    </div>
+  } @else {
+    <!-- Tarjeta «Reportes»: los filtros encima de la tabla -->
+    <div class="card reportes-card">
+
+      <!-- Barra de herramientas: filtros (sección 1) y «Filtrar» (ctl_529e1c2a36) -->
+      <form [formGroup]="form" class="reportes-filtros" (ngSubmit)="filtrar()" novalidate>
+
+        <div class="campo-grupo">
+          <label for="periodo" class="campo-label">
+            Período
+            <span class="campo-obligatorio" aria-hidden="true">*</span>
+          </label>
+          <select
+            #periodoSelect
+            id="periodo"
+            formControlName="periodo"
+            class="campo-select"
+            aria-required="true"
+            [attr.aria-invalid]="mensajePeriodo ? true : null"
+            [attr.aria-describedby]="mensajePeriodo ? 'periodo-error' : null">
+            @for (opcion of periodoOpciones; track opcion) {
+              <option [value]="opcion">{{ opcion }}</option>
+            }
+          </select>
+          @if (mensajePeriodo) {
+            <span id="periodo-error" class="campo-error" role="alert">{{ mensajePeriodo }}</span>
+          }
+        </div>
+
+        <div class="filtros-acciones">
+          <button type="submit" class="btn btn-secondary" aria-label="Filtrar reportes">
+            <!-- Lucide filter 16px -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+            </svg>
+            Filtrar
+          </button>
+        </div>
+
+      </form>
+
+      <!-- Estado: cargando (AC-01) -->
+      @if (estadoVista() === 'loading') {
+        <div class="estado-cargando" role="status" aria-live="polite">
+          {{ estados.loading }}
+        </div>
+      }
+
+      <!-- Estado: error de carga (AC-03) o 400 (AC-04) -->
+      @if (estadoVista() === 'error') {
+        <div class="estado-error" role="alert">
+          <p>{{ mensajeError() }}</p>
+          <button type="button" class="btn btn-secondary" (click)="cargar()">
+            Vuelve a intentarlo
+          </button>
+        </div>
+      }
+
+      <!-- Estado: vacío (AC-02) -->
+      @if (estadoVista() === 'empty') {
+        <div class="estado-vacio">
+          <p>{{ estados.empty }}</p>
+        </div>
+      }
+
+      <!-- Estado: con datos — vista «Reportes» (dv_bf50351776) -->
+      @if (estadoVista() === 'data') {
+        <div class="estado-datos">
+          <table class="reportes-tabla" aria-label="Reportes">
+            <thead>
+              <tr>
+                <th scope="col">Ejecutivo</th>
+                <th scope="col">Equipo</th>
+                <th scope="col">Abiertas</th>
+                <th scope="col">Valor abierto</th>
+                <th scope="col">Ganado</th>
+                <th scope="col">Conversión</th>
+                <th scope="col">Act. vencidas</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (reporte of reportes(); track reporte.id) {
+                <tr
+                  class="fila-reporte"
+                  tabindex="0"
+                  [attr.data-id]="reporte.id"
+                  (click)="abrirFila(reporte.id)"
+                  (keydown.enter)="abrirFila(reporte.id)">
+                  <td>{{ reporte.ejecutivo }}</td>
+                  <td>{{ reporte.equipo }}</td>
+                  <td>{{ reporte.abiertas }}</td>
+                  <td class="celda-dinero">{{ reporte.valorAbierto | number:'1.2-2' }}</td>
+                  <td class="celda-dinero">{{ reporte.ganado | number:'1.2-2' }}</td>
+                  <td>{{ reporte.conversion }}</td>
+                  <td>{{ reporte.actVencidas }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+    </div>
+  }
+
+</div>
